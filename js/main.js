@@ -366,10 +366,9 @@
     let animationId = null;
 
     // Physics constants
-    const GRAVITY = 0.6;
-    const BOUNCE = 0.5;
-    const FRICTION = 0.98;
-    const FLOOR_Y = window.innerHeight - 20;
+    const GRAVITY = 0.8;
+    const BOUNCE = 0.4;
+    const FRICTION = 0.95;
 
     // Get all droppable elements
     function getDroppableElements() {
@@ -383,31 +382,46 @@
     }
 
     // Create physics body from element
-    function createBody(el) {
+    function createBody(el, index) {
       const rect = el.getBoundingClientRect();
+
+      // Store original styles
+      const computedStyle = window.getComputedStyle(el);
+
       return {
         el,
         x: rect.left,
         y: rect.top,
         width: rect.width,
         height: rect.height,
-        vx: (Math.random() - 0.5) * 8,
-        vy: Math.random() * -5,
+        vx: (Math.random() - 0.5) * 12,
+        vy: -2 - Math.random() * 3,
         rotation: 0,
-        vr: (Math.random() - 0.5) * 10,
-        originalRect: rect,
-        originalTransform: el.style.transform,
-        originalPosition: el.style.position,
-        originalTop: el.style.top,
-        originalLeft: el.style.left,
+        vr: (Math.random() - 0.5) * 15,
+        originalRect: { left: rect.left, top: rect.top },
+        originalStyles: {
+          position: el.style.position,
+          top: el.style.top,
+          left: el.style.left,
+          transform: el.style.transform,
+          zIndex: el.style.zIndex,
+          margin: el.style.margin,
+          width: el.style.width,
+          background: el.style.background,
+          transition: el.style.transition,
+        },
+        settled: false,
       };
     }
 
     // Apply physics step
     function physicsStep() {
+      const floorY = window.innerHeight - 30;
       let allSettled = true;
 
       bodies.forEach(body => {
+        if (body.settled) return;
+
         // Apply gravity
         body.vy += GRAVITY;
 
@@ -417,16 +431,19 @@
         body.rotation += body.vr;
 
         // Floor collision
-        const floorY = FLOOR_Y - body.height;
-        if (body.y >= floorY) {
-          body.y = floorY;
+        const bodyFloor = floorY - body.height;
+        if (body.y >= bodyFloor) {
+          body.y = bodyFloor;
           body.vy *= -BOUNCE;
           body.vx *= FRICTION;
-          body.vr *= FRICTION * 0.8;
+          body.vr *= FRICTION * 0.7;
 
-          // Check if settled
-          if (Math.abs(body.vy) < 0.5) {
+          // Settle if barely moving
+          if (Math.abs(body.vy) < 1 && Math.abs(body.vx) < 0.5) {
             body.vy = 0;
+            body.vx = 0;
+            body.vr = 0;
+            body.settled = true;
           }
         }
 
@@ -441,17 +458,12 @@
         }
 
         // Check if still moving
-        if (Math.abs(body.vx) > 0.1 || Math.abs(body.vy) > 0.1 || body.y < floorY - 1) {
+        if (!body.settled) {
           allSettled = false;
         }
 
         // Apply transform
-        body.el.style.position = 'fixed';
-        body.el.style.top = '0';
-        body.el.style.left = '0';
         body.el.style.transform = `translate(${body.x}px, ${body.y}px) rotate(${body.rotation}deg)`;
-        body.el.style.zIndex = '1000';
-        body.el.style.margin = '0';
       });
 
       return allSettled;
@@ -467,19 +479,19 @@
         });
 
         // Wait for animation to complete
+        const totalTime = 800 + bodies.length * 50 + 200;
         setTimeout(() => {
           bodies.forEach(body => {
-            body.el.style.transition = '';
-            body.el.style.transform = body.originalTransform || '';
-            body.el.style.position = body.originalPosition || '';
-            body.el.style.top = body.originalTop || '';
-            body.el.style.left = body.originalLeft || '';
-            body.el.style.zIndex = '';
-            body.el.style.margin = '';
+            // Restore all original styles
+            Object.keys(body.originalStyles).forEach(key => {
+              body.el.style[key] = body.originalStyles[key];
+            });
           });
           bodies = [];
+          document.body.style.overflow = '';
+          isAnimating = false;
           resolve();
-        }, 1000 + bodies.length * 50);
+        }, totalTime);
       });
     }
 
@@ -490,11 +502,10 @@
       if (!settled) {
         animationId = requestAnimationFrame(dropAnimation);
       } else {
-        // Wait 2 seconds then reassemble
-        setTimeout(async () => {
-          await resetElements();
-          isAnimating = false;
-        }, 2000);
+        // Wait 1.5 seconds then reassemble
+        setTimeout(() => {
+          resetElements();
+        }, 1500);
       }
     }
 
@@ -504,19 +515,35 @@
       isAnimating = true;
 
       // Get elements and create physics bodies
-      const elements = getDroppableElements();
-      bodies = elements.map(createBody);
+      const droppableElements = getDroppableElements();
+      bodies = droppableElements.map((el, i) => createBody(el, i));
 
-      // Disable pointer events during animation
+      // Prepare elements for animation
+      bodies.forEach(body => {
+        body.el.style.position = 'fixed';
+        body.el.style.top = '0';
+        body.el.style.left = '0';
+        body.el.style.width = body.width + 'px';
+        body.el.style.margin = '0';
+        body.el.style.zIndex = '1000';
+        body.el.style.background = '#D1D1D1';
+        body.el.style.transition = 'none';
+        body.el.style.transform = `translate(${body.x}px, ${body.y}px)`;
+      });
+
+      // Disable scroll during animation
       document.body.style.overflow = 'hidden';
 
-      // Start physics simulation
-      dropAnimation();
+      // Start physics simulation on next frame
+      requestAnimationFrame(() => {
+        dropAnimation();
+      });
     }
 
     // Desktop: Click trigger
     trigger.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       startDrop();
     });
 
@@ -526,6 +553,7 @@
 
     if (window.DeviceMotionEvent) {
       window.addEventListener('devicemotion', (e) => {
+        if (isAnimating) return;
         const acc = e.accelerationIncludingGravity;
         if (!acc) return;
 
@@ -553,10 +581,11 @@
       let pressTimer = null;
 
       logo.addEventListener('touchstart', (e) => {
+        if (isAnimating) return;
         pressTimer = setTimeout(() => {
           startDrop();
         }, 800);
-      });
+      }, { passive: true });
 
       logo.addEventListener('touchend', () => {
         clearTimeout(pressTimer);
@@ -566,6 +595,9 @@
         clearTimeout(pressTimer);
       });
     }
+
+    // Debug: Log when initialized
+    console.log('Easter egg initialized - click "00" to trigger');
   }
 
   // ---------- Initialize ----------
