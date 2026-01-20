@@ -356,12 +356,225 @@
     updatePosition();
   }
 
+  // ---------- Easter Egg: Physics Drop ----------
+  function initEasterEgg() {
+    const trigger = document.getElementById('easter-egg-trigger');
+    if (!trigger) return;
+
+    let isAnimating = false;
+    let bodies = [];
+    let animationId = null;
+
+    // Physics constants
+    const GRAVITY = 0.6;
+    const BOUNCE = 0.5;
+    const FRICTION = 0.98;
+    const FLOOR_Y = window.innerHeight - 20;
+
+    // Get all droppable elements
+    function getDroppableElements() {
+      return [
+        document.querySelector('.site-title'),
+        document.querySelector('.tagline'),
+        document.querySelector('.divider'),
+        ...document.querySelectorAll('.project-item'),
+        document.querySelector('.footer'),
+      ].filter(Boolean);
+    }
+
+    // Create physics body from element
+    function createBody(el) {
+      const rect = el.getBoundingClientRect();
+      return {
+        el,
+        x: rect.left,
+        y: rect.top,
+        width: rect.width,
+        height: rect.height,
+        vx: (Math.random() - 0.5) * 8,
+        vy: Math.random() * -5,
+        rotation: 0,
+        vr: (Math.random() - 0.5) * 10,
+        originalRect: rect,
+        originalTransform: el.style.transform,
+        originalPosition: el.style.position,
+        originalTop: el.style.top,
+        originalLeft: el.style.left,
+      };
+    }
+
+    // Apply physics step
+    function physicsStep() {
+      let allSettled = true;
+
+      bodies.forEach(body => {
+        // Apply gravity
+        body.vy += GRAVITY;
+
+        // Apply velocity
+        body.x += body.vx;
+        body.y += body.vy;
+        body.rotation += body.vr;
+
+        // Floor collision
+        const floorY = FLOOR_Y - body.height;
+        if (body.y >= floorY) {
+          body.y = floorY;
+          body.vy *= -BOUNCE;
+          body.vx *= FRICTION;
+          body.vr *= FRICTION * 0.8;
+
+          // Check if settled
+          if (Math.abs(body.vy) < 0.5) {
+            body.vy = 0;
+          }
+        }
+
+        // Wall collisions
+        if (body.x <= 0) {
+          body.x = 0;
+          body.vx *= -BOUNCE;
+        }
+        if (body.x + body.width >= window.innerWidth) {
+          body.x = window.innerWidth - body.width;
+          body.vx *= -BOUNCE;
+        }
+
+        // Check if still moving
+        if (Math.abs(body.vx) > 0.1 || Math.abs(body.vy) > 0.1 || body.y < floorY - 1) {
+          allSettled = false;
+        }
+
+        // Apply transform
+        body.el.style.position = 'fixed';
+        body.el.style.top = '0';
+        body.el.style.left = '0';
+        body.el.style.transform = `translate(${body.x}px, ${body.y}px) rotate(${body.rotation}deg)`;
+        body.el.style.zIndex = '1000';
+        body.el.style.margin = '0';
+      });
+
+      return allSettled;
+    }
+
+    // Reset elements to original positions
+    function resetElements() {
+      return new Promise(resolve => {
+        // Animate back to original positions
+        bodies.forEach((body, index) => {
+          body.el.style.transition = `transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s`;
+          body.el.style.transform = `translate(${body.originalRect.left}px, ${body.originalRect.top}px) rotate(0deg)`;
+        });
+
+        // Wait for animation to complete
+        setTimeout(() => {
+          bodies.forEach(body => {
+            body.el.style.transition = '';
+            body.el.style.transform = body.originalTransform || '';
+            body.el.style.position = body.originalPosition || '';
+            body.el.style.top = body.originalTop || '';
+            body.el.style.left = body.originalLeft || '';
+            body.el.style.zIndex = '';
+            body.el.style.margin = '';
+          });
+          bodies = [];
+          resolve();
+        }, 1000 + bodies.length * 50);
+      });
+    }
+
+    // Main drop animation
+    function dropAnimation() {
+      const settled = physicsStep();
+
+      if (!settled) {
+        animationId = requestAnimationFrame(dropAnimation);
+      } else {
+        // Wait 2 seconds then reassemble
+        setTimeout(async () => {
+          await resetElements();
+          isAnimating = false;
+        }, 2000);
+      }
+    }
+
+    // Start the drop
+    function startDrop() {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      // Get elements and create physics bodies
+      const elements = getDroppableElements();
+      bodies = elements.map(createBody);
+
+      // Disable pointer events during animation
+      document.body.style.overflow = 'hidden';
+
+      // Start physics simulation
+      dropAnimation();
+    }
+
+    // Desktop: Click trigger
+    trigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      startDrop();
+    });
+
+    // Mobile: Shake detection
+    let lastShake = 0;
+    let shakeCount = 0;
+
+    if (window.DeviceMotionEvent) {
+      window.addEventListener('devicemotion', (e) => {
+        const acc = e.accelerationIncludingGravity;
+        if (!acc) return;
+
+        const magnitude = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+
+        if (magnitude > 25) {
+          const now = Date.now();
+          if (now - lastShake < 500) {
+            shakeCount++;
+            if (shakeCount >= 2) {
+              startDrop();
+              shakeCount = 0;
+            }
+          } else {
+            shakeCount = 1;
+          }
+          lastShake = now;
+        }
+      });
+    }
+
+    // Mobile: Long press on logo
+    const logo = document.querySelector('.site-title');
+    if (logo) {
+      let pressTimer = null;
+
+      logo.addEventListener('touchstart', (e) => {
+        pressTimer = setTimeout(() => {
+          startDrop();
+        }, 800);
+      });
+
+      logo.addEventListener('touchend', () => {
+        clearTimeout(pressTimer);
+      });
+
+      logo.addEventListener('touchmove', () => {
+        clearTimeout(pressTimer);
+      });
+    }
+  }
+
   // ---------- Initialize ----------
   function init() {
     loadProjects();
     initKeyboardNav();
     initCursorEffect();
     initScrollIndicator();
+    initEasterEgg();
   }
 
   // Run on DOM ready

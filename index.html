@@ -68,6 +68,11 @@
       font-family: var(--font-mono);
       font-size: 0.75rem;
       color: var(--color-text-secondary);
+      cursor: default;
+      transition: color 0.15s ease;
+    }
+    .index-number:hover {
+      color: var(--color-accent);
     }
     .tagline {
       font-family: var(--font-body);
@@ -113,7 +118,7 @@
     <!-- Header -->
     <header class="header" role="banner">
       <h1 class="site-title">PUBLICWORKS</h1>
-      <span class="index-number" aria-label="Project count">000</span>
+      <span class="index-number" id="easter-egg-trigger" aria-label="Project count" title="">00</span>
     </header>
 
     <!-- Main Content -->
