@@ -9,39 +9,12 @@
     "date": "2025-01"
   },
   {
-    "id": "gridkit",
+    "id": "breath",
     "number": "002",
-    "name": "Gridkit",
-    "description": "Minimal CSS grid generator for rapid prototyping",
+    "name": "Breath",
+    "description": "Meditative breathwork guide with calming visuals",
     "status": "live",
-    "url": "projects/gridkit/",
-    "date": "2024-12"
-  },
-  {
-    "id": "chromascope",
-    "number": "003",
-    "name": "Chromascope",
-    "description": "Color palette extraction from any image",
-    "status": "live",
-    "url": "projects/chromascope/",
-    "date": "2024-11"
-  },
-  {
-    "id": "typespec",
-    "number": "004",
-    "name": "Typespec",
-    "description": "Typography scale calculator with fluid sizing",
-    "status": "building",
-    "url": "projects/typespec/",
+    "url": "projects/breath/",
     "date": "2025-01"
-  },
-  {
-    "id": "dotfiles",
-    "number": "005",
-    "name": "Dotfiles",
-    "description": "Personal development environment configuration",
-    "status": "archived",
-    "url": "https://github.com/username/dotfiles",
-    "date": "2023-06"
   }
 ]
