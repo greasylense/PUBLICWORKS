@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Disruption — PUBLICWORKS</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #D1D1D1;
+      overflow: hidden;
+      font-family: 'IBM Plex Mono', 'SF Mono', monospace;
+    }
+
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #video {
+      display: none;
+    }
+
+    /* Start prompt */
+    #start-prompt {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #D1D1D1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      cursor: pointer;
+      transition: opacity 0.5s ease;
+    }
+
+    #start-prompt.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #start-prompt h1 {
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 400;
+      color: #0F0F0F;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    #start-prompt p {
+      font-size: 0.75rem;
+      color: #6E6E6E;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    #start-prompt .hint {
+      position: absolute;
+      bottom: 2rem;
+      font-size: 0.625rem;
+      color: #6E6E6E;
+    }
+
+    /* Loading state */
+    #loading {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      font-size: 0.625rem;
+      color: #6E6E6E;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #loading.visible {
+      opacity: 1;
+    }
+
+    /* Back link */
+    #back-link {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      font-size: 0.75rem;
+      color: #6E6E6E;
+      text-decoration: none;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.3s ease, color 0.15s ease;
+    }
+
+    #back-link:hover {
+      color: #0047FF;
+    }
+
+    #back-link.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="start-prompt">
+    <h1>Grid Disruption</h1>
+    <p>Click to begin</p>
+    <span class="hint">Requires camera access</span>
+  </div>
+
+  <a href="../../" id="back-link">← PUBLICWORKS</a>
+  <div id="loading">Initializing hand tracking...</div>
+
+  <video id="video" playsinline></video>
+  <canvas id="canvas"></canvas>
+
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ---------- Configuration ----------
+      const CONFIG = {
+        grid: {
+          spacing: 12,
+          lineWidth: 0.8,
+          distortedLineWidth: 2.5,
+          opacity: 1,
+        },
+        distortion: {
+          radius: 100,
+          strength: 60,
+          smoothing: 0.12,
+          depthScale: 1.5,
+        },
+        camera: {
+          opacity: 0,
+        },
+        colors: {
+          background: '#0A0A0A',
+          gridDefault: '#2A2A2A',
+          gridNear: '#FFFFFF',
+          gridFar: '#0047FF',
+        },
+      };
+
+      // ---------- DOM Elements ----------
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const video = document.getElementById('video');
+      const startPrompt = document.getElementById('start-prompt');
+      const loadingEl = document.getElementById('loading');
+      const backLink = document.getElementById('back-link');
+
+      // ---------- State ----------
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      let gridVertices = [];
+      let targetVertices = [];
+      let handLandmarks = [];
+      let faceLandmarks = [];
+      let isRunning = false;
+      let animationId = null;
+
+      // ---------- Grid Setup ----------
+      function initGrid() {
+        gridVertices = [];
+        targetVertices = [];
+
+        const cols = Math.ceil(width / CONFIG.grid.spacing) + 2;
+        const rows = Math.ceil(height / CONFIG.grid.spacing) + 2;
+
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
+            const x = col * CONFIG.grid.spacing;
+            const y = row * CONFIG.grid.spacing;
+            gridVertices.push({ x, y, baseX: x, baseY: y, depth: 0 });
+            targetVertices.push({ x, y, depth: 0 });
+          }
+        }
+      }
+
+      // ---------- Distortion Calculation ----------
+      function calculateDistortion() {
+        const { radius, strength, depthScale } = CONFIG.distortion;
+
+        // Combine all landmarks (hands + face)
+        const allLandmarks = [...handLandmarks, ...faceLandmarks];
+
+        for (let i = 0; i < gridVertices.length; i++) {
+          const vertex = gridVertices[i];
+          let targetX = vertex.baseX;
+          let targetY = vertex.baseY;
+          let maxDepth = 0;
+
+          // Check distance to each landmark
+          for (const landmark of allLandmarks) {
+            // Mirror the x coordinate to match the mirrored video feed
+            const lmX = (1 - landmark.x) * width;
+            const lmY = landmark.y * height;
+            // Use z coordinate for depth (how close to camera)
+            const lmZ = landmark.z || 0;
+            // Use custom radius if provided (face landmarks have smaller radius)
+            const effectRadius = landmark.radius || radius;
+            const effectStrength = landmark.strength || strength;
+
+            const dx = vertex.baseX - lmX;
+            const dy = vertex.baseY - lmY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < effectRadius && distance > 0) {
+              // Inverse falloff - closer = more displacement
+              const falloff = 1 - (distance / effectRadius);
+              // Depth affects push strength - closer to camera = more push
+              const depthFactor = 1 + Math.max(0, -lmZ * depthScale * 10);
+              const force = falloff * falloff * falloff * effectStrength * depthFactor;
+
+              // Push away from landmark
+              const angle = Math.atan2(dy, dx);
+              targetX += Math.cos(angle) * force;
+              targetY += Math.sin(angle) * force;
+
+              // Track depth for coloring
+              maxDepth = Math.max(maxDepth, falloff * depthFactor);
+            }
+          }
+
+          targetVertices[i].x = targetX;
+          targetVertices[i].y = targetY;
+          targetVertices[i].depth = maxDepth;
+        }
+      }
+
+      // ---------- Smooth Interpolation ----------
+      function interpolateVertices() {
+        const smoothing = CONFIG.distortion.smoothing;
+
+        for (let i = 0; i < gridVertices.length; i++) {
+          gridVertices[i].x += (targetVertices[i].x - gridVertices[i].x) * smoothing;
+          gridVertices[i].y += (targetVertices[i].y - gridVertices[i].y) * smoothing;
+          gridVertices[i].depth += (targetVertices[i].depth - gridVertices[i].depth) * smoothing;
+        }
+      }
+
+      // ---------- Rendering ----------
+      function render() {
+        // Clear canvas with dark background
+        ctx.fillStyle = CONFIG.colors.background;
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw grid as depth visualization - pure filter effect
+        drawGrid();
+      }
+
+      function drawGrid() {
+        const cols = Math.ceil(width / CONFIG.grid.spacing) + 2;
+        const rows = Math.ceil(height / CONFIG.grid.spacing) + 2;
+
+        // Draw horizontal line segments with per-segment depth coloring
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols - 1; col++) {
+            const index1 = row * cols + col;
+            const index2 = row * cols + col + 1;
+            const v1 = gridVertices[index1];
+            const v2 = gridVertices[index2];
+
+            const avgDepth = (v1.depth + v2.depth) / 2;
+            setDepthStyle(avgDepth);
+
+            ctx.beginPath();
+            ctx.moveTo(v1.x, v1.y);
+            ctx.lineTo(v2.x, v2.y);
+            ctx.stroke();
+          }
+        }
+
+        // Draw vertical line segments with per-segment depth coloring
+        for (let col = 0; col < cols; col++) {
+          for (let row = 0; row < rows - 1; row++) {
+            const index1 = row * cols + col;
+            const index2 = (row + 1) * cols + col;
+            const v1 = gridVertices[index1];
+            const v2 = gridVertices[index2];
+
+            const avgDepth = (v1.depth + v2.depth) / 2;
+            setDepthStyle(avgDepth);
+
+            ctx.beginPath();
+            ctx.moveTo(v1.x, v1.y);
+            ctx.lineTo(v2.x, v2.y);
+            ctx.stroke();
+          }
+        }
+
+        // Draw intersection points for more depth feel
+        for (let i = 0; i < gridVertices.length; i++) {
+          const v = gridVertices[i];
+          if (v.depth > 0.1) {
+            const size = 1 + v.depth * 3;
+            setDepthStyle(v.depth);
+            ctx.beginPath();
+            ctx.arc(v.x, v.y, size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      function setDepthStyle(depth) {
+        const defaultColor = hexToRgb(CONFIG.colors.gridDefault);
+        const nearColor = hexToRgb(CONFIG.colors.gridNear);
+        const farColor = hexToRgb(CONFIG.colors.gridFar);
+
+        // Blend from default -> far (blue) -> near (white) based on depth
+        let r, g, b;
+        if (depth < 0.5) {
+          // Default to blue
+          const t = depth * 2;
+          r = Math.round(defaultColor.r + (farColor.r - defaultColor.r) * t);
+          g = Math.round(defaultColor.g + (farColor.g - defaultColor.g) * t);
+          b = Math.round(defaultColor.b + (farColor.b - defaultColor.b) * t);
+        } else {
+          // Blue to white
+          const t = (depth - 0.5) * 2;
+          r = Math.round(farColor.r + (nearColor.r - farColor.r) * t);
+          g = Math.round(farColor.g + (nearColor.g - farColor.g) * t);
+          b = Math.round(farColor.b + (nearColor.b - farColor.b) * t);
+        }
+
+        ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        ctx.lineWidth = CONFIG.grid.lineWidth +
+          (CONFIG.grid.distortedLineWidth - CONFIG.grid.lineWidth) * depth;
+      }
+
+      function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : { r: 0, g: 0, b: 0 };
+      }
+
+      // ---------- Animation Loop ----------
+      function animate() {
+        if (!isRunning) return;
+
+        calculateDistortion();
+        interpolateVertices();
+        render();
+
+        animationId = requestAnimationFrame(animate);
+      }
+
+      // ---------- MediaPipe Setup ----------
+      let handsModel = null;
+      let faceMeshModel = null;
+
+      async function initTracking() {
+        // Initialize hands tracking
+        handsModel = new Hands({
+          locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+          }
+        });
+
+        handsModel.setOptions({
+          maxNumHands: 2,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+
+        handsModel.onResults(onHandResults);
+
+        // Initialize face mesh tracking
+        faceMeshModel = new FaceMesh({
+          locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+          }
+        });
+
+        faceMeshModel.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: false,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+
+        faceMeshModel.onResults(onFaceResults);
+
+        const camera = new Camera(video, {
+          onFrame: async () => {
+            // Run sequentially to avoid conflicts
+            await handsModel.send({ image: video });
+            await faceMeshModel.send({ image: video });
+          },
+          width: 1280,
+          height: 720,
+        });
+
+        camera.start().then(() => {
+          loadingEl.classList.remove('visible');
+          backLink.classList.add('visible');
+        });
+      }
+
+      function onHandResults(results) {
+        handLandmarks = [];
+
+        if (results.multiHandLandmarks) {
+          for (const landmarks of results.multiHandLandmarks) {
+            // Palm center (landmark 9 - middle finger base)
+            handLandmarks.push(landmarks[9]);
+
+            // Add fingertips for more detailed interaction
+            handLandmarks.push(landmarks[4]);  // Thumb tip
+            handLandmarks.push(landmarks[8]);  // Index tip
+            handLandmarks.push(landmarks[12]); // Middle tip
+            handLandmarks.push(landmarks[16]); // Ring tip
+            handLandmarks.push(landmarks[20]); // Pinky tip
+          }
+        }
+      }
+
+      function onFaceResults(results) {
+        faceLandmarks = [];
+
+        if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+          const landmarks = results.multiFaceLandmarks[0];
+
+          // Use ALL 468 face mesh landmarks for full face coverage
+          // This creates a complete face silhouette like pushing through fabric
+          for (let i = 0; i < landmarks.length; i++) {
+            const lm = landmarks[i];
+
+            // Vary radius/strength based on face region for depth
+            // Center of face (nose area) pushes more
+            const centerX = 0.5;
+            const centerY = 0.4;
+            const distFromCenter = Math.sqrt(
+              Math.pow(lm.x - centerX, 2) + Math.pow(lm.y - centerY, 2)
+            );
+
+            // Nose tip area gets extra push
+            const isNoseArea = i >= 1 && i <= 19;
+            const baseRadius = isNoseArea ? 45 : 35;
+            const baseStrength = isNoseArea ? 50 : 35;
+
+            faceLandmarks.push({
+              x: lm.x,
+              y: lm.y,
+              z: lm.z,
+              radius: baseRadius,
+              strength: baseStrength * (1 + Math.max(0, 0.3 - distFromCenter))
+            });
+          }
+        }
+      }
+
+      // ---------- Resize Handler ----------
+      function handleResize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        initGrid();
+      }
+
+      // ---------- Start Experience ----------
+      function start() {
+        startPrompt.classList.add('hidden');
+        loadingEl.classList.add('visible');
+
+        handleResize();
+        initTracking();
+
+        isRunning = true;
+        animate();
+      }
+
+      // ---------- Event Listeners ----------
+      startPrompt.addEventListener('click', start);
+      window.addEventListener('resize', handleResize);
+
+      // Pause when tab is hidden
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          isRunning = false;
+          if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+          }
+        } else if (startPrompt.classList.contains('hidden')) {
+          isRunning = true;
+          animate();
+        }
+      });
+
+      // Initial canvas size
+      canvas.width = width;
+      canvas.height = height;
+
+    })();
+  </script>
+</body>
+</html>

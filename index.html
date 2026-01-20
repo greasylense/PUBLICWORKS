@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PUBLICWORKS — A collection of tools, experiments, and small works.">
+  <meta name="theme-color" content="#D1D1D1">
+
+  <title>PUBLICWORKS</title>
+
+  <!-- Preload critical fonts -->
+  <link rel="preload" href="https://fonts.gstatic.com/s/spacegrotesk/v16/V8mDoQDjQSkFtoMM3T6r8E7mPbF4Cw.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="https://fonts.gstatic.com/s/ibmplexmono/v19/-F6qfjptAgt5VM-kVkqdyU8n1ioa1g.woff2" as="font" type="font/woff2" crossorigin>
+
+  <!-- Preconnect to font origins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Critical CSS inlined for fast first paint -->
+  <style>
+    :root {
+      --color-bg: #D1D1D1;
+      --color-text: #0F0F0F;
+      --color-text-secondary: #6E6E6E;
+      --color-accent: #0047FF;
+      --color-divider: #0F0F0F;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-body: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+      --space-md: 1rem;
+      --space-lg: 2rem;
+      --space-xl: 4rem;
+      --max-width: 900px;
+      --container-padding: var(--space-md);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: var(--space-lg) var(--container-padding);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: var(--space-xl);
+    }
+    .site-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.25rem, 4vw, 1.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .index-number {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+    }
+    .tagline {
+      font-family: var(--font-body);
+      font-size: clamp(1rem, 3vw, 1.125rem);
+      color: var(--color-text-secondary);
+      max-width: 40ch;
+      margin-bottom: var(--space-lg);
+    }
+    .divider {
+      border: none;
+      height: 1px;
+      background-color: var(--color-divider);
+      margin-bottom: var(--space-xl);
+    }
+    .project-list { list-style: none; }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      padding-top: var(--space-xl);
+      margin-top: auto;
+      border-top: 1px solid var(--color-divider);
+    }
+    a { color: inherit; text-decoration: none; }
+  </style>
+
+  <!-- Load fonts with font-display: swap for FOUT instead of FOIT -->
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+  </noscript>
+
+  <!-- Non-critical CSS loaded async -->
+  <link rel="stylesheet" href="css/style.css" media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="css/style.css">
+  </noscript>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header" role="banner">
+      <h1 class="site-title">PUBLICWORKS</h1>
+      <span class="index-number" aria-label="Project count">000</span>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main" role="main">
+      <section class="intro">
+        <p class="tagline">A collection of tools, experiments, and small works.</p>
+      </section>
+
+      <hr class="divider" aria-hidden="true">
+
+      <!-- Project List -->
+      <section class="projects" aria-label="Projects">
+        <ul class="project-list" role="list" id="project-list">
+          <!-- Projects loaded via JS -->
+        </ul>
+
+        <!-- Fallback for no-JS -->
+        <noscript>
+          <p class="no-js-message">Enable JavaScript to view the project list.</p>
+        </noscript>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+      <div class="status-line">
+        <span class="status-indicator" aria-hidden="true"></span>
+        <span class="status-text">Currently building</span>
+      </div>
+
+      <nav class="social-links" aria-label="Social links">
+        <a href="https://github.com" class="social-link" target="_blank" rel="noopener noreferrer">
+          GitHub
+        </a>
+        <a href="https://twitter.com" class="social-link" target="_blank" rel="noopener noreferrer">
+          Twitter
+        </a>
+        <a href="mailto:hello@example.com" class="social-link">
+          Email
+        </a>
+      </nav>
+    </footer>
+  </div>
+
+  <!-- Defer non-critical JS -->
+  <script src="js/main.js" defer></script>
+</body>
+</html>
