@@ -16,5 +16,14 @@
     "status": "live",
     "url": "projects/breath/",
     "date": "2025-01"
+  },
+  {
+    "id": "landscape",
+    "number": "003",
+    "name": "Landscape",
+    "description": "Infinite glitch landscape collage generator",
+    "status": "live",
+    "url": "projects/landscape/",
+    "date": "2025-01"
   }
 ]
