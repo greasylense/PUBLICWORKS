@@ -11,28 +11,51 @@ export default function RarityApp() {
     : null;
 
   const oneInX = Math.round(TOTAL_POPULATION / Math.max(state.currentPool, 1));
+  const progress = (state.currentQuestionIndex / 25) * 100;
 
   // Start screen
   if (!started) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#D1D1D1' }}>
         <div className="text-center max-w-md">
           <h1
-            className="text-4xl md:text-6xl font-bold mb-4"
+            className="text-4xl md:text-5xl font-bold mb-4 tracking-tight"
             style={{
-              background: 'linear-gradient(135deg, #00f2ff 0%, #a855f7 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              fontFamily: "'Space Grotesk', system-ui, sans-serif",
+              color: '#0F0F0F',
             }}
           >
             THE RARITY ENGINE
           </h1>
-          <p className="text-white/60 text-lg mb-2">Discover how rare you really are</p>
-          <p className="text-white/40 text-sm mb-8">Answer 25 questions. Watch 8 billion become one.</p>
+          <p className="text-lg mb-2" style={{ color: '#6E6E6E' }}>
+            Discover how rare you really are
+          </p>
+          <p className="text-sm mb-8" style={{ color: '#6E6E6E' }}>
+            Answer 25 questions. Watch 8 billion become one.
+          </p>
 
-          <div className="glass rounded-xl px-6 py-4 mb-8 inline-block">
-            <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Starting population</p>
-            <p className="text-3xl font-bold text-glow-cyan" style={{ color: '#00f2ff' }}>
+          <div
+            className="px-6 py-4 mb-8 inline-block"
+            style={{
+              backgroundColor: '#0F0F0F',
+            }}
+          >
+            <p
+              className="text-xs uppercase tracking-wider mb-1"
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                color: '#6E6E6E',
+              }}
+            >
+              Starting population
+            </p>
+            <p
+              className="text-3xl font-bold"
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                color: '#D1D1D1',
+              }}
+            >
               8,000,000,000
             </p>
           </div>
@@ -40,10 +63,11 @@ export default function RarityApp() {
           <div>
             <button
               onClick={() => setStarted(true)}
-              className="px-10 py-4 rounded-xl font-semibold text-lg text-black"
+              className="px-10 py-4 font-semibold text-lg transition-all duration-200 hover:translate-x-1"
               style={{
-                background: 'linear-gradient(135deg, #00f2ff 0%, #00d4ff 100%)',
-                boxShadow: '0 0 30px rgba(0, 242, 255, 0.4)',
+                fontFamily: "'Space Grotesk', system-ui, sans-serif",
+                backgroundColor: '#0047FF',
+                color: '#D1D1D1',
               }}
             >
               Begin
@@ -57,26 +81,53 @@ export default function RarityApp() {
   // Result screen
   if (state.isComplete) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: '#D1D1D1' }}>
         <div className="text-center max-w-md">
-          <p className="text-white/60 text-sm uppercase tracking-widest mb-4">You are</p>
-          <h1
-            className="text-5xl md:text-7xl font-bold mb-6"
+          <p
+            className="text-sm uppercase tracking-widest mb-4"
             style={{
-              background: 'linear-gradient(135deg, #00f2ff 0%, #a855f7 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              fontFamily: "'IBM Plex Mono', monospace",
+              color: '#6E6E6E',
+            }}
+          >
+            You are
+          </p>
+          <h1
+            className="text-4xl md:text-6xl font-bold mb-6 tracking-tight"
+            style={{
+              fontFamily: "'Space Grotesk', system-ui, sans-serif",
+              color: '#0047FF',
             }}
           >
             {formatRarity(state.currentPool)}
           </h1>
-          <p className="text-white/70 text-xl mb-8">
-            Rarer than <span className="text-purple-400 font-semibold">{getComparison(oneInX)}</span>
+          <p className="text-xl mb-8" style={{ color: '#0F0F0F' }}>
+            Rarer than{' '}
+            <span className="font-semibold" style={{ color: '#FF4D00' }}>
+              {getComparison(oneInX)}
+            </span>
           </p>
 
-          <div className="glass rounded-xl px-6 py-4 mb-8 inline-block">
-            <p className="text-white/50 text-xs uppercase tracking-wider mb-1">People like you</p>
-            <p className="text-2xl font-bold" style={{ color: '#00f2ff' }}>
+          <div
+            className="px-6 py-4 mb-8 inline-block"
+            style={{ backgroundColor: '#0F0F0F' }}
+          >
+            <p
+              className="text-xs uppercase tracking-wider mb-1"
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                color: '#6E6E6E',
+              }}
+            >
+              People like you
+            </p>
+            <p
+              className="text-2xl font-bold"
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                color: '#D1D1D1',
+              }}
+            >
               {state.currentPool.toLocaleString()}
             </p>
           </div>
@@ -87,7 +138,12 @@ export default function RarityApp() {
                 reset();
                 setStarted(false);
               }}
-              className="px-8 py-4 rounded-xl font-semibold text-white/80 border border-white/20 hover:bg-white/5"
+              className="px-8 py-4 font-semibold transition-all duration-200 hover:opacity-90"
+              style={{
+                fontFamily: "'Space Grotesk', system-ui, sans-serif",
+                backgroundColor: '#0F0F0F',
+                color: '#D1D1D1',
+              }}
             >
               Try Again
             </button>
@@ -99,22 +155,48 @@ export default function RarityApp() {
 
   // Question screen
   return (
-    <div className="min-h-screen bg-[#050505] flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#D1D1D1' }}>
       {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-6 pb-32">
         {currentQuestion && (
           <div className="w-full max-w-lg">
-            <div className="glass-strong rounded-2xl p-6 md:p-8">
-              <p className="text-xs text-white/50 uppercase tracking-wider mb-4">
+            <div
+              className="p-6 md:p-8"
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #0F0F0F',
+              }}
+            >
+              <p
+                className="text-xs uppercase tracking-wider mb-4"
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  color: '#6E6E6E',
+                }}
+              >
                 Question {state.currentQuestionIndex + 1} of 25
               </p>
 
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
+              <h2
+                className="text-xl md:text-2xl font-bold mb-2"
+                style={{
+                  fontFamily: "'Space Grotesk', system-ui, sans-serif",
+                  color: '#0F0F0F',
+                }}
+              >
                 {currentQuestion.question}
               </h2>
 
               {currentQuestion.subtext && (
-                <p className="text-white/40 text-sm mb-6">{currentQuestion.subtext}</p>
+                <p
+                  className="text-sm mb-6"
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    color: '#6E6E6E',
+                  }}
+                >
+                  {currentQuestion.subtext}
+                </p>
               )}
 
               <div className="space-y-3 mt-6">
@@ -126,10 +208,25 @@ export default function RarityApp() {
                       choiceId: choice.id,
                       weight: choice.weight,
                     })}
-                    className="w-full text-left px-5 py-4 rounded-xl bg-white/5 border border-white/10
-                             hover:bg-white/10 hover:border-cyan-500/50 transition-all duration-200"
+                    className="w-full text-left px-5 py-4 transition-all duration-150"
+                    style={{
+                      fontFamily: "'Space Grotesk', system-ui, sans-serif",
+                      backgroundColor: '#D1D1D1',
+                      border: '1px solid #0F0F0F',
+                      color: '#0F0F0F',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#0047FF';
+                      e.currentTarget.style.color = '#D1D1D1';
+                      e.currentTarget.style.borderColor = '#0047FF';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#D1D1D1';
+                      e.currentTarget.style.color = '#0F0F0F';
+                      e.currentTarget.style.borderColor = '#0F0F0F';
+                    }}
                   >
-                    <span className="text-white/90">{choice.text}</span>
+                    {choice.text}
                   </button>
                 ))}
               </div>
@@ -139,19 +236,40 @@ export default function RarityApp() {
       </div>
 
       {/* Bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 glass-strong">
-        <div className="h-1 bg-white/10">
+      <div
+        className="fixed bottom-0 left-0 right-0"
+        style={{
+          backgroundColor: '#0F0F0F',
+        }}
+      >
+        {/* Progress bar */}
+        <div style={{ height: '3px', backgroundColor: '#6E6E6E' }}>
           <div
             className="h-full transition-all duration-500"
             style={{
-              width: `${(state.currentQuestionIndex / 25) * 100}%`,
-              background: 'linear-gradient(90deg, #00f2ff, #a855f7)',
+              width: `${progress}%`,
+              backgroundColor: '#0047FF',
             }}
           />
         </div>
+
         <div className="px-4 py-4 flex items-center justify-between max-w-lg mx-auto">
-          <span className="text-white/60 text-sm">People like you</span>
-          <span className="text-2xl font-bold text-glow-cyan" style={{ color: '#00f2ff' }}>
+          <span
+            className="text-sm"
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              color: '#6E6E6E',
+            }}
+          >
+            People like you
+          </span>
+          <span
+            className="text-2xl font-bold"
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              color: '#D1D1D1',
+            }}
+          >
             {state.currentPool.toLocaleString()}
           </span>
         </div>
