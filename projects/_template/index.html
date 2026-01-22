@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#D1D1D1">
+  <title>Project Name — PUBLICWORKS</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Brand Kit (optional - or use inline styles below) -->
+  <!-- <link rel="stylesheet" href="../../css/brand-kit.css"> -->
+
+  <style>
+    /* ========================================
+       PUBLICWORKS Project Template
+       Copy this folder to create new projects
+       ======================================== */
+
+    /* Brand Kit Variables */
+    :root {
+      --bg: #D1D1D1;
+      --text: #0F0F0F;
+      --text-secondary: #6E6E6E;
+      --accent: #0047FF;
+      --alert: #FF4D00;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+    }
+
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Base */
+    body {
+      font-family: var(--font-mono);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* Back Link - Always include this */
+    #back-link {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      z-index: 50;
+      transition: color 0.15s ease;
+    }
+
+    #back-link:hover {
+      color: var(--accent);
+    }
+
+    /* Start Prompt - Common pattern */
+    .start-prompt {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      cursor: pointer;
+      transition: opacity 0.5s ease;
+    }
+
+    .start-prompt.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .start-prompt h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .start-prompt p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .start-prompt .hint {
+      position: absolute;
+      bottom: 2rem;
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+    }
+
+    /* Loading State */
+    .loading {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      z-index: 50;
+    }
+
+    /* Main Canvas (for visual projects) */
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Container (for content-based projects) */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    /* Focus Styles */
+    a:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Responsive */
+    @media (min-width: 600px) {
+      .container {
+        padding: 4rem 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Back link to homepage - REQUIRED -->
+  <a href="../../" id="back-link">← PUBLICWORKS</a>
+
+  <!-- Start prompt (optional - for interactive projects) -->
+  <div class="start-prompt" id="start-prompt">
+    <h1>Project Name</h1>
+    <p>Click to begin</p>
+    <span class="hint">Brief description or requirements</span>
+  </div>
+
+  <!-- Loading indicator (optional) -->
+  <div class="loading" id="loading" style="display: none;">Loading...</div>
+
+  <!-- Main content area - choose one: -->
+
+  <!-- Option A: Canvas for visual/interactive projects -->
+  <canvas id="canvas"></canvas>
+
+  <!-- Option B: Container for content-based projects -->
+  <!--
+  <div class="container">
+    <main>
+      Your content here
+    </main>
+  </div>
+  -->
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ---------- DOM Elements ----------
+      const startPrompt = document.getElementById('start-prompt');
+      const loading = document.getElementById('loading');
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // ---------- State ----------
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      let isRunning = false;
+
+      // ---------- Setup ----------
+      function setup() {
+        canvas.width = width;
+        canvas.height = height;
+        // Initialize your project here
+      }
+
+      // ---------- Animation Loop ----------
+      function animate() {
+        if (!isRunning) return;
+
+        // Clear canvas
+        ctx.fillStyle = '#D1D1D1';
+        ctx.fillRect(0, 0, width, height);
+
+        // Your animation code here
+
+        requestAnimationFrame(animate);
+      }
+
+      // ---------- Start ----------
+      function start() {
+        startPrompt.classList.add('hidden');
+        setup();
+        isRunning = true;
+        animate();
+      }
+
+      // ---------- Resize ----------
+      function handleResize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      }
+
+      // ---------- Event Listeners ----------
+      startPrompt.addEventListener('click', start);
+      window.addEventListener('resize', handleResize);
+
+      // Pause when tab is hidden
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          isRunning = false;
+        } else if (startPrompt.classList.contains('hidden')) {
+          isRunning = true;
+          animate();
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>

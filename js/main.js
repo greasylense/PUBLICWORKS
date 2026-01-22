@@ -596,8 +596,6 @@
       });
     }
 
-    // Debug: Log when initialized
-    console.log('Easter egg initialized - click "00" to trigger');
   }
 
   // ---------- Initialize ----------

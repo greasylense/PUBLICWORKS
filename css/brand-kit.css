@@ -1,0 +1,107 @@
+/**
+ * PUBLICWORKS Brand Kit
+ * Shared styles for all projects
+ * Import from projects: @import url('../../css/brand-kit.css');
+ */
+
+:root {
+  /* Colors */
+  --pw-bg: #D1D1D1;
+  --pw-text: #0F0F0F;
+  --pw-text-secondary: #6E6E6E;
+  --pw-accent: #0047FF;
+  --pw-alert: #FF4D00;
+
+  /* Typography */
+  --pw-font-display: 'Space Grotesk', system-ui, sans-serif;
+  --pw-font-body: 'Space Grotesk', system-ui, sans-serif;
+  --pw-font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+
+  /* Spacing */
+  --pw-space-xs: 0.25rem;
+  --pw-space-sm: 0.5rem;
+  --pw-space-md: 1rem;
+  --pw-space-lg: 2rem;
+  --pw-space-xl: 4rem;
+
+  /* Transitions */
+  --pw-transition-fast: 150ms ease-out;
+  --pw-transition-normal: 200ms ease-out;
+}
+
+/* Back Link - Standard style for all projects */
+.pw-back-link {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  font-family: var(--pw-font-mono);
+  font-size: 0.75rem;
+  color: var(--pw-text-secondary);
+  text-decoration: none;
+  z-index: 50;
+  transition: color var(--pw-transition-fast);
+}
+
+.pw-back-link:hover {
+  color: var(--pw-accent);
+}
+
+/* Project Title - Standard style */
+.pw-title {
+  font-family: var(--pw-font-display);
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  font-weight: 400;
+  color: var(--pw-text);
+  letter-spacing: -0.02em;
+}
+
+/* Subtle text */
+.pw-subtle {
+  font-family: var(--pw-font-mono);
+  font-size: 0.75rem;
+  color: var(--pw-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Loading indicator */
+.pw-loading {
+  font-family: var(--pw-font-mono);
+  font-size: 0.625rem;
+  color: var(--pw-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Button styles */
+.pw-button {
+  font-family: var(--pw-font-mono);
+  font-size: 0.75rem;
+  color: var(--pw-text);
+  background: transparent;
+  border: 1px solid var(--pw-text);
+  padding: var(--pw-space-sm) var(--pw-space-md);
+  cursor: pointer;
+  transition: all var(--pw-transition-fast);
+}
+
+.pw-button:hover {
+  color: var(--pw-accent);
+  border-color: var(--pw-accent);
+}
+
+/* Focus styles for accessibility */
+.pw-back-link:focus-visible,
+.pw-button:focus-visible {
+  outline: 2px solid var(--pw-accent);
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
