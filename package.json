@@ -4,11 +4,7 @@
   "private": true,
   "description": "PUBLICWORKS - A collection of tools, experiments, and small works",
   "scripts": {
-    "dev": "npx serve . -l 3000",
-    "build": "npm run build:apps",
-    "build:apps": "for dir in apps/*/; do (cd \"$dir\" && npm run build); done",
-    "build:rarity-engine": "cd apps/rarity-engine && npm run build",
-    "new:app": "echo 'Usage: npm run new:app -- <app-name>' && exit 1"
+    "dev": "npx serve . -l 3000"
   },
   "keywords": ["portfolio", "experiments", "tools"],
   "author": "",

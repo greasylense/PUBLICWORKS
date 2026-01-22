@@ -34,23 +34,5 @@
     "status": "live",
     "url": "projects/public-archive/",
     "date": "2026-01"
-  },
-  {
-    "id": "stock-life",
-    "number": "005",
-    "name": "Stock Life",
-    "description": "Life simulator rendered in generic stock photography",
-    "status": "live",
-    "url": "projects/stock-life/",
-    "date": "2026-01"
-  },
-  {
-    "id": "rarity-engine",
-    "number": "006",
-    "name": "The Rarity Engine",
-    "description": "Discover how rare you really are with 25 questions",
-    "status": "live",
-    "url": "projects/rarity-engine/",
-    "date": "2026-01"
   }
 ]
