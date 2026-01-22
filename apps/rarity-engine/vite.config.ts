@@ -9,7 +9,7 @@ export default defineConfig({
   base: '/projects/rarity-engine/',
   build: {
     // Output directly to the projects folder
-    outDir: '../projects/rarity-engine',
+    outDir: '../../projects/rarity-engine',
     emptyOutDir: true,
   },
 })
