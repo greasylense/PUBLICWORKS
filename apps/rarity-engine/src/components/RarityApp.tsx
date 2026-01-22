@@ -59,11 +59,11 @@ function DotMatrix({ activeRatio }: { activeRatio: number }) {
   );
 }
 
-// Home link component
+// Home link component - use relative path for GitHub Pages
 function HomeLink() {
   return (
     <a
-      href="/"
+      href="../../"
       style={{
         fontFamily: "'IBM Plex Mono', monospace",
         fontSize: '12px',
@@ -243,7 +243,7 @@ export default function RarityApp() {
                 Try Again
               </button>
               <a
-                href="/"
+                href="../../"
                 className="px-10 py-4 font-semibold transition-all duration-200 text-center"
                 style={{
                   fontFamily: "'Space Grotesk', system-ui, sans-serif",
