@@ -249,6 +249,88 @@
       25% { transform: translateX(-10px); }
       75% { transform: translateX(10px); }
     }
+
+    /* Cursor ripple effect */
+    .cursor-ripple {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 200;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      animation: ripple-expand 0.8s ease-out forwards;
+    }
+
+    @keyframes ripple-expand {
+      0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+      }
+    }
+
+    /* Distortion field around cursor */
+    .distortion-field {
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      pointer-events: none;
+      z-index: 150;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+      mix-blend-mode: overlay;
+    }
+
+    /* Slice being dragged */
+    .slice.dragging {
+      z-index: 1000 !important;
+      cursor: grabbing !important;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      transition: none !important;
+    }
+
+    .slice.hoverable:hover {
+      cursor: grab;
+    }
+
+    /* Revealed hidden layer */
+    .hidden-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .hidden-layer.revealed {
+      opacity: 1;
+    }
+
+    /* Click shockwave */
+    .shockwave {
+      position: fixed;
+      pointer-events: none;
+      z-index: 300;
+      animation: shockwave-expand 0.6s ease-out forwards;
+    }
+
+    @keyframes shockwave-expand {
+      0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+        border-width: 3px;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+        border-width: 1px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -269,6 +351,7 @@
   <div id="noise"></div>
   <div id="scanlines"></div>
   <div class="glitch-flash" id="flash"></div>
+  <div class="distortion-field" id="distortion-field"></div>
 
   <script>
     (function() {
@@ -293,12 +376,24 @@
       const depthEl = document.getElementById('depth');
       const fragsEl = document.getElementById('frags');
       const flash = document.getElementById('flash');
+      const distortionField = document.getElementById('distortion-field');
 
       let images = [];
       let slices = [];
       let generatedHeight = 0;
       let sliceId = 0;
       let totalFragments = 0;
+
+      // Interactive state
+      let mouseX = 0;
+      let mouseY = 0;
+      let isMouseDown = false;
+      let draggedSlice = null;
+      let dragOffsetX = 0;
+      let dragOffsetY = 0;
+      let lastRippleTime = 0;
+      const REPULSION_RADIUS = 200;
+      const REPULSION_STRENGTH = 80;
 
       // ---------- Utility ----------
       function rand(min, max) {
@@ -848,6 +943,22 @@
         }
 
         const slice = createSlice(imageData, config);
+
+        // Store original rotation for interactive transforms
+        const transform = slice.style.transform;
+        const rotationMatch = transform ? transform.match(/rotate\([^)]+\)/) : null;
+        if (rotationMatch) {
+          slice.dataset.originalRotation = rotationMatch[0];
+        }
+
+        // Add hidden layer for click reveals (40% chance)
+        if (chance(0.4)) {
+          addHiddenLayer(slice);
+        }
+
+        // Make slice draggable
+        slice.classList.add('hoverable');
+
         container.appendChild(slice);
         slices.push(slice);
         totalFragments++;
@@ -886,26 +997,7 @@
       // ---------- Scroll & Parallax ----------
       function updateParallax() {
         const scrollY = window.scrollY;
-
-        slices.forEach(slice => {
-          const layer = parseInt(slice.dataset.layer) || 1;
-          const baseY = parseFloat(slice.dataset.baseY) || 0;
-
-          // Dramatic parallax differences
-          const speed = 0.3 + (layer / CONFIG.parallaxLayers) * 0.7;
-          const offset = (scrollY - baseY) * (1 - speed);
-
-          const currentTransform = slice.style.transform || '';
-          const hasRotation = currentTransform.includes('rotate');
-
-          if (hasRotation) {
-            const rotation = currentTransform.match(/rotate\([^)]+\)/)?.[0] || '';
-            slice.style.transform = `translateY(${offset}px) ${rotation}`;
-          } else {
-            slice.style.transform = `translateY(${offset}px)`;
-          }
-        });
-
+        // Just update depth display - transforms handled by animation loop
         depthEl.textContent = String(Math.round(scrollY)).padStart(4, '0');
       }
 
@@ -969,6 +1061,258 @@
         document.head.appendChild(style);
       }
 
+      // ---------- Mouse/Touch Interactivity ----------
+      function createRipple(x, y, size = 100, color = 'rgba(255,255,255,0.6)') {
+        const ripple = document.createElement('div');
+        ripple.className = 'cursor-ripple';
+        ripple.style.cssText = `
+          left: ${x}px;
+          top: ${y}px;
+          width: ${size}px;
+          height: ${size}px;
+          border-color: ${color};
+        `;
+        document.body.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 800);
+      }
+
+      function createShockwave(x, y) {
+        const colors = ['#fff', '#0ff', '#f0f', '#ff0'];
+        const numWaves = randInt(3, 6);
+
+        for (let i = 0; i < numWaves; i++) {
+          setTimeout(() => {
+            const wave = document.createElement('div');
+            wave.className = 'shockwave';
+            const size = rand(150, 400);
+            wave.style.cssText = `
+              left: ${x}px;
+              top: ${y}px;
+              width: ${size}px;
+              height: ${size}px;
+              border: 2px solid ${pick(colors)};
+              border-radius: ${chance(0.5) ? '50%' : '0'};
+            `;
+            document.body.appendChild(wave);
+            setTimeout(() => wave.remove(), 600);
+          }, i * 50);
+        }
+      }
+
+      function updateDistortionField(x, y) {
+        distortionField.style.left = `${x}px`;
+        distortionField.style.top = `${y}px`;
+      }
+
+      function applyRepulsion(clientX, clientY) {
+        const scrollY = window.scrollY;
+        const mouseAbsY = clientY + scrollY;
+
+        slices.forEach(slice => {
+          if (slice === draggedSlice) return;
+
+          const rect = slice.getBoundingClientRect();
+          const sliceCenterX = rect.left + rect.width / 2;
+          const sliceCenterY = rect.top + rect.height / 2;
+
+          const dx = sliceCenterX - clientX;
+          const dy = sliceCenterY - clientY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < REPULSION_RADIUS && distance > 0) {
+            const force = (1 - distance / REPULSION_RADIUS) * REPULSION_STRENGTH;
+            const angle = Math.atan2(dy, dx);
+
+            const pushX = Math.cos(angle) * force;
+            const pushY = Math.sin(angle) * force;
+
+            // Store original position data if not set
+            if (!slice.dataset.repelX) slice.dataset.repelX = '0';
+            if (!slice.dataset.repelY) slice.dataset.repelY = '0';
+
+            slice.dataset.repelX = pushX.toFixed(2);
+            slice.dataset.repelY = pushY.toFixed(2);
+
+            // Add glitch effects on strong repulsion
+            if (force > REPULSION_STRENGTH * 0.6 && chance(0.05)) {
+              slice.style.filter = `hue-rotate(${rand(-180, 180)}deg) saturate(${rand(1, 3)})`;
+              setTimeout(() => {
+                slice.style.filter = '';
+              }, 100);
+            }
+          } else {
+            // Smoothly return to original position
+            const currentRepelX = parseFloat(slice.dataset.repelX || 0);
+            const currentRepelY = parseFloat(slice.dataset.repelY || 0);
+            slice.dataset.repelX = (currentRepelX * 0.9).toFixed(2);
+            slice.dataset.repelY = (currentRepelY * 0.9).toFixed(2);
+          }
+        });
+      }
+
+      function updateSliceTransforms() {
+        slices.forEach(slice => {
+          const layer = parseInt(slice.dataset.layer) || 1;
+          const baseY = parseFloat(slice.dataset.baseY) || 0;
+          const repelX = parseFloat(slice.dataset.repelX || 0);
+          const repelY = parseFloat(slice.dataset.repelY || 0);
+
+          const scrollY = window.scrollY;
+          const speed = 0.3 + (layer / CONFIG.parallaxLayers) * 0.7;
+          const parallaxOffset = (scrollY - baseY) * (1 - speed);
+
+          const currentTransform = slice.dataset.originalRotation || '';
+
+          slice.style.transform = `translateY(${parallaxOffset}px) translate(${repelX}px, ${repelY}px) ${currentTransform}`;
+        });
+      }
+
+      function addHiddenLayer(slice) {
+        // Create a hidden glitch layer that can be revealed
+        const hidden = document.createElement('div');
+        hidden.className = 'hidden-layer';
+
+        const effect = pick([
+          `background: linear-gradient(${rand(0, 360)}deg, rgba(255,0,255,0.5), rgba(0,255,255,0.5))`,
+          `background: repeating-linear-gradient(${randInt(0, 90)}deg, #fff 0px, #fff 2px, transparent 2px, transparent 4px)`,
+          `background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%)`,
+          `background: conic-gradient(from ${rand(0, 360)}deg, #f00, #0f0, #00f, #f00)`,
+        ]);
+
+        hidden.style.cssText = `${effect}; mix-blend-mode: ${pick(['overlay', 'screen', 'difference', 'exclusion'])}`;
+        slice.appendChild(hidden);
+        slice.dataset.hasHiddenLayer = 'true';
+      }
+
+      function revealHiddenLayer(slice) {
+        const hidden = slice.querySelector('.hidden-layer');
+        if (hidden) {
+          hidden.classList.add('revealed');
+          setTimeout(() => {
+            hidden.classList.remove('revealed');
+          }, 500);
+        }
+      }
+
+      function handleMouseMove(e) {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        updateDistortionField(mouseX, mouseY);
+
+        // Create subtle ripples while moving
+        const now = Date.now();
+        if (now - lastRippleTime > 100 && chance(0.15)) {
+          createRipple(mouseX, mouseY, rand(30, 60), `rgba(255,255,255,${rand(0.1, 0.3)})`);
+          lastRippleTime = now;
+        }
+
+        // Apply repulsion effect to nearby slices
+        applyRepulsion(mouseX, mouseY);
+        updateSliceTransforms();
+
+        // Handle dragging
+        if (draggedSlice) {
+          const newX = e.clientX - dragOffsetX;
+          const newY = e.clientY - dragOffsetY + window.scrollY;
+          draggedSlice.style.left = `${newX}px`;
+          draggedSlice.style.top = `${newY}px`;
+          draggedSlice.dataset.baseY = newY;
+        }
+      }
+
+      function handleMouseDown(e) {
+        isMouseDown = true;
+
+        // Check if clicking on a slice
+        const target = e.target.closest('.slice');
+        if (target && !target.classList.contains('dragging')) {
+          // Start dragging
+          draggedSlice = target;
+          const rect = target.getBoundingClientRect();
+          dragOffsetX = e.clientX - rect.left;
+          dragOffsetY = e.clientY - rect.top;
+          target.classList.add('dragging');
+
+          // Store original rotation if any
+          const transform = target.style.transform;
+          const rotationMatch = transform.match(/rotate\([^)]+\)/);
+          if (rotationMatch) {
+            target.dataset.originalRotation = rotationMatch[0];
+          }
+        }
+      }
+
+      function handleMouseUp(e) {
+        isMouseDown = false;
+
+        if (draggedSlice) {
+          draggedSlice.classList.remove('dragging');
+          draggedSlice = null;
+        }
+      }
+
+      function handleClick(e) {
+        // Don't trigger on drag end
+        if (draggedSlice) return;
+
+        const x = e.clientX;
+        const y = e.clientY;
+
+        // Create shockwave effect
+        createShockwave(x, y);
+
+        // Flash effect
+        triggerGlitchFlash();
+
+        // Reveal hidden layers in nearby slices
+        const clickRadius = 150;
+        slices.forEach(slice => {
+          const rect = slice.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+
+          if (distance < clickRadius) {
+            if (slice.dataset.hasHiddenLayer === 'true') {
+              revealHiddenLayer(slice);
+            }
+
+            // Random glitch effect
+            if (chance(0.3)) {
+              const originalFilter = slice.style.filter;
+              slice.style.filter = `invert(1) hue-rotate(${rand(0, 360)}deg)`;
+              setTimeout(() => {
+                slice.style.filter = originalFilter;
+              }, 150);
+            }
+          }
+        });
+      }
+
+      // Touch support
+      function handleTouchStart(e) {
+        const touch = e.touches[0];
+        handleMouseDown({ clientX: touch.clientX, clientY: touch.clientY, target: document.elementFromPoint(touch.clientX, touch.clientY) });
+      }
+
+      function handleTouchMove(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
+      }
+
+      function handleTouchEnd(e) {
+        handleMouseUp({});
+        if (e.changedTouches.length > 0) {
+          const touch = e.changedTouches[0];
+          // Tap to reveal
+          if (!draggedSlice) {
+            handleClick({ clientX: touch.clientX, clientY: touch.clientY });
+          }
+        }
+      }
+
       // ---------- SVG Filters ----------
       function createFilters() {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -1011,11 +1355,29 @@
         // Generate initial composition
         generateComposition(window.innerHeight * 3);
 
-        // Events
+        // Scroll events
         window.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('resize', () => {
           generateComposition(window.scrollY + window.innerHeight + CONFIG.generateAhead);
         });
+
+        // Mouse interactivity
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mousedown', handleMouseDown);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('click', handleClick);
+
+        // Touch interactivity
+        document.addEventListener('touchstart', handleTouchStart, { passive: false });
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleTouchEnd);
+
+        // Animation loop for smooth repulsion decay
+        function animationLoop() {
+          updateSliceTransforms();
+          requestAnimationFrame(animationLoop);
+        }
+        requestAnimationFrame(animationLoop);
 
         updateParallax();
       }

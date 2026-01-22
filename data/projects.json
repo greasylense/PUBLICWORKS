@@ -25,5 +25,23 @@
     "status": "live",
     "url": "projects/landscape/",
     "date": "2025-01"
+  },
+  {
+    "id": "public-archive",
+    "number": "004",
+    "name": "The Public Archive",
+    "description": "Visual essay on humanity's data footprint",
+    "status": "live",
+    "url": "projects/public-archive/",
+    "date": "2026-01"
+  },
+  {
+    "id": "stock-life",
+    "number": "005",
+    "name": "Stock Life",
+    "description": "Life simulator rendered in generic stock photography",
+    "status": "live",
+    "url": "projects/stock-life/",
+    "date": "2026-01"
   }
 ]
