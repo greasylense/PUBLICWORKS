@@ -5,8 +5,8 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  // Base path for serving from /projects/rarity-engine/
-  base: '/projects/rarity-engine/',
+  // Use relative paths so it works from any location
+  base: './',
   build: {
     // Output directly to the projects folder
     outDir: '../../projects/rarity-engine',
