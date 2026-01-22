@@ -18,7 +18,8 @@
             --font-display: 'Space Grotesk', system-ui, sans-serif;
             --font-body: 'Space Grotesk', system-ui, sans-serif;
             --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
-            --max-width: 680px;
+            --max-width: 1200px;
+            --content-width: 680px;
         }
 
         * {
@@ -30,6 +31,7 @@
         html {
             font-size: 18px;
             -webkit-font-smoothing: antialiased;
+            scroll-behavior: smooth;
         }
 
         body {
@@ -37,6 +39,7 @@
             background: var(--color-bg);
             color: var(--color-text);
             line-height: 1.6;
+            overflow-x: hidden;
         }
 
         /* Navigation */
@@ -50,13 +53,7 @@
             justify-content: space-between;
             align-items: center;
             z-index: 100;
-            background: var(--color-bg);
-            border-bottom: 1px solid transparent;
-            transition: border-color 0.3s;
-        }
-
-        nav.scrolled {
-            border-bottom-color: var(--color-divider);
+            mix-blend-mode: difference;
         }
 
         .nav-logo {
@@ -64,126 +61,332 @@
             font-weight: 700;
             font-size: 0.875rem;
             letter-spacing: -0.02em;
+            color: white;
         }
 
         .nav-back {
             font-family: var(--font-mono);
             font-size: 0.75rem;
-            color: var(--color-text-secondary);
+            color: white;
             text-decoration: none;
-            transition: color 0.2s;
         }
 
-        .nav-back:hover {
-            color: var(--color-accent);
-        }
-
-        /* Hero */
+        /* Hero - Full viewport immersive */
         .hero {
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            padding: 6rem 2rem 4rem;
+            justify-content: flex-end;
+            padding: 4rem 2rem;
+            position: relative;
+            overflow: hidden;
+            background: var(--color-text);
+            color: var(--color-bg);
+        }
+
+        /* Data Rain Effect */
+        .data-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .rain-column {
+            position: absolute;
+            top: -100%;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--color-accent);
+            opacity: 0.4;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            animation: rain-fall linear infinite;
+            white-space: nowrap;
+            letter-spacing: 2px;
+        }
+
+        @keyframes rain-fall {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(200vh); }
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, var(--color-text) 0%, rgba(15,15,15,0.7) 50%, var(--color-text) 100%);
+            z-index: 2;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 3;
             max-width: var(--max-width);
             margin: 0 auto;
+            width: 100%;
         }
 
         .hero-label {
             font-family: var(--font-mono);
-            font-size: 0.7rem;
-            color: var(--color-text-secondary);
+            font-size: 0.65rem;
+            color: var(--color-accent);
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 1.5rem;
+            letter-spacing: 0.2em;
+            margin-bottom: 1rem;
         }
 
         .hero h1 {
             font-family: var(--font-display);
-            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-size: clamp(3rem, 12vw, 8rem);
             font-weight: 700;
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-            margin-bottom: 1.5rem;
+            line-height: 0.9;
+            letter-spacing: -0.04em;
+            margin-bottom: 2rem;
         }
 
-        .hero-intro {
-            font-size: 1.25rem;
-            color: var(--color-text-secondary);
-            max-width: 480px;
-            margin-bottom: 3rem;
-        }
-
-        .scroll-cue {
-            font-family: var(--font-mono);
-            font-size: 0.7rem;
-            color: var(--color-text-secondary);
+        .hero-stat {
             display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            align-items: baseline;
+            gap: 1rem;
+            margin-bottom: 1rem;
         }
 
-        .scroll-cue span {
-            display: inline-block;
-            animation: bounce 2s infinite;
+        .hero-stat-value {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 700;
+            color: var(--color-accent);
+            letter-spacing: -0.03em;
+            animation: pulse-glow 2s ease-in-out infinite;
         }
 
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(4px); }
+        @keyframes pulse-glow {
+            0%, 100% { text-shadow: 0 0 20px rgba(0, 71, 255, 0.3); }
+            50% { text-shadow: 0 0 40px rgba(0, 71, 255, 0.6); }
         }
 
-        /* Article Content */
-        article {
-            max-width: var(--max-width);
-            margin: 0 auto;
-            padding: 0 2rem 6rem;
+        .hero-stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--color-bg);
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--color-bg);
+            opacity: 0.5;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(8px); }
+        }
+
+        /* Content sections */
+        .content {
+            position: relative;
         }
 
         section {
-            margin-bottom: 6rem;
+            padding: 8rem 2rem;
+            position: relative;
+        }
+
+        .narrow {
+            max-width: var(--content-width);
+            margin: 0 auto;
+        }
+
+        .wide {
+            max-width: var(--max-width);
+            margin: 0 auto;
         }
 
         h2 {
             font-family: var(--font-display);
-            font-size: 1.75rem;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
             font-weight: 700;
             letter-spacing: -0.02em;
             margin-bottom: 1.5rem;
-            line-height: 1.2;
+            line-height: 1.15;
         }
 
         p {
             margin-bottom: 1.5rem;
-            color: var(--color-text);
+            line-height: 1.7;
         }
 
         .lead {
-            font-size: 1.125rem;
+            font-size: 1.25rem;
             color: var(--color-text-secondary);
         }
 
-        /* Big Numbers */
-        .big-number {
-            padding: 4rem 0;
-            text-align: center;
+        /* Real-time ticker */
+        .ticker-section {
+            background: var(--color-accent);
+            padding: 1rem 0;
+            overflow: hidden;
         }
 
-        .big-number-value {
-            font-family: var(--font-display);
-            font-size: clamp(4rem, 15vw, 8rem);
-            font-weight: 700;
+        .ticker-track {
+            display: flex;
+            animation: ticker 30s linear infinite;
+            white-space: nowrap;
+        }
+
+        .ticker-item {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: white;
+            padding: 0 3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Live Counter Section */
+        .counter-section {
+            background: var(--color-text);
+            color: var(--color-bg);
+            padding: 6rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .counter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        @media (max-width: 800px) {
+            .counter-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+        }
+
+        .counter-main {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .counter-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--color-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 1rem;
+        }
+
+        .counter-value {
+            font-family: var(--font-mono);
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 500;
             line-height: 1;
-            letter-spacing: -0.04em;
-            color: var(--color-text);
+            margin-bottom: 0.5rem;
             transition: color 0.3s;
         }
 
-        .big-number-value.accent {
+        .counter-unit {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: rgba(209, 209, 209, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .counter-breakdown {
+            display: grid;
+            gap: 0;
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 0;
+            border-bottom: 1px solid rgba(209, 209, 209, 0.1);
+        }
+
+        .breakdown-row:last-child {
+            border-bottom: none;
+        }
+
+        .breakdown-label {
+            font-size: 0.875rem;
+            color: rgba(209, 209, 209, 0.5);
+        }
+
+        .breakdown-value {
+            font-family: var(--font-mono);
+            font-size: 1.125rem;
+            color: var(--color-bg);
+        }
+
+        /* Big Number Reveal */
+        .big-reveal {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            position: relative;
+        }
+
+        .big-number-container {
+            text-align: center;
+        }
+
+        .big-number {
+            font-family: var(--font-display);
+            font-size: clamp(6rem, 25vw, 20rem);
+            font-weight: 700;
+            line-height: 0.85;
+            letter-spacing: -0.05em;
+            color: var(--color-text);
+            opacity: 0.1;
+            transition: opacity 0.8s, transform 0.8s, color 0.8s;
+            transform: scale(0.95);
+        }
+
+        .big-number.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .big-number.accent {
             color: var(--color-accent);
         }
 
-        .big-number-value.alert {
+        .big-number.alert {
             color: var(--color-alert);
         }
 
@@ -192,331 +395,693 @@
             font-size: 0.75rem;
             color: var(--color-text-secondary);
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-top: 1rem;
+            letter-spacing: 0.15em;
+            margin-top: 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s 0.3s, transform 0.6s 0.3s;
         }
 
-        /* Interactive Counter */
-        .counter-section {
+        .big-number.visible + .big-number-label {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Overwhelming Dots Visualization */
+        .dots-section {
             background: var(--color-text);
             color: var(--color-bg);
-            margin: 4rem -2rem;
-            padding: 4rem 2rem;
+            padding: 6rem 2rem;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
         }
 
-        .counter-section h2 {
+        .dots-header {
+            max-width: var(--content-width);
+            margin: 0 auto 4rem;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .dots-header h2 {
             color: var(--color-bg);
         }
 
-        .counter-section p {
-            color: rgba(209, 209, 209, 0.7);
+        .dots-header p {
+            color: rgba(209,209,209,0.6);
         }
 
-        .live-counter {
-            font-family: var(--font-mono);
-            font-size: clamp(2rem, 8vw, 4rem);
-            font-weight: 500;
-            color: var(--color-bg);
-            padding: 2rem 0;
-            border-bottom: 1px solid rgba(209, 209, 209, 0.2);
-            margin-bottom: 1.5rem;
+        .dots-container {
+            position: relative;
+            width: 100%;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            aspect-ratio: 2/1;
+            overflow: hidden;
         }
 
-        .counter-breakdown {
-            display: grid;
-            gap: 1rem;
+        .dots-canvas {
+            width: 100%;
+            height: 100%;
         }
 
-        .breakdown-item {
+        .dots-legend {
             display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid rgba(209, 209, 209, 0.1);
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
         }
 
-        .breakdown-label {
-            font-size: 0.875rem;
-            color: rgba(209, 209, 209, 0.6);
-        }
-
-        .breakdown-value {
-            font-family: var(--font-mono);
-            font-size: 1rem;
-            color: var(--color-bg);
-        }
-
-        /* Scale Toggle */
-        .scale-section {
-            padding: 3rem 0;
-        }
-
-        .toggle-container {
+        .legend-item {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            margin: 2rem 0;
+            gap: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: rgba(209,209,209,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
 
-        .toggle-label {
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* Data Type Breakdown */
+        .data-types-section {
+            padding: 8rem 2rem;
+            background: white;
+        }
+
+        .data-types-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        .data-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1px;
+            background: var(--color-divider);
+            margin-top: 3rem;
+        }
+
+        .data-type-card {
+            background: white;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .data-type-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 4px;
+            width: 0%;
+            background: var(--color-accent);
+            transition: width 1s ease-out;
+        }
+
+        .data-type-card.visible::before {
+            width: var(--percentage);
+        }
+
+        .data-type-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .data-type-value {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .data-type-unit {
             font-family: var(--font-mono);
             font-size: 0.75rem;
             color: var(--color-text-secondary);
+        }
+
+        /* Your Digital Day */
+        .your-day-section {
+            background: var(--color-bg);
+            padding: 8rem 2rem;
+        }
+
+        .your-day-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        .your-day-header {
+            max-width: var(--content-width);
+            margin-bottom: 4rem;
+        }
+
+        .your-day-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .day-stat {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .day-stat:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .day-stat-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .day-stat-value {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            margin-bottom: 0.25rem;
+        }
+
+        .day-stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--color-text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            transition: color 0.2s;
         }
 
-        .toggle-label.active {
-            color: var(--color-accent);
-        }
-
-        .toggle-switch {
-            width: 56px;
-            height: 28px;
+        .day-total {
+            grid-column: 1 / -1;
             background: var(--color-text);
+            color: var(--color-bg);
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .day-total-value {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .day-total-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: rgba(209,209,209,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Scale Section */
+        .scale-section {
+            background: white;
+            padding: 6rem 2rem;
+        }
+
+        .scale-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .scale-container {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+        }
+
+        .scale-controls h2 {
+            margin-bottom: 1rem;
+        }
+
+        .scale-controls p {
+            color: var(--color-text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .toggle-group {
+            display: flex;
+            flex-wrap: wrap;
+            background: var(--color-bg);
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 1rem 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: transparent;
             border: none;
             cursor: pointer;
-            position: relative;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            color: var(--color-text-secondary);
         }
 
-        .toggle-switch::after {
-            content: '';
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            width: 20px;
-            height: 20px;
-            background: var(--color-bg);
-            transition: transform 0.2s;
-        }
-
-        .toggle-switch.active {
-            background: var(--color-accent);
-        }
-
-        .toggle-switch.active::after {
-            transform: translateX(28px);
+        .toggle-btn.active {
+            background: var(--color-text);
+            color: var(--color-bg);
         }
 
         .scale-display {
-            padding: 2rem 0;
+            padding: 3rem;
+            background: var(--color-bg);
+            position: relative;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .scale-value {
             font-family: var(--font-display);
-            font-size: clamp(2.5rem, 10vw, 5rem);
+            font-size: clamp(3rem, 8vw, 6rem);
             font-weight: 700;
-            line-height: 1.1;
+            line-height: 1;
             letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .scale-unit {
+        .scale-equiv {
             font-family: var(--font-mono);
             font-size: 0.875rem;
             color: var(--color-text-secondary);
-            margin-top: 0.5rem;
+            line-height: 1.6;
+        }
+
+        /* Infinite Scroll Section */
+        .infinite-section {
+            background: var(--color-text);
+            padding: 4rem 2rem;
+            overflow: hidden;
+        }
+
+        .infinite-header {
+            max-width: var(--content-width);
+            margin: 0 auto 2rem;
+            text-align: center;
+            color: var(--color-bg);
+        }
+
+        .infinite-header h2 {
+            color: var(--color-bg);
+            margin-bottom: 0.5rem;
+        }
+
+        .infinite-header p {
+            color: rgba(209,209,209,0.6);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .infinite-viewport {
+            height: 400px;
+            overflow-y: auto;
+            position: relative;
+            border: 1px solid rgba(209,209,209,0.1);
+            scrollbar-width: thin;
+            scrollbar-color: var(--color-accent) var(--color-text);
+        }
+
+        .infinite-viewport::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .infinite-viewport::-webkit-scrollbar-track {
+            background: var(--color-text);
+        }
+
+        .infinite-viewport::-webkit-scrollbar-thumb {
+            background: var(--color-accent);
+        }
+
+        .infinite-content {
+            padding: 1rem;
+        }
+
+        .infinite-row {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: rgba(209,209,209,0.4);
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(209,209,209,0.05);
+            display: flex;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        .infinite-row:hover {
+            color: var(--color-accent);
+            background: rgba(0,71,255,0.05);
+        }
+
+        .infinite-counter {
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--color-bg);
+        }
+
+        .infinite-counter-value {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--color-accent);
+        }
+
+        .infinite-counter-label {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: rgba(209,209,209,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Timeline visualization */
+        .timeline-section {
+            padding: 8rem 2rem;
+            position: relative;
+        }
+
+        .timeline {
+            max-width: var(--max-width);
+            margin: 4rem auto 0;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--color-divider);
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 100px 1fr auto;
+            gap: 2rem;
+            padding: 2rem 0;
+            padding-left: 3rem;
+            position: relative;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: opacity 0.6s, transform 0.6s;
+        }
+
+        .timeline-item.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -5px;
+            top: 2.5rem;
+            width: 12px;
+            height: 12px;
+            background: var(--color-bg);
+            border: 2px solid var(--color-text);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .timeline-item.visible::before {
+            background: var(--color-accent);
+            border-color: var(--color-accent);
+        }
+
+        .timeline-year {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+        }
+
+        .timeline-content h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-content p {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 0;
+        }
+
+        .timeline-value {
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--color-accent);
+            text-align: right;
+        }
+
+        @media (max-width: 700px) {
+            .timeline-item {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+                padding-left: 2rem;
+            }
+            .timeline-value {
+                text-align: left;
+            }
         }
 
         /* Age Calculator */
         .calculator-section {
-            padding: 3rem 0;
-            border-top: 1px solid var(--color-divider);
-            border-bottom: 1px solid var(--color-divider);
+            background: var(--color-accent);
+            color: white;
+            padding: 6rem 2rem;
         }
 
-        .input-group {
+        .calculator-container {
+            max-width: var(--content-width);
+            margin: 0 auto;
+        }
+
+        .calculator-section h2 {
+            color: white;
+        }
+
+        .calculator-section p {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             margin: 2rem 0;
+        }
+
+        .age-input {
+            width: 140px;
+            padding: 1.25rem;
+            font-family: var(--font-mono);
+            font-size: 2rem;
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            text-align: center;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .age-input::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .age-input:focus {
+            outline: none;
+            border-color: white;
+            background: rgba(255,255,255,0.25);
         }
 
         .input-label {
             font-family: var(--font-mono);
-            font-size: 0.7rem;
-            color: var(--color-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            display: block;
-            margin-bottom: 0.75rem;
-        }
-
-        .age-input {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .age-input input {
-            width: 120px;
-            padding: 1rem;
-            font-family: var(--font-mono);
-            font-size: 1.5rem;
-            background: white;
-            border: 2px solid var(--color-text);
-            color: var(--color-text);
-            text-align: center;
-        }
-
-        .age-input input:focus {
-            outline: none;
-            border-color: var(--color-accent);
-        }
-
-        .age-input span {
-            font-family: var(--font-mono);
             font-size: 0.875rem;
-            color: var(--color-text-secondary);
+            color: rgba(255,255,255,0.6);
         }
 
-        .result-box {
-            background: white;
+        .result-display {
+            margin-top: 3rem;
             padding: 2rem;
-            margin-top: 2rem;
+            background: rgba(0,0,0,0.2);
             display: none;
         }
 
-        .result-box.visible {
+        .result-display.visible {
             display: block;
+            animation: slideUp 0.4s ease-out;
         }
 
-        .result-percent {
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-value {
             font-family: var(--font-display);
-            font-size: clamp(3rem, 12vw, 6rem);
+            font-size: clamp(4rem, 15vw, 8rem);
             font-weight: 700;
-            color: var(--color-accent);
             line-height: 1;
-            letter-spacing: -0.03em;
+            letter-spacing: -0.04em;
         }
 
         .result-text {
             font-size: 1rem;
-            color: var(--color-text-secondary);
-            margin-top: 1rem;
-        }
-
-        .result-text strong {
-            color: var(--color-text);
-        }
-
-        /* Visualization */
-        .viz-section {
-            margin: 4rem -2rem;
-            padding: 4rem 2rem;
-            background: white;
-        }
-
-        .viz-section h2 {
-            max-width: var(--max-width);
-            margin: 0 auto 1.5rem;
-        }
-
-        .viz-section > p {
-            max-width: var(--max-width);
-            margin: 0 auto 2rem;
-        }
-
-        .bar-chart {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .bar-row {
-            display: grid;
-            grid-template-columns: 80px 1fr 100px;
-            gap: 1rem;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-
-        .bar-year {
-            font-family: var(--font-mono);
-            font-size: 0.75rem;
-            color: var(--color-text-secondary);
-            text-align: right;
-        }
-
-        .bar-track {
-            height: 32px;
-            background: var(--color-bg);
-            position: relative;
-        }
-
-        .bar-fill {
-            height: 100%;
-            background: var(--color-text);
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-
-        .bar-fill.accent {
-            background: var(--color-accent);
-        }
-
-        .bar-fill.alert {
-            background: var(--color-alert);
-        }
-
-        .bar-value {
-            font-family: var(--font-mono);
-            font-size: 0.75rem;
-            color: var(--color-text-secondary);
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2rem;
-            padding: 3rem 0;
-        }
-
-        .stat-item {
-            padding: 1.5rem 0;
-            border-top: 1px solid var(--color-divider);
-        }
-
-        .stat-value {
-            font-family: var(--font-display);
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .stat-label {
-            font-family: var(--font-mono);
-            font-size: 0.7rem;
-            color: var(--color-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-top: 0.5rem;
-        }
-
-        /* Prose styles */
-        .prose {
-            font-size: 1rem;
+            color: rgba(255,255,255,0.8);
+            margin-top: 1.5rem;
             line-height: 1.7;
         }
 
-        .prose strong {
-            font-weight: 500;
+        .result-text strong {
+            color: white;
         }
 
-        .highlight {
-            background: linear-gradient(180deg, transparent 60%, rgba(0, 71, 255, 0.2) 60%);
+        /* Paradox section */
+        .paradox-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background: var(--color-text);
+            color: var(--color-bg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .paradox-content {
+            position: relative;
+            z-index: 1;
+            max-width: var(--content-width);
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .paradox-content h2 {
+            font-size: clamp(2rem, 6vw, 4rem);
+            margin-bottom: 2rem;
+        }
+
+        .paradox-content p {
+            color: rgba(209,209,209,0.7);
+            font-size: 1.125rem;
+        }
+
+        .paradox-stat {
+            margin: 4rem 0;
+            text-align: center;
+        }
+
+        .paradox-stat .big-number {
+            color: var(--color-alert);
+            opacity: 1;
+        }
+
+        /* Deletion animation */
+        .deletion-visual {
+            margin: 4rem 0;
+            padding: 2rem;
+            background: rgba(255,77,0,0.1);
+            border: 1px solid rgba(255,77,0,0.3);
+        }
+
+        .deletion-bar {
+            height: 40px;
+            background: rgba(209,209,209,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .deletion-filled {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--color-alert);
+            width: 97.9%;
+            animation: deletion-pulse 3s ease-in-out infinite;
+        }
+
+        .deletion-kept {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            background: var(--color-accent);
+            width: 2.1%;
+        }
+
+        @keyframes deletion-pulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        .deletion-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .deletion-labels span:first-child {
+            color: var(--color-alert);
+        }
+
+        .deletion-labels span:last-child {
+            color: var(--color-accent);
         }
 
         /* Footer */
         footer {
-            max-width: var(--max-width);
-            margin: 0 auto;
             padding: 4rem 2rem;
             border-top: 1px solid var(--color-divider);
         }
 
-        .footer-meta {
+        .footer-content {
+            max-width: var(--content-width);
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
+            align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
         }
@@ -541,207 +1106,346 @@
             color: var(--color-accent);
         }
 
-        /* Responsive */
-        @media (max-width: 600px) {
-            html {
-                font-size: 16px;
-            }
-
-            .hero, article, footer {
-                padding-left: 1.25rem;
-                padding-right: 1.25rem;
-            }
-
-            .counter-section, .viz-section {
-                margin-left: -1.25rem;
-                margin-right: -1.25rem;
-                padding-left: 1.25rem;
-                padding-right: 1.25rem;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .bar-row {
-                grid-template-columns: 60px 1fr 80px;
-            }
-        }
-
-        /* Scroll animations */
-        .fade-in {
+        /* Scroll-triggered fade */
+        .fade-up {
             opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
         }
 
-        .fade-in.visible {
+        .fade-up.visible {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--color-accent);
+            z-index: 1000;
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        /* Real-time comparison */
+        .realtime-comparison {
+            background: rgba(0,71,255,0.05);
+            border-left: 3px solid var(--color-accent);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+        }
+
+        .realtime-comparison strong {
+            color: var(--color-accent);
         }
     </style>
 </head>
 <body>
-    <nav id="nav">
+    <div class="progress-bar" id="progress"></div>
+
+    <nav>
         <span class="nav-logo">PUBLICWORKS</span>
         <a href="../../index.html" class="nav-back">Back to Index</a>
     </nav>
 
+    <!-- Hero -->
     <header class="hero">
-        <span class="hero-label">Visual Essay — 001</span>
-        <h1>The Public Archive</h1>
-        <p class="hero-intro">Every second, humanity generates 3.2 petabytes of data. Where does it all go? And what does it mean to live in a world that never forgets?</p>
-        <div class="scroll-cue">
-            <span>↓</span> Scroll to explore
+        <div class="data-rain" id="data-rain"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <span class="hero-label">Visual Essay 004</span>
+            <h1>The Public<br>Archive</h1>
+            <div class="hero-stat">
+                <span class="hero-stat-value" id="hero-bytes">0</span>
+                <span class="hero-stat-label">bytes generated since you arrived</span>
+            </div>
         </div>
+        <div class="scroll-indicator">Scroll to explore the endless</div>
     </header>
 
-    <article>
-        <section class="fade-in">
-            <p class="lead">In 2026, the global datasphere reached a milestone that would have been incomprehensible just two decades ago.</p>
+    <!-- Ticker -->
+    <div class="ticker-section">
+        <div class="ticker-track" id="ticker">
+            <!-- Populated by JS -->
+        </div>
+    </div>
 
-            <div class="big-number">
-                <div class="big-number-value" id="total-zb">402</div>
-                <div class="big-number-label">Zettabytes of data</div>
-            </div>
-
-            <p class="prose">That's 402,000,000,000,000,000,000,000 bytes. If you started counting at one byte per second the moment the universe began, you'd still be nowhere close. The number is so large it resists comprehension—which is precisely why we built this.</p>
-        </section>
-
-        <section class="counter-section fade-in">
-            <h2>Right now, this second</h2>
-            <p>While you read this sentence, the archive grows.</p>
-
-            <div class="live-counter" id="live-counter">0 bytes</div>
-
-            <div class="counter-breakdown">
-                <div class="breakdown-item">
-                    <span class="breakdown-label">Emails sent</span>
-                    <span class="breakdown-value" id="emails">0</span>
-                </div>
-                <div class="breakdown-item">
-                    <span class="breakdown-label">Google searches</span>
-                    <span class="breakdown-value" id="searches">0</span>
-                </div>
-                <div class="breakdown-item">
-                    <span class="breakdown-label">YouTube uploaded</span>
-                    <span class="breakdown-value" id="youtube">0 hrs</span>
-                </div>
-                <div class="breakdown-item">
-                    <span class="breakdown-label">Photos shared</span>
-                    <span class="breakdown-value" id="photos">0</span>
+    <div class="content">
+        <!-- Opening -->
+        <section>
+            <div class="narrow fade-up">
+                <p class="lead">Every second, humanity creates 3.2 petabytes of data. That's 3,200,000,000,000,000 bytes—more information than existed in all human history before the year 2000.</p>
+                <p>This is a story about that data. Where it comes from. Where it goes. And the strange paradox at its heart.</p>
+                <div class="realtime-comparison">
+                    While you read that sentence, approximately <strong id="reading-bytes">0</strong> of new data was created globally.
                 </div>
             </div>
         </section>
 
-        <section class="scale-section fade-in">
-            <h2>The problem with zettabytes</h2>
-            <p class="prose">The human brain isn't built to understand numbers this large. So let's translate.</p>
-
-            <div class="toggle-container">
-                <span class="toggle-label active" id="label-tech">Technical</span>
-                <button class="toggle-switch" id="scale-toggle" aria-label="Toggle scale"></button>
-                <span class="toggle-label" id="label-human">Human</span>
+        <!-- Big Number: Total -->
+        <section class="big-reveal">
+            <div class="big-number-container">
+                <div class="big-number" id="zb-number">402</div>
+                <div class="big-number-label">Zettabytes — total data in existence, 2026</div>
             </div>
-
-            <div class="scale-display">
-                <div class="scale-value" id="scale-value">402 ZB</div>
-                <div class="scale-unit" id="scale-unit">Total global data in 2026</div>
-            </div>
-
-            <p class="prose" id="scale-context">One zettabyte equals one trillion gigabytes. Your phone might hold 128 gigabytes. The global archive holds 402 trillion of those.</p>
         </section>
 
-        <section class="viz-section fade-in">
-            <h2>The exponential curve</h2>
-            <p class="prose">Data growth isn't linear. It compounds. Every year, we create more than all previous years combined.</p>
+        <!-- Live Counter -->
+        <section class="counter-section">
+            <div class="counter-grid">
+                <div class="counter-main">
+                    <div class="counter-label">Data generated since page load</div>
+                    <div class="counter-value" id="live-bytes">0 TB</div>
+                    <div class="counter-unit">and counting</div>
+                </div>
+                <div class="counter-breakdown">
+                    <div class="breakdown-row">
+                        <span class="breakdown-label">Emails sent</span>
+                        <span class="breakdown-value" id="stat-emails">0</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span class="breakdown-label">Google searches</span>
+                        <span class="breakdown-value" id="stat-searches">0</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span class="breakdown-label">Hours of video uploaded</span>
+                        <span class="breakdown-value" id="stat-video">0</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span class="breakdown-label">Photos shared</span>
+                        <span class="breakdown-value" id="stat-photos">0</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span class="breakdown-label">Tweets posted</span>
+                        <span class="breakdown-value" id="stat-tweets">0</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span class="breakdown-label">Active users right now</span>
+                        <span class="breakdown-value" id="stat-users">~6.04B</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-            <div class="bar-chart" id="bar-chart">
+        <!-- Overwhelming Dots -->
+        <section class="dots-section">
+            <div class="dots-header">
+                <h2 class="fade-up">Try to comprehend this</h2>
+                <p class="fade-up">Each dot below represents 1 exabyte. There are 402,000 exabytes in the archive.</p>
+                <p class="fade-up" style="color: var(--color-alert);">This visualization only shows 0.5% of the real scale.</p>
+            </div>
+            <div class="dots-container">
+                <canvas class="dots-canvas" id="dots-canvas"></canvas>
+            </div>
+            <div class="dots-legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--color-accent);"></div>
+                    <span>Video content (60%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--color-alert);"></div>
+                    <span>Social media (15%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #00C853;"></div>
+                    <span>Enterprise data (12%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: #FFD600;"></div>
+                    <span>IoT sensors (8%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: rgba(209,209,209,0.5);"></div>
+                    <span>Other (5%)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Types -->
+        <section class="data-types-section">
+            <div class="data-types-container">
+                <div class="narrow">
+                    <h2 class="fade-up">What's in the archive?</h2>
+                    <p class="fade-up">Every type of human expression, captured digitally. Every format, every platform, every language.</p>
+                </div>
+                <div class="data-types-grid" id="data-types">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Your Digital Day -->
+        <section class="your-day-section">
+            <div class="your-day-container">
+                <div class="your-day-header">
+                    <h2 class="fade-up">Your digital day</h2>
+                    <p class="fade-up">The average internet user generates this much data every 24 hours—without even thinking about it.</p>
+                </div>
+                <div class="your-day-grid">
+                    <div class="day-stat fade-up">
+                        <div class="day-stat-icon">📧</div>
+                        <div class="day-stat-value">121</div>
+                        <div class="day-stat-label">Emails sent/received</div>
+                    </div>
+                    <div class="day-stat fade-up">
+                        <div class="day-stat-icon">🔍</div>
+                        <div class="day-stat-value">8.5</div>
+                        <div class="day-stat-label">Google searches</div>
+                    </div>
+                    <div class="day-stat fade-up">
+                        <div class="day-stat-icon">📱</div>
+                        <div class="day-stat-value">2,617</div>
+                        <div class="day-stat-label">Phone touches</div>
+                    </div>
+                    <div class="day-stat fade-up">
+                        <div class="day-stat-icon">📷</div>
+                        <div class="day-stat-value">5.4</div>
+                        <div class="day-stat-label">Photos taken</div>
+                    </div>
+                    <div class="day-stat fade-up">
+                        <div class="day-stat-icon">▶️</div>
+                        <div class="day-stat-value">84</div>
+                        <div class="day-stat-label">Minutes of video watched</div>
+                    </div>
+                    <div class="day-stat fade-up">
+                        <div class="day-stat-icon">🌐</div>
+                        <div class="day-stat-value">156</div>
+                        <div class="day-stat-label">Web pages visited</div>
+                    </div>
+                    <div class="day-total fade-up">
+                        <div class="day-total-value">1.7 GB</div>
+                        <div class="day-total-label">Average data generated per person per day</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scale Section -->
+        <section class="scale-section">
+            <div class="scale-container">
+                <div class="scale-controls">
+                    <h2>The problem with zettabytes</h2>
+                    <p>Numbers this large resist comprehension. Our brains evolved to count hunting parties, not data centers. So let's translate.</p>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-scale="zb">Zettabytes</button>
+                        <button class="toggle-btn" data-scale="movies">HD Movies</button>
+                        <button class="toggle-btn" data-scale="libraries">Libraries</button>
+                        <button class="toggle-btn" data-scale="drives">Hard Drives</button>
+                        <button class="toggle-btn" data-scale="paper">Paper</button>
+                    </div>
+                </div>
+                <div class="scale-display">
+                    <div class="scale-value" id="scale-value">402 ZB</div>
+                    <div class="scale-equiv" id="scale-equiv">One zettabyte = one trillion gigabytes. Your phone holds maybe 128 GB. The archive holds 402 trillion of those.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Big Number: Users -->
+        <section class="big-reveal">
+            <div class="big-number-container">
+                <div class="big-number accent" id="users-number">6.04B</div>
+                <div class="big-number-label">Active internet users — 75% of humanity</div>
+            </div>
+        </section>
+
+        <!-- Infinite Scroll -->
+        <section class="infinite-section">
+            <div class="infinite-header">
+                <h2>The endless feed</h2>
+                <p>Try scrolling. It never ends. Just like the real thing.</p>
+            </div>
+            <div class="infinite-viewport" id="infinite-viewport">
+                <div class="infinite-content" id="infinite-content">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="infinite-counter">
+                <div class="infinite-counter-value" id="infinite-count">0</div>
+                <div class="infinite-counter-label">entries you've scrolled past — there are trillions more</div>
+            </div>
+        </section>
+
+        <!-- Timeline -->
+        <section class="timeline-section">
+            <div class="narrow">
+                <h2 class="fade-up">The exponential curve</h2>
+                <p class="fade-up">Data doesn't grow linearly. It compounds. Every year creates more than all previous years combined.</p>
+            </div>
+            <div class="timeline" id="timeline">
                 <!-- Populated by JS -->
             </div>
         </section>
 
-        <section class="calculator-section fade-in">
-            <h2>Your lifetime in data</h2>
-            <p class="prose">When you were born, the archive was a different size. Enter your age to see how much it's grown during your lifetime.</p>
+        <!-- Calculator -->
+        <section class="calculator-section">
+            <div class="calculator-container">
+                <h2>Your lifetime in data</h2>
+                <p>When you were born, the archive was a different size entirely. Enter your age to see how much has changed.</p>
 
-            <div class="input-group">
-                <label class="input-label" for="age">Your age</label>
-                <div class="age-input">
-                    <input type="number" id="age" min="1" max="120" placeholder="25">
-                    <span>years old</span>
+                <div class="input-row">
+                    <input type="number" class="age-input" id="age-input" min="1" max="120" placeholder="25">
+                    <span class="input-label">years old</span>
                 </div>
-            </div>
 
-            <div class="result-box" id="result-box">
-                <div class="result-percent" id="result-percent">0%</div>
-                <p class="result-text" id="result-text"></p>
-            </div>
-        </section>
-
-        <section class="fade-in">
-            <h2>Who's online?</h2>
-
-            <div class="big-number">
-                <div class="big-number-value accent">6.04B</div>
-                <div class="big-number-label">Active internet users</div>
-            </div>
-
-            <p class="prose">That's <span class="highlight">75% of humanity</span>, all contributing to the archive. Every search, every message, every photo—catalogued, indexed, stored.</p>
-
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value">49.2 TB</div>
-                    <div class="stat-label">Data per person</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">+23%</div>
-                    <div class="stat-label">Yearly growth</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">2.1%</div>
-                    <div class="stat-label">Actually stored</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">97.9%</div>
-                    <div class="stat-label">Lost forever</div>
+                <div class="result-display" id="result">
+                    <div class="result-value" id="result-value">+0%</div>
+                    <p class="result-text" id="result-text"></p>
                 </div>
             </div>
         </section>
 
-        <section class="fade-in">
-            <h2>The paradox</h2>
-            <p class="prose">Here's the thing about the archive: <strong>almost all of it disappears</strong>.</p>
-            <p class="prose">Only 2.1% of data generated is retained past its first year. The rest—ephemeral messages, temporary files, streaming buffers—vanishes like it never existed. We're building the largest library in history, and most of it burns the moment it's written.</p>
+        <!-- Paradox -->
+        <section class="paradox-section">
+            <div class="paradox-content">
+                <h2 class="fade-up">The paradox</h2>
+                <p class="fade-up">Here's the thing about the archive: almost all of it disappears.</p>
+                <p class="fade-up">Only 2.1% of data generated is retained past its first year. Ephemeral messages. Temporary files. Streaming buffers. Gone before anyone notices.</p>
 
-            <div class="big-number">
-                <div class="big-number-value alert">97.9%</div>
-                <div class="big-number-label">of all data created is deleted within one year</div>
+                <div class="deletion-visual fade-up">
+                    <div class="deletion-bar">
+                        <div class="deletion-filled"></div>
+                        <div class="deletion-kept"></div>
+                    </div>
+                    <div class="deletion-labels">
+                        <span>97.9% Deleted</span>
+                        <span>2.1% Kept</span>
+                    </div>
+                </div>
+
+                <div class="paradox-stat fade-up">
+                    <div class="big-number visible">97.9%</div>
+                    <div class="big-number-label" style="opacity:1;transform:none;color:rgba(209,209,209,0.6);">of all data created is deleted within one year</div>
+                </div>
+
+                <p class="fade-up">The public archive isn't a permanent record. It's a river—constantly flowing, constantly forgetting. We're building the largest library in history, and most of it burns the moment it's written.</p>
             </div>
-
-            <p class="prose">The public archive isn't a permanent record. It's a river—constantly flowing, constantly forgetting.</p>
         </section>
-    </article>
+    </div>
 
     <footer>
-        <div class="footer-meta">
+        <div class="footer-content">
             <span class="footer-label">PUBLICWORKS / 2026</span>
             <a href="../../index.html" class="footer-link">Return to index →</a>
         </div>
     </footer>
 
     <script>
-        // Data constants
-        const DATA = {
-            totalZB: 402,
-            perSecondPB: 3.2,
+        // Configuration
+        const CONFIG = {
             perSecondBytes: 3.2e15,
             emailsPerSec: 4100000,
             searchesPerSec: 104000,
-            youtubeHrsPerSec: 16.2,
+            videoHrsPerSec: 500,
             photosPerSec: 102000,
+            tweetsPerSec: 6000,
+            totalZB: 402,
             historical: {
-                1990: 0.002,
                 1995: 0.02,
                 2000: 0.054,
                 2005: 0.13,
@@ -753,153 +1457,368 @@
             }
         };
 
-        // Format numbers with commas
+        const scaleData = {
+            zb: {
+                value: '402 ZB',
+                equiv: 'One zettabyte = one trillion gigabytes. Your phone holds maybe 128 GB. The archive holds 402 trillion of those.'
+            },
+            movies: {
+                value: '100.5B',
+                equiv: '100.5 billion HD movies. Played back-to-back, that\'s 17 million years of continuous viewing. The universe is only 13.8 billion years old.'
+            },
+            libraries: {
+                value: '16B',
+                equiv: '16 billion Libraries of Congress. Every book ever written fits in one. The archive holds 16 billion of those.'
+            },
+            drives: {
+                value: '402T',
+                equiv: '402 trillion 1TB hard drives. Stacked, they\'d reach the moon 1,600 times.'
+            },
+            paper: {
+                value: '4×10²³',
+                equiv: 'If printed on paper, it would require 400 sextillion sheets—enough to cover every planet in the solar system thousands of times over.'
+            }
+        };
+
+        const dataTypes = [
+            { label: 'Video Streaming', value: '241', unit: 'ZB', percentage: 60 },
+            { label: 'Social Media', value: '60', unit: 'ZB', percentage: 15 },
+            { label: 'Enterprise/Business', value: '48', unit: 'ZB', percentage: 12 },
+            { label: 'IoT & Sensors', value: '32', unit: 'ZB', percentage: 8 },
+            { label: 'Email', value: '0.3', unit: 'ZB', percentage: 0.07 },
+            { label: 'Everything Else', value: '20.7', unit: 'ZB', percentage: 5 },
+        ];
+
+        // Format numbers
         function formatNum(n) {
-            return n.toLocaleString('en-US');
+            if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
+            if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+            if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+            if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+            return n.toLocaleString();
         }
 
-        // Format bytes to human readable
         function formatBytes(bytes) {
             if (bytes >= 1e18) return (bytes / 1e18).toFixed(2) + ' EB';
             if (bytes >= 1e15) return (bytes / 1e15).toFixed(2) + ' PB';
             if (bytes >= 1e12) return (bytes / 1e12).toFixed(2) + ' TB';
             if (bytes >= 1e9) return (bytes / 1e9).toFixed(2) + ' GB';
-            return formatNum(Math.round(bytes)) + ' bytes';
+            return Math.round(bytes).toLocaleString() + ' bytes';
         }
 
-        // Nav scroll behavior
-        const nav = document.getElementById('nav');
-        window.addEventListener('scroll', () => {
-            nav.classList.toggle('scrolled', window.scrollY > 50);
-        });
+        // Data rain effect
+        function initDataRain() {
+            const container = document.getElementById('data-rain');
+            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+            const columnCount = Math.floor(window.innerWidth / 20);
+
+            for (let i = 0; i < columnCount; i++) {
+                const column = document.createElement('div');
+                column.className = 'rain-column';
+                column.style.left = (i / columnCount * 100) + '%';
+                column.style.animationDuration = (3 + Math.random() * 4) + 's';
+                column.style.animationDelay = Math.random() * 5 + 's';
+                column.style.opacity = 0.1 + Math.random() * 0.3;
+
+                let text = '';
+                const length = 20 + Math.floor(Math.random() * 30);
+                for (let j = 0; j < length; j++) {
+                    text += chars[Math.floor(Math.random() * chars.length)];
+                }
+                column.textContent = text;
+                container.appendChild(column);
+            }
+        }
+
+        // Ticker
+        function initTicker() {
+            const ticker = document.getElementById('ticker');
+            const items = [
+                'Every second: 3.2 PB created',
+                'Every minute: 500 hours of video uploaded',
+                'Every hour: 14.8 billion emails sent',
+                'Every day: 720,000 hours of content added to Netflix',
+                'Right now: 6.04 billion humans online',
+                'Since 2020: Data has grown 6x',
+                'By 2030: 2,000+ zettabytes projected',
+            ];
+
+            const doubledItems = [...items, ...items];
+            ticker.innerHTML = doubledItems.map(item =>
+                `<span class="ticker-item">${item}</span>`
+            ).join('');
+        }
 
         // Live counter
-        let startTime = Date.now();
-        const liveCounter = document.getElementById('live-counter');
-        const emailsEl = document.getElementById('emails');
-        const searchesEl = document.getElementById('searches');
-        const youtubeEl = document.getElementById('youtube');
-        const photosEl = document.getElementById('photos');
+        const startTime = Date.now();
+        let readingStartTime = Date.now();
 
         function updateCounter() {
             const elapsed = (Date.now() - startTime) / 1000;
-            const bytes = elapsed * DATA.perSecondBytes;
+            const bytes = elapsed * CONFIG.perSecondBytes;
 
-            liveCounter.textContent = formatBytes(bytes);
-            emailsEl.textContent = formatNum(Math.round(elapsed * DATA.emailsPerSec));
-            searchesEl.textContent = formatNum(Math.round(elapsed * DATA.searchesPerSec));
-            youtubeEl.textContent = (elapsed * DATA.youtubeHrsPerSec).toFixed(1) + ' hrs';
-            photosEl.textContent = formatNum(Math.round(elapsed * DATA.photosPerSec));
+            document.getElementById('hero-bytes').textContent = formatBytes(bytes);
+            document.getElementById('live-bytes').textContent = formatBytes(bytes);
+            document.getElementById('stat-emails').textContent = formatNum(Math.round(elapsed * CONFIG.emailsPerSec));
+            document.getElementById('stat-searches').textContent = formatNum(Math.round(elapsed * CONFIG.searchesPerSec));
+            document.getElementById('stat-video').textContent = formatNum(Math.round(elapsed * CONFIG.videoHrsPerSec));
+            document.getElementById('stat-photos').textContent = formatNum(Math.round(elapsed * CONFIG.photosPerSec));
+            document.getElementById('stat-tweets').textContent = formatNum(Math.round(elapsed * CONFIG.tweetsPerSec));
+
+            // Update reading comparison (assume 5 seconds of reading)
+            const readingElapsed = Math.min((Date.now() - readingStartTime) / 1000, 8);
+            const readingBytes = readingElapsed * CONFIG.perSecondBytes;
+            document.getElementById('reading-bytes').textContent = formatBytes(readingBytes);
 
             requestAnimationFrame(updateCounter);
         }
-        updateCounter();
+
+        // Dots visualization
+        function initDots() {
+            const canvas = document.getElementById('dots-canvas');
+            const ctx = canvas.getContext('2d');
+
+            function resize() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width * 2;
+                canvas.height = rect.height * 2;
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = rect.height + 'px';
+                ctx.scale(2, 2);
+            }
+
+            resize();
+            window.addEventListener('resize', resize);
+
+            const colors = [
+                { color: '#0047FF', ratio: 0.60 },
+                { color: '#FF4D00', ratio: 0.15 },
+                { color: '#00C853', ratio: 0.12 },
+                { color: '#FFD600', ratio: 0.08 },
+                { color: 'rgba(209,209,209,0.5)', ratio: 0.05 }
+            ];
+
+            const dotCount = 2000; // Representing 0.5% of real scale
+            const dots = [];
+
+            for (let i = 0; i < dotCount; i++) {
+                let color;
+                const rand = Math.random();
+                let cumulative = 0;
+                for (const c of colors) {
+                    cumulative += c.ratio;
+                    if (rand < cumulative) {
+                        color = c.color;
+                        break;
+                    }
+                }
+
+                dots.push({
+                    x: Math.random() * (canvas.width / 2),
+                    y: Math.random() * (canvas.height / 2),
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3,
+                    color: color,
+                    size: 2 + Math.random() * 2
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width / 2, canvas.height / 2);
+
+                for (const dot of dots) {
+                    dot.x += dot.vx;
+                    dot.y += dot.vy;
+
+                    if (dot.x < 0 || dot.x > canvas.width / 2) dot.vx *= -1;
+                    if (dot.y < 0 || dot.y > canvas.height / 2) dot.vy *= -1;
+
+                    ctx.beginPath();
+                    ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2);
+                    ctx.fillStyle = dot.color;
+                    ctx.fill();
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        // Data types
+        function initDataTypes() {
+            const container = document.getElementById('data-types');
+            container.innerHTML = dataTypes.map(type => `
+                <div class="data-type-card" style="--percentage: ${type.percentage}%">
+                    <div class="data-type-label">${type.label}</div>
+                    <div class="data-type-value">${type.value}</div>
+                    <div class="data-type-unit">${type.unit} (${type.percentage}%)</div>
+                </div>
+            `).join('');
+        }
 
         // Scale toggle
-        const scaleToggle = document.getElementById('scale-toggle');
-        const labelTech = document.getElementById('label-tech');
-        const labelHuman = document.getElementById('label-human');
-        const scaleValue = document.getElementById('scale-value');
-        const scaleUnit = document.getElementById('scale-unit');
-        const scaleContext = document.getElementById('scale-context');
-        let isHuman = false;
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
 
-        scaleToggle.addEventListener('click', () => {
-            isHuman = !isHuman;
-            scaleToggle.classList.toggle('active', isHuman);
-            labelTech.classList.toggle('active', !isHuman);
-            labelHuman.classList.toggle('active', isHuman);
+                const scale = btn.dataset.scale;
+                const data = scaleData[scale];
 
-            if (isHuman) {
-                scaleValue.textContent = '16 billion';
-                scaleUnit.textContent = 'Libraries of Congress';
-                scaleContext.textContent = 'The Library of Congress holds about 25 terabytes of text. The global archive could fill it 16 billion times over. Stack those libraries and you\'d reach the moon—then keep going for another 4 million miles.';
-            } else {
-                scaleValue.textContent = '402 ZB';
-                scaleUnit.textContent = 'Total global data in 2026';
-                scaleContext.textContent = 'One zettabyte equals one trillion gigabytes. Your phone might hold 128 gigabytes. The global archive holds 402 trillion of those.';
+                document.getElementById('scale-value').textContent = data.value;
+                document.getElementById('scale-equiv').textContent = data.equiv;
+            });
+        });
+
+        // Infinite scroll
+        let rowCount = 0;
+        const fakeData = [
+            'user_session_', 'video_chunk_', 'img_upload_', 'msg_payload_', 'api_call_',
+            'sensor_reading_', 'transaction_', 'log_entry_', 'cache_update_', 'file_transfer_'
+        ];
+
+        function generateRows(count) {
+            let html = '';
+            for (let i = 0; i < count; i++) {
+                const type = fakeData[Math.floor(Math.random() * fakeData.length)];
+                const id = Math.random().toString(36).substring(2, 15);
+                const size = (Math.random() * 1000).toFixed(2) + ' KB';
+                const time = new Date().toISOString();
+                html += `<div class="infinite-row">
+                    <span>${type}${id}</span>
+                    <span>${size}</span>
+                    <span>${time}</span>
+                </div>`;
+                rowCount++;
             }
-        });
+            return html;
+        }
 
-        // Bar chart
-        const chartContainer = document.getElementById('bar-chart');
-        const years = [2000, 2005, 2010, 2015, 2020, 2025, 2026];
-        const maxVal = DATA.historical[2026];
+        function initInfiniteScroll() {
+            const viewport = document.getElementById('infinite-viewport');
+            const content = document.getElementById('infinite-content');
+            const counter = document.getElementById('infinite-count');
 
-        years.forEach((year, i) => {
-            const val = DATA.historical[year];
-            const pct = (val / maxVal) * 100;
+            // Initial load
+            content.innerHTML = generateRows(100);
+            counter.textContent = formatNum(rowCount);
 
-            const row = document.createElement('div');
-            row.className = 'bar-row';
-            row.innerHTML = `
-                <span class="bar-year">${year}</span>
-                <div class="bar-track">
-                    <div class="bar-fill ${year === 2026 ? 'accent' : ''}" style="width: 0%"></div>
+            viewport.addEventListener('scroll', () => {
+                if (viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 200) {
+                    content.innerHTML += generateRows(50);
+                    counter.textContent = formatNum(rowCount);
+                }
+            });
+
+            // Auto-generate periodically
+            setInterval(() => {
+                content.innerHTML = generateRows(5) + content.innerHTML;
+                counter.textContent = formatNum(rowCount);
+            }, 500);
+        }
+
+        // Timeline
+        function initTimeline() {
+            const timeline = document.getElementById('timeline');
+            const events = [
+                { year: 1995, title: 'The web goes public', desc: 'Netscape IPO sparks the dot-com boom', value: '0.02 ZB' },
+                { year: 2000, title: 'Y2K + the bubble', desc: 'Peak optimism, followed by collapse', value: '0.05 ZB' },
+                { year: 2005, title: 'Web 2.0 emerges', desc: 'YouTube, Facebook, user-generated everything', value: '0.13 ZB' },
+                { year: 2010, title: 'Mobile takes over', desc: 'The smartphone becomes essential infrastructure', value: '2 ZB' },
+                { year: 2015, title: 'Streaming era', desc: 'Netflix, Spotify, always-on content', value: '15.5 ZB' },
+                { year: 2020, title: 'Pandemic digitization', desc: 'Remote work forces mass adoption', value: '64 ZB' },
+                { year: 2025, title: 'AI explosion', desc: 'Generative models reshape creation', value: '181 ZB' },
+                { year: 2026, title: 'Now', desc: 'The archive grows every second', value: '402 ZB' },
+            ];
+
+            timeline.innerHTML = events.map(e => `
+                <div class="timeline-item">
+                    <div class="timeline-year">${e.year}</div>
+                    <div class="timeline-content">
+                        <h3>${e.title}</h3>
+                        <p>${e.desc}</p>
+                    </div>
+                    <div class="timeline-value">${e.value}</div>
                 </div>
-                <span class="bar-value">${val < 1 ? val.toFixed(2) : val} ZB</span>
-            `;
-            chartContainer.appendChild(row);
-
-            // Animate on scroll
-            setTimeout(() => {
-                row.querySelector('.bar-fill').style.width = pct + '%';
-            }, i * 100 + 500);
-        });
+            `).join('');
+        }
 
         // Age calculator
-        const ageInput = document.getElementById('age');
-        const resultBox = document.getElementById('result-box');
-        const resultPercent = document.getElementById('result-percent');
+        const ageInput = document.getElementById('age-input');
+        const resultEl = document.getElementById('result');
+        const resultValue = document.getElementById('result-value');
         const resultText = document.getElementById('result-text');
 
         ageInput.addEventListener('input', () => {
             const age = parseInt(ageInput.value);
             if (!age || age < 1 || age > 120) {
-                resultBox.classList.remove('visible');
+                resultEl.classList.remove('visible');
                 return;
             }
 
             const birthYear = 2026 - age;
             let birthData = 0.001;
 
-            // Interpolate historical data
-            const histYears = Object.keys(DATA.historical).map(Number).sort((a, b) => a - b);
-            for (let i = 0; i < histYears.length; i++) {
-                if (histYears[i] <= birthYear) {
-                    birthData = DATA.historical[histYears[i]];
-                }
-                if (birthYear > histYears[i] && birthYear < histYears[i + 1]) {
-                    const ratio = (birthYear - histYears[i]) / (histYears[i + 1] - histYears[i]);
-                    birthData = DATA.historical[histYears[i]] +
-                        (DATA.historical[histYears[i + 1]] - DATA.historical[histYears[i]]) * ratio;
+            const years = Object.keys(CONFIG.historical).map(Number).sort((a, b) => a - b);
+            for (let i = 0; i < years.length; i++) {
+                if (years[i] <= birthYear) birthData = CONFIG.historical[years[i]];
+                if (birthYear > years[i] && birthYear < years[i + 1]) {
+                    const ratio = (birthYear - years[i]) / (years[i + 1] - years[i]);
+                    birthData = CONFIG.historical[years[i]] + (CONFIG.historical[years[i + 1]] - CONFIG.historical[years[i]]) * ratio;
                     break;
                 }
             }
 
-            const growth = ((DATA.totalZB - birthData) / birthData * 100);
-            const dataGrowth = DATA.totalZB - birthData;
+            const growth = ((CONFIG.totalZB - birthData) / birthData * 100);
+            const dataGrowth = CONFIG.totalZB - birthData;
 
-            resultPercent.textContent = '+' + formatNum(Math.round(growth)) + '%';
-            resultText.innerHTML = `Since <strong>${birthYear}</strong>, the archive has grown from <strong>${birthData < 1 ? birthData.toFixed(3) : birthData.toFixed(1)} ZB</strong> to <strong>${DATA.totalZB} ZB</strong>. That's <strong>${dataGrowth.toFixed(1)} zettabytes</strong> of new data created during your lifetime.`;
-            resultBox.classList.add('visible');
+            resultValue.textContent = '+' + formatNum(Math.round(growth)) + '%';
+            resultText.innerHTML = `Since <strong>${birthYear}</strong>, the archive has grown from <strong>${birthData < 1 ? birthData.toFixed(3) : birthData.toFixed(1)} ZB</strong> to <strong>${CONFIG.totalZB} ZB</strong>. That's <strong>${dataGrowth.toFixed(1)} zettabytes</strong> of new data created during your lifetime.`;
+            resultEl.classList.add('visible');
         });
 
-        // Scroll animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+        // Progress bar
+        function updateProgress() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / docHeight) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
 
+        // Intersection Observer for animations
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
                 }
             });
-        }, observerOptions);
+        }, { threshold: 0.2, rootMargin: '0px 0px -100px 0px' });
 
-        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Start counter
+            updateCounter();
+
+            // Visual elements
+            initDataRain();
+            initTicker();
+            initDots();
+            initDataTypes();
+            initInfiniteScroll();
+
+            // Build timeline
+            initTimeline();
+
+            // Observe elements
+            document.querySelectorAll('.fade-up, .big-number, .timeline-item, .data-type-card').forEach(el => {
+                observer.observe(el);
+            });
+
+            // Progress bar
+            window.addEventListener('scroll', updateProgress, { passive: true });
+            updateProgress();
+        });
     </script>
 </body>
 </html>
