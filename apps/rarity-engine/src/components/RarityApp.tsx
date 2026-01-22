@@ -3,391 +3,170 @@ import { useRarity } from '../context/RarityContext';
 import { questions, formatRarity, getComparison, TOTAL_POPULATION } from '../data/questions';
 
 const TOTAL_DOTS = 10000;
-const GRID_COLS = 100;
+const GRID_SIZE = 100;
 
-// Canvas-based dot matrix for 10,000 dots
-function DotMatrix({ activeRatio }: { activeRatio: number }) {
+function DotMatrix({ ratio }: { ratio: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const activeDots = Math.max(1, Math.round(activeRatio * TOTAL_DOTS));
+  const active = Math.max(1, Math.round(ratio * TOTAL_DOTS));
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const size = canvas.width;
-    const dotSize = size / GRID_COLS;
-    const gap = dotSize * 0.15;
-    const actualDotSize = dotSize - gap;
+    const dot = canvas.width / GRID_SIZE;
+    const gap = dot * 0.2;
+    const size = dot - gap;
 
-    ctx.clearRect(0, 0, size, size);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (let i = 0; i < TOTAL_DOTS; i++) {
-      const row = Math.floor(i / GRID_COLS);
-      const col = i % GRID_COLS;
-      const x = col * dotSize + gap / 2;
-      const y = row * dotSize + gap / 2;
-
-      const isActive = i < activeDots;
-
-      if (isActive) {
-        ctx.fillStyle = '#0047FF';
-        ctx.globalAlpha = 1;
-      } else {
-        ctx.fillStyle = '#0F0F0F';
-        ctx.globalAlpha = 0.08;
-      }
-
-      ctx.fillRect(x, y, actualDotSize, actualDotSize);
+      const x = (i % GRID_SIZE) * dot + gap / 2;
+      const y = Math.floor(i / GRID_SIZE) * dot + gap / 2;
+      ctx.fillStyle = i < active ? '#0047FF' : '#0F0F0F';
+      ctx.globalAlpha = i < active ? 1 : 0.1;
+      ctx.fillRect(x, y, size, size);
     }
-  }, [activeDots]);
+  }, [active]);
 
   return (
     <canvas
       ref={canvasRef}
-      width={400}
-      height={400}
-      style={{
-        width: '100%',
-        maxWidth: '400px',
-        height: 'auto',
-        aspectRatio: '1',
-      }}
+      width={500}
+      height={500}
+      style={{ width: '100%', maxWidth: '320px', aspectRatio: '1' }}
     />
-  );
-}
-
-// Home link component - use relative path for GitHub Pages
-function HomeLink() {
-  return (
-    <a
-      href="../../"
-      style={{
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: '12px',
-        color: '#6E6E6E',
-        textDecoration: 'none',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '6px',
-        transition: 'color 0.15s',
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.color = '#0047FF'}
-      onMouseLeave={(e) => e.currentTarget.style.color = '#6E6E6E'}
-    >
-      <span style={{ fontSize: '16px' }}>&larr;</span> PUBLICWORKS
-    </a>
   );
 }
 
 export default function RarityApp() {
   const [started, setStarted] = useState(false);
   const { state, answerQuestion, reset } = useRarity();
-
-  const currentQuestion = state.currentQuestionIndex < questions.length
-    ? questions[state.currentQuestionIndex]
-    : null;
-
+  const question = questions[state.currentQuestionIndex] || null;
+  const ratio = state.currentPool / TOTAL_POPULATION;
   const oneInX = Math.round(TOTAL_POPULATION / Math.max(state.currentPool, 1));
-  const progress = (state.currentQuestionIndex / 25) * 100;
-  const activeRatio = state.currentPool / TOTAL_POPULATION;
 
-  // Start screen
+  const styles = {
+    page: { backgroundColor: '#D1D1D1', minHeight: '100vh', fontFamily: "'Space Grotesk', system-ui, sans-serif" },
+    mono: { fontFamily: "'IBM Plex Mono', monospace" },
+    header: { padding: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+    link: { fontSize: '12px', color: '#6E6E6E', textDecoration: 'none' },
+    center: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', padding: '24px', flex: 1 },
+    title: { fontSize: '32px', fontWeight: 700, color: '#0F0F0F', marginBottom: '8px', letterSpacing: '-0.02em' },
+    subtitle: { fontSize: '14px', color: '#6E6E6E', marginBottom: '32px' },
+    label: { fontSize: '11px', color: '#6E6E6E', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: '4px' },
+    number: { fontSize: '28px', fontWeight: 700, color: '#0F0F0F' },
+    btn: { padding: '16px 48px', fontSize: '16px', fontWeight: 600, backgroundColor: '#0047FF', color: '#D1D1D1', border: 'none', cursor: 'pointer' },
+    btnDark: { padding: '16px 32px', fontSize: '14px', fontWeight: 600, backgroundColor: '#0F0F0F', color: '#D1D1D1', border: 'none', cursor: 'pointer' },
+    btnOutline: { padding: '16px 32px', fontSize: '14px', fontWeight: 600, backgroundColor: 'transparent', color: '#0F0F0F', border: '1px solid #0F0F0F', cursor: 'pointer', textDecoration: 'none' },
+    choice: { width: '100%', padding: '16px 20px', fontSize: '15px', backgroundColor: '#FFF', border: '1px solid #0F0F0F', color: '#0F0F0F', cursor: 'pointer', textAlign: 'left' as const, marginBottom: '8px' },
+  };
+
+  // START
   if (!started) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#D1D1D1' }}>
-        <header className="p-6">
-          <HomeLink />
+      <div style={styles.page}>
+        <header style={styles.header}>
+          <a href="../../" style={styles.link}>← PUBLICWORKS</a>
         </header>
-
-        <main className="flex-1 flex items-center justify-center px-6 pb-12">
-          <div className="text-center w-full max-w-lg">
-            <h1
-              className="text-3xl md:text-4xl font-bold mb-3 tracking-tight"
-              style={{
-                fontFamily: "'Space Grotesk', system-ui, sans-serif",
-                color: '#0F0F0F',
-              }}
-            >
-              THE RARITY ENGINE
-            </h1>
-            <p className="text-base mb-8" style={{ color: '#6E6E6E' }}>
-              Discover how rare you really are
-            </p>
-
-            <div className="mb-8">
-              <DotMatrix activeRatio={1} />
-            </div>
-
-            <p
-              className="text-xs uppercase tracking-wider mb-1"
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                color: '#6E6E6E',
-              }}
-            >
-              Starting population
-            </p>
-            <p
-              className="text-3xl font-bold mb-10"
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                color: '#0F0F0F',
-              }}
-            >
-              8,000,000,000
-            </p>
-
-            <button
-              onClick={() => setStarted(true)}
-              className="px-12 py-4 font-semibold text-lg transition-all duration-200"
-              style={{
-                fontFamily: "'Space Grotesk', system-ui, sans-serif",
-                backgroundColor: '#0047FF',
-                color: '#D1D1D1',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0035CC'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0047FF'}
-            >
-              Begin
-            </button>
-
-            <p
-              className="mt-6 text-sm"
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                color: '#6E6E6E',
-              }}
-            >
-              25 questions &middot; 2 min
-            </p>
+        <div style={{ ...styles.center, minHeight: 'calc(100vh - 80px)' }}>
+          <h1 style={styles.title}>THE RARITY ENGINE</h1>
+          <p style={styles.subtitle}>How rare are you?</p>
+          <div style={{ marginBottom: '32px' }}>
+            <DotMatrix ratio={1} />
           </div>
-        </main>
+          <p style={{ ...styles.mono, ...styles.label }}>World Population</p>
+          <p style={{ ...styles.mono, ...styles.number, marginBottom: '32px' }}>8,000,000,000</p>
+          <button style={styles.btn} onClick={() => setStarted(true)}>Start</button>
+          <p style={{ ...styles.mono, fontSize: '12px', color: '#6E6E6E', marginTop: '16px' }}>25 questions</p>
+        </div>
       </div>
     );
   }
 
-  // Result screen
+  // RESULT
   if (state.isComplete) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#D1D1D1' }}>
-        <header className="p-6">
-          <HomeLink />
+      <div style={styles.page}>
+        <header style={styles.header}>
+          <a href="../../" style={styles.link}>← PUBLICWORKS</a>
         </header>
-
-        <main className="flex-1 flex items-center justify-center px-6 pb-12">
-          <div className="text-center w-full max-w-lg">
-            <p
-              className="text-xs uppercase tracking-widest mb-2"
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                color: '#6E6E6E',
-              }}
-            >
-              Out of 8 billion people, you are
-            </p>
-            <h1
-              className="text-4xl md:text-6xl font-bold mb-6 tracking-tight"
-              style={{
-                fontFamily: "'Space Grotesk', system-ui, sans-serif",
-                color: '#0047FF',
-              }}
-            >
-              {formatRarity(state.currentPool)}
-            </h1>
-
-            <div className="mb-8">
-              <DotMatrix activeRatio={activeRatio} />
-            </div>
-
-            <p
-              className="text-lg mb-2"
-              style={{
-                fontFamily: "'Space Grotesk', system-ui, sans-serif",
-                color: '#0F0F0F',
-              }}
-            >
-              Rarer than{' '}
-              <span className="font-bold" style={{ color: '#FF4D00' }}>
-                {getComparison(oneInX)}
-              </span>
-            </p>
-
-            <p
-              className="text-sm mb-10"
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                color: '#6E6E6E',
-              }}
-            >
-              Only {state.currentPool.toLocaleString()} people share your combination
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => {
-                  reset();
-                  setStarted(false);
-                }}
-                className="px-10 py-4 font-semibold transition-all duration-200"
-                style={{
-                  fontFamily: "'Space Grotesk', system-ui, sans-serif",
-                  backgroundColor: '#0F0F0F',
-                  color: '#D1D1D1',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#333'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0F0F0F'}
-              >
-                Try Again
-              </button>
-              <a
-                href="../../"
-                className="px-10 py-4 font-semibold transition-all duration-200 text-center"
-                style={{
-                  fontFamily: "'Space Grotesk', system-ui, sans-serif",
-                  backgroundColor: 'transparent',
-                  color: '#0F0F0F',
-                  border: '1px solid #0F0F0F',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#0F0F0F';
-                  e.currentTarget.style.color = '#D1D1D1';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#0F0F0F';
-                }}
-              >
-                Back to Home
-              </a>
-            </div>
+        <div style={{ ...styles.center, minHeight: 'calc(100vh - 80px)' }}>
+          <p style={{ ...styles.mono, ...styles.label, marginBottom: '8px' }}>You are</p>
+          <h1 style={{ ...styles.title, fontSize: '40px', color: '#0047FF', marginBottom: '24px' }}>
+            {formatRarity(state.currentPool)}
+          </h1>
+          <div style={{ marginBottom: '24px' }}>
+            <DotMatrix ratio={ratio} />
           </div>
-        </main>
+          <p style={{ fontSize: '16px', color: '#0F0F0F', marginBottom: '8px' }}>
+            Rarer than <span style={{ color: '#FF4D00', fontWeight: 700 }}>{getComparison(oneInX)}</span>
+          </p>
+          <p style={{ ...styles.mono, fontSize: '13px', color: '#6E6E6E', marginBottom: '32px' }}>
+            {state.currentPool.toLocaleString()} people like you
+          </p>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button style={styles.btnDark} onClick={() => { reset(); setStarted(false); }}>Try Again</button>
+            <a href="../../" style={styles.btnOutline}>Home</a>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Question screen
+  // QUESTION
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#D1D1D1' }}>
-      <header className="p-6 flex items-center justify-between">
-        <HomeLink />
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: '12px',
-            color: '#6E6E6E',
-          }}
-        >
-          {state.currentQuestionIndex + 1} / 25
+    <div style={{ ...styles.page, display: 'flex', flexDirection: 'column' }}>
+      <header style={styles.header}>
+        <a href="../../" style={styles.link}>← PUBLICWORKS</a>
+        <span style={{ ...styles.mono, fontSize: '12px', color: '#6E6E6E' }}>
+          {state.currentQuestionIndex + 1}/25
         </span>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
-        {/* Dot matrix at top */}
-        <div className="w-full max-w-md mb-8">
-          <DotMatrix activeRatio={activeRatio} />
+      <div style={{ ...styles.center, flex: 1, paddingBottom: '100px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <DotMatrix ratio={ratio} />
         </div>
 
-        {/* Population counter */}
-        <div className="text-center mb-8">
-          <p
-            className="text-xs uppercase tracking-wider mb-1"
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              color: '#6E6E6E',
-            }}
-          >
-            People like you
-          </p>
-          <p
-            className="text-3xl font-bold"
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              color: '#0F0F0F',
-            }}
-          >
-            {state.currentPool.toLocaleString()}
-          </p>
-        </div>
+        <p style={{ ...styles.mono, ...styles.label }}>People like you</p>
+        <p style={{ ...styles.mono, ...styles.number, marginBottom: '32px' }}>
+          {state.currentPool.toLocaleString()}
+        </p>
 
-        {/* Question card */}
-        {currentQuestion && (
-          <div className="w-full max-w-md">
-            <h2
-              className="text-xl md:text-2xl font-bold mb-3 text-center"
-              style={{
-                fontFamily: "'Space Grotesk', system-ui, sans-serif",
-                color: '#0F0F0F',
-              }}
-            >
-              {currentQuestion.question}
+        {question && (
+          <div style={{ width: '100%', maxWidth: '400px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0F0F0F', marginBottom: '8px', textAlign: 'center' }}>
+              {question.question}
             </h2>
-
-            {currentQuestion.subtext && (
-              <p
-                className="text-sm mb-6 text-center"
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  color: '#6E6E6E',
-                }}
-              >
-                {currentQuestion.subtext}
+            {question.subtext && (
+              <p style={{ ...styles.mono, fontSize: '12px', color: '#6E6E6E', marginBottom: '24px', textAlign: 'center' }}>
+                {question.subtext}
               </p>
             )}
-
-            <div className="space-y-3 mt-6">
-              {currentQuestion.choices.map((choice) => (
+            <div>
+              {question.choices.map((c) => (
                 <button
-                  key={choice.id}
-                  onClick={() => answerQuestion({
-                    questionId: currentQuestion.id,
-                    choiceId: choice.id,
-                    weight: choice.weight,
-                  })}
-                  className="w-full text-left px-5 py-4 transition-all duration-150"
-                  style={{
-                    fontFamily: "'Space Grotesk', system-ui, sans-serif",
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #0F0F0F',
-                    color: '#0F0F0F',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#0047FF';
-                    e.currentTarget.style.color = '#FFFFFF';
-                    e.currentTarget.style.borderColor = '#0047FF';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#FFFFFF';
-                    e.currentTarget.style.color = '#0F0F0F';
-                    e.currentTarget.style.borderColor = '#0F0F0F';
-                  }}
+                  key={c.id}
+                  style={styles.choice}
+                  onClick={() => answerQuestion({ questionId: question.id, choiceId: c.id, weight: c.weight })}
+                  onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#0047FF'; e.currentTarget.style.color = '#FFF'; e.currentTarget.style.borderColor = '#0047FF'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#FFF'; e.currentTarget.style.color = '#0F0F0F'; e.currentTarget.style.borderColor = '#0F0F0F'; }}
                 >
-                  {choice.text}
+                  {c.text}
                 </button>
               ))}
             </div>
           </div>
         )}
-      </main>
+      </div>
 
-      {/* Progress bar at bottom */}
-      <footer className="p-6">
-        <div className="max-w-md mx-auto">
-          <div style={{ height: '3px', backgroundColor: '#0F0F0F', opacity: 0.15 }}>
-            <div
-              className="h-full transition-all duration-500"
-              style={{
-                width: `${progress}%`,
-                backgroundColor: '#0047FF',
-              }}
-            />
-          </div>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '24px', backgroundColor: '#D1D1D1' }}>
+        <div style={{ maxWidth: '400px', margin: '0 auto', height: '3px', backgroundColor: 'rgba(15,15,15,0.1)' }}>
+          <div style={{ height: '100%', width: `${(state.currentQuestionIndex / 25) * 100}%`, backgroundColor: '#0047FF', transition: 'width 0.3s' }} />
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
