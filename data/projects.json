@@ -1,7 +1,16 @@
 [
   {
-    "id": "grid-disruption",
+    "id": "one-in-eight-billion",
     "number": "001",
+    "name": "One in 8 Billion",
+    "description": "Discover how unique you are among all of humanity",
+    "status": "live",
+    "url": "projects/one-in-eight-billion/",
+    "date": "2026-01"
+  },
+  {
+    "id": "grid-disruption",
+    "number": "002",
     "name": "Grid Disruption",
     "description": "Hand-tracking grid distortion experience",
     "status": "live",
@@ -10,7 +19,7 @@
   },
   {
     "id": "breath",
-    "number": "002",
+    "number": "003",
     "name": "Breath",
     "description": "Meditative breathwork guide with calming visuals",
     "status": "live",
@@ -19,7 +28,7 @@
   },
   {
     "id": "landscape",
-    "number": "003",
+    "number": "004",
     "name": "Landscape",
     "description": "Infinite glitch landscape collage generator",
     "status": "live",
@@ -28,7 +37,7 @@
   },
   {
     "id": "public-archive",
-    "number": "004",
+    "number": "005",
     "name": "The Public Archive",
     "description": "Visual essay on humanity's data footprint",
     "status": "live",

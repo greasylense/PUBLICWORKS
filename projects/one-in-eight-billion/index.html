@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#D1D1D1">
+  <meta name="description" content="Discover how unique you are among 8 billion people through an interactive visualization.">
+  <title>One in 8 Billion — PUBLICWORKS</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #D1D1D1;
+      --text: #0F0F0F;
+      --text-secondary: #6E6E6E;
+      --accent: #0047FF;
+      --alert: #FF4D00;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-mono);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    #back-link {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      z-index: 100;
+      transition: color 0.15s ease;
+    }
+    #back-link:hover { color: var(--accent); }
+
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+    }
+
+    .ui-layer {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      pointer-events: none;
+    }
+
+    .ui-layer > * { pointer-events: auto; }
+
+    /* Start Screen */
+    .start-screen {
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .start-screen h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+      line-height: 1.1;
+    }
+
+    .start-screen .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .start-screen .dot-count {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    .start-screen .dot-count span {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .btn {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--text);
+      padding: 0.875rem 2rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Question Screen */
+    .question-screen {
+      display: none;
+      text-align: center;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 2px;
+      background: rgba(15, 15, 15, 0.2);
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+
+    .question-number {
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    .question-text {
+      font-family: var(--font-display);
+      font-size: clamp(1.25rem, 4vw, 1.75rem);
+      font-weight: 700;
+      margin-bottom: 2rem;
+      line-height: 1.3;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .option-btn {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid transparent;
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .option-btn:hover {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.8);
+    }
+    .option-btn .percent {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .option-btn:hover .percent { opacity: 1; }
+
+    .skip-btn {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.5rem;
+      transition: color 0.15s ease;
+    }
+    .skip-btn:hover { color: var(--text); }
+
+    /* Insight Panel */
+    .insight-panel {
+      display: none;
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .insight-stat {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 10vw, 5rem);
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .insight-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+    }
+
+    .insight-text {
+      font-size: 0.9375rem;
+      color: var(--text);
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+
+    .remaining-count {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+    .remaining-count span {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Results Screen */
+    .results-screen {
+      display: none;
+      text-align: center;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .results-screen h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .archetype-name {
+      font-size: 1rem;
+      color: var(--accent);
+      margin-bottom: 2rem;
+    }
+
+    .final-stat {
+      font-family: var(--font-display);
+      font-size: clamp(4rem, 15vw, 8rem);
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .final-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 2rem;
+    }
+
+    .results-description {
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      color: var(--text);
+      margin-bottom: 2rem;
+    }
+
+    .trait-list {
+      text-align: left;
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .trait-list h3 {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    .trait-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(15, 15, 15, 0.1);
+    }
+    .trait-item:last-child { border-bottom: none; }
+    .trait-item .rarity {
+      color: var(--text-secondary);
+    }
+    .trait-item .rarity.rare { color: var(--accent); }
+    .trait-item .rarity.very-rare { color: var(--alert); }
+
+    .restart-btn {
+      margin-top: 1rem;
+    }
+
+    /* Responsive */
+    @media (min-width: 600px) {
+      .options {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .option-btn {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-width: 200px;
+      }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="../../" id="back-link">← PUBLICWORKS</a>
+  <canvas id="canvas"></canvas>
+
+  <div class="ui-layer">
+    <!-- Start Screen -->
+    <div class="start-screen" id="start-screen">
+      <h1>One in 8 Billion</h1>
+      <p class="subtitle">
+        Answer 23 questions to discover how unique you are among all of humanity.
+        Watch as each answer filters down from the entire human population to find others exactly like you.
+      </p>
+      <p class="dot-count">Each dot represents <span>80,000 people</span></p>
+      <button class="btn" id="start-btn">Begin</button>
+    </div>
+
+    <!-- Question Screen -->
+    <div class="question-screen" id="question-screen">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <p class="question-number" id="question-number">Question 1 of 23</p>
+      <h2 class="question-text" id="question-text"></h2>
+      <div class="options" id="options"></div>
+      <button class="skip-btn" id="skip-btn">Skip this question</button>
+    </div>
+
+    <!-- Insight Panel -->
+    <div class="insight-panel" id="insight-panel">
+      <p class="insight-stat" id="insight-stat"></p>
+      <p class="insight-label" id="insight-label"></p>
+      <p class="insight-text" id="insight-text"></p>
+      <p class="remaining-count">
+        <span id="remaining-count"></span> people share this trait with you
+      </p>
+      <button class="btn" id="continue-btn">Continue</button>
+    </div>
+
+    <!-- Results Screen -->
+    <div class="results-screen" id="results-screen">
+      <h2>You are</h2>
+      <p class="archetype-name" id="archetype-name"></p>
+      <p class="final-stat" id="final-stat"></p>
+      <p class="final-label">people on Earth are statistically like you</p>
+      <p class="results-description" id="results-description"></p>
+      <div class="trait-list" id="trait-list">
+        <h3>Your Rarest Traits</h3>
+      </div>
+      <button class="btn restart-btn" id="restart-btn">Start Over</button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ============================================
+      // GLOBAL STATISTICS DATA
+      // Sources: UN, WHO, Pew Research, scientific studies
+      // ============================================
+      const QUESTIONS = [
+        {
+          id: 'age',
+          question: 'What is your age range?',
+          options: [
+            { label: '0-14', percent: 25.4 },
+            { label: '15-24', percent: 15.5 },
+            { label: '25-34', percent: 15.3 },
+            { label: '35-44', percent: 13.2 },
+            { label: '45-54', percent: 11.8 },
+            { label: '55-64', percent: 9.3 },
+            { label: '65+', percent: 9.5 }
+          ],
+          insight: {
+            stat: (p) => `${p.toFixed(1)}%`,
+            label: 'of humanity',
+            getText: (opt) => {
+              const insights = {
+                '0-14': 'You are part of the youngest generation. There are about 2 billion people under 15 on Earth right now.',
+                '15-24': 'You are in what the UN calls the "youth bulge" - a critical demographic for global change and innovation.',
+                '25-34': 'You are in the largest working-age cohort globally. This is peak productivity and family-formation age worldwide.',
+                '35-44': 'You are in your prime earning years. Globally, people in this range hold significant economic and social influence.',
+                '45-54': 'You have lived through tremendous technological change - from no internet to AI in a single lifetime.',
+                '55-64': 'You represent a growing demographic. In many countries, this age group is becoming the largest voting bloc.',
+                '65+': 'You are part of the fastest-growing age demographic. The global population over 65 has tripled since 1950.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'gender',
+          question: 'What is your gender identity?',
+          options: [
+            { label: 'Male', percent: 49.5 },
+            { label: 'Female', percent: 49.5 },
+            { label: 'Non-binary / Other', percent: 1.0 }
+          ],
+          insight: {
+            stat: (p) => p < 2 ? '1 in 100' : '1 in 2',
+            label: 'people share this identity',
+            getText: (opt) => {
+              const insights = {
+                'Male': 'Globally, there are about 101 males born for every 100 females, but women tend to live longer, balancing the adult population.',
+                'Female': 'Women make up slightly less than half the global population but represent the majority of people over 60.',
+                'Non-binary / Other': 'Gender diversity has been documented across cultures throughout history. Modern surveys show increasing visibility of non-binary identities.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'continent',
+          question: 'Which continent do you live on?',
+          options: [
+            { label: 'Asia', percent: 59.4 },
+            { label: 'Africa', percent: 17.9 },
+            { label: 'Europe', percent: 9.3 },
+            { label: 'Latin America', percent: 8.2 },
+            { label: 'North America', percent: 4.6 },
+            { label: 'Oceania', percent: 0.6 }
+          ],
+          insight: {
+            stat: (p) => p < 1 ? '1 in 167' : p < 5 ? '1 in 20' : `1 in ${Math.round(100/p)}`,
+            label: 'live on your continent',
+            getText: (opt) => {
+              const insights = {
+                'Asia': '6 in 10 humans live in Asia. China and India alone account for over 35% of all people on Earth.',
+                'Africa': 'Africa has the youngest population and fastest growth. By 2100, it may hold 40% of humanity.',
+                'Europe': 'Europe\'s share of world population has declined from 22% in 1950 to under 10% today.',
+                'Latin America': 'Latin America is highly urbanized - over 80% of people live in cities, higher than any other region.',
+                'North America': 'Less than 5% of humans live in North America, yet the region produces about 25% of global GDP.',
+                'Oceania': 'You live on the least populated continent. Only about 45 million people call Oceania home.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'urban',
+          question: 'Do you live in an urban or rural area?',
+          options: [
+            { label: 'Urban (city/suburbs)', percent: 57 },
+            { label: 'Rural (countryside/village)', percent: 43 }
+          ],
+          insight: {
+            stat: (p) => `${p}%`,
+            label: 'of humanity',
+            getText: (opt) => {
+              const insights = {
+                'Urban (city/suburbs)': '2007 was the first year more humans lived in cities than rural areas. Urbanization continues to accelerate.',
+                'Rural (countryside/village)': 'Rural populations still produce most of the world\'s food. About 3.4 billion people live outside cities.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'height',
+          question: 'How would you describe your height?',
+          dependsOn: 'gender',
+          getOptions: (answers) => {
+            const isMale = answers.gender === 'Male';
+            if (isMale) {
+              return [
+                { label: 'Short (under 5\'6" / 168cm)', percent: 25 },
+                { label: 'Below average (5\'6"-5\'8" / 168-173cm)', percent: 25 },
+                { label: 'Average (5\'9"-5\'11" / 174-180cm)', percent: 30 },
+                { label: 'Above average (6\'0"-6\'2" / 181-188cm)', percent: 15 },
+                { label: 'Tall (over 6\'2" / 188cm)', percent: 5 }
+              ];
+            } else {
+              return [
+                { label: 'Short (under 5\'1" / 155cm)', percent: 20 },
+                { label: 'Below average (5\'1"-5\'3" / 155-160cm)', percent: 25 },
+                { label: 'Average (5\'4"-5\'6" / 161-168cm)', percent: 35 },
+                { label: 'Above average (5\'7"-5\'9" / 169-175cm)', percent: 15 },
+                { label: 'Tall (over 5\'9" / 175cm)', percent: 5 }
+              ];
+            }
+          },
+          insight: {
+            stat: (p) => p <= 5 ? '1 in 20' : `${p}%`,
+            label: (p) => p <= 5 ? 'are this height' : 'share your height range',
+            getText: (opt, answers) => {
+              const isMale = answers.gender === 'Male';
+              if (opt.label.includes('Short')) {
+                return isMale
+                  ? 'Global average male height is 5\'7" (171cm). Height varies significantly by region - Dutch men average 6\'0" while Timorese men average 5\'3".'
+                  : 'Global average female height is 5\'3" (161cm). Genetics, nutrition, and healthcare all influence height across populations.';
+              }
+              if (opt.label.includes('Tall')) {
+                return 'Being significantly taller than average puts you in an elite minority. Height is 80% determined by genetics and 20% by nutrition/environment.';
+              }
+              return 'You fall within the middle range of human height. Most humans throughout history have been within this range.';
+            }
+          }
+        },
+        {
+          id: 'eyeColor',
+          question: 'What is your eye color?',
+          options: [
+            { label: 'Brown', percent: 79 },
+            { label: 'Blue', percent: 8 },
+            { label: 'Hazel', percent: 5 },
+            { label: 'Amber', percent: 5 },
+            { label: 'Green', percent: 2 },
+            { label: 'Gray', percent: 1 }
+          ],
+          insight: {
+            stat: (p) => p <= 2 ? '1 in 50' : p <= 5 ? '1 in 20' : `${p}%`,
+            label: 'have your eye color',
+            getText: (opt) => {
+              const insights = {
+                'Brown': 'Brown eyes contain the most melanin and are dominant genetically. All humans had brown eyes until about 10,000 years ago.',
+                'Blue': 'Blue eyes originated from a single genetic mutation 6,000-10,000 years ago near the Black Sea. All blue-eyed people share this ancestor.',
+                'Hazel': 'Hazel eyes are caused by a combination of melanin and Rayleigh scattering. The color can appear to shift based on lighting.',
+                'Amber': 'True amber eyes are rare and distinct from hazel. The golden color comes from lipochrome, the same pigment that makes wolves\' eyes yellow.',
+                'Green': 'Green is the rarest eye color. Only about 2% of people worldwide have green eyes, mostly concentrated in Northern and Central Europe.',
+                'Gray': 'Gray eyes are the rarest, caused by very little melanin and more collagen in the stroma. They\'re most common in Northern and Eastern Europe.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'hairColor',
+          question: 'What is your natural hair color?',
+          options: [
+            { label: 'Black', percent: 75 },
+            { label: 'Brown', percent: 11 },
+            { label: 'Blonde', percent: 2 },
+            { label: 'Red', percent: 1 },
+            { label: 'Gray/White', percent: 11 }
+          ],
+          insight: {
+            stat: (p) => p <= 2 ? '1 in 50' : `${p}%`,
+            label: 'share your hair color',
+            getText: (opt) => {
+              const insights = {
+                'Black': 'Black hair is the most common and the ancestral human hair color. It\'s dominant across Asia, Africa, and Latin America.',
+                'Brown': 'Brown hair results from moderate eumelanin levels. It\'s most common among Europeans and their descendants.',
+                'Blonde': 'Natural blonde hair is rare globally, found mainly in Northern Europe. Blonde hair evolved as recently as 11,000 years ago.',
+                'Red': 'Red hair is the rarest, caused by a variant of the MC1R gene. Scotland has the highest percentage at 13%.',
+                'Gray/White': 'Hair turns gray when melanocyte stem cells stop producing pigment. The average person starts graying in their mid-30s.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'handedness',
+          question: 'Which hand do you write with?',
+          options: [
+            { label: 'Right', percent: 89 },
+            { label: 'Left', percent: 10 },
+            { label: 'Ambidextrous', percent: 1 }
+          ],
+          insight: {
+            stat: (p) => p === 1 ? '1 in 100' : p === 10 ? '1 in 10' : `${p}%`,
+            label: 'share your handedness',
+            getText: (opt) => {
+              const insights = {
+                'Right': 'Right-handedness has been dominant for at least 500,000 years. Stone tools from that era show right-handed use patterns.',
+                'Left': 'Left-handedness has remained stable at ~10% for thousands of years. This suggests it provides some evolutionary advantage.',
+                'Ambidextrous': 'True ambidexterity (equal skill with both hands) is extremely rare. Most "ambidextrous" people have a slight preference.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'bloodType',
+          question: 'What is your blood type?',
+          options: [
+            { label: 'O+', percent: 37.4 },
+            { label: 'A+', percent: 35.7 },
+            { label: 'B+', percent: 8.5 },
+            { label: 'AB+', percent: 3.4 },
+            { label: 'O-', percent: 6.6 },
+            { label: 'A-', percent: 6.3 },
+            { label: 'B-', percent: 1.5 },
+            { label: 'AB-', percent: 0.6 },
+            { label: 'Don\'t know', percent: 0, skip: true }
+          ],
+          insight: {
+            stat: (p) => p < 2 ? '1 in ' + Math.round(100/p) : `${p.toFixed(1)}%`,
+            label: 'of people share your blood type',
+            getText: (opt) => {
+              if (opt.label === 'Don\'t know') return 'About 30% of people don\'t know their blood type. Consider finding out - it could save your life.';
+              if (opt.label.includes('-')) {
+                return `Rh-negative blood types are rarer than positive. ${opt.label} can only receive ${opt.label.replace('+', '-')} or O- blood in transfusions.`;
+              }
+              if (opt.label === 'O+') return 'O+ is the most common blood type and can donate to any positive blood type. O+ is called the "universal donor" for positive patients.';
+              if (opt.label === 'AB+') return 'AB+ is the universal recipient - you can receive blood from any type. However, you can only donate to other AB+ individuals.';
+              return 'Blood type distribution varies significantly by ethnicity and region. Type B is most common in Central Asia.';
+            }
+          }
+        },
+        {
+          id: 'glasses',
+          question: 'Do you wear glasses or contact lenses?',
+          options: [
+            { label: 'Yes', percent: 36 },
+            { label: 'No', percent: 64 }
+          ],
+          insight: {
+            stat: (p) => `${p}%`,
+            label: 'of people',
+            getText: (opt) => {
+              const insights = {
+                'Yes': 'Vision problems have increased dramatically with modern lifestyles. In some Asian countries, up to 90% of young adults are nearsighted.',
+                'No': 'Natural good vision is becoming less common, especially in developed countries. Screen time and less outdoor activity are major factors.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'languages',
+          question: 'How many languages can you hold a conversation in?',
+          options: [
+            { label: '1 language', percent: 40 },
+            { label: '2 languages', percent: 43 },
+            { label: '3 languages', percent: 13 },
+            { label: '4+ languages', percent: 4 }
+          ],
+          insight: {
+            stat: (p) => p <= 4 ? '1 in 25' : `${p}%`,
+            label: 'share your linguistic ability',
+            getText: (opt) => {
+              const insights = {
+                '1 language': 'Monolingualism is most common in English-speaking countries. In Europe and Africa, speaking multiple languages is the norm.',
+                '2 languages': 'Bilingualism is the global norm. Over half of the world\'s population speaks at least two languages.',
+                '3 languages': 'Trilingualism is common in multilingual countries like Switzerland, Belgium, and many African nations.',
+                '4+ languages': 'Polyglots (speakers of 4+ languages) are relatively rare. The record is held by people who speak dozens of languages.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'education',
+          question: 'What is your highest level of education?',
+          options: [
+            { label: 'No formal education', percent: 14 },
+            { label: 'Primary school', percent: 26 },
+            { label: 'Secondary school', percent: 40 },
+            { label: 'University degree', percent: 15 },
+            { label: 'Graduate degree', percent: 5 }
+          ],
+          insight: {
+            stat: (p) => p <= 5 ? '1 in 20' : `${p}%`,
+            label: 'have reached this level',
+            getText: (opt) => {
+              const insights = {
+                'No formal education': '14% of adults globally (about 750 million) cannot read or write. Two-thirds of them are women.',
+                'Primary school': 'Completing primary education was a major achievement for most of human history. Universal primary education is a recent goal.',
+                'Secondary school': 'Secondary education completion varies wildly - from 10% in some countries to 99% in others.',
+                'University degree': 'Only about 15% of adults worldwide have a bachelor\'s degree. This number is rising rapidly.',
+                'Graduate degree': 'Having a graduate degree puts you in the top 5% of global educational attainment.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'relationship',
+          question: 'What is your relationship status?',
+          options: [
+            { label: 'Single', percent: 32 },
+            { label: 'In a relationship', percent: 18 },
+            { label: 'Married', percent: 42 },
+            { label: 'Divorced/Separated', percent: 5 },
+            { label: 'Widowed', percent: 3 }
+          ],
+          insight: {
+            stat: (p) => `${p}%`,
+            label: 'of adults share your status',
+            getText: (opt) => {
+              const insights = {
+                'Single': 'Single adults are increasing globally. In many developed countries, the median age of first marriage has risen by 5+ years since 1990.',
+                'In a relationship': 'Cohabitation without marriage is increasingly common globally, though rates vary dramatically by culture and religion.',
+                'Married': 'Marriage remains the most common relationship structure globally. About 750 million marriages exist worldwide.',
+                'Divorced/Separated': 'Global divorce rates vary enormously - from under 1% in some countries to over 50% in others.',
+                'Widowed': 'There are about 258 million widows worldwide. Due to longer female life expectancy, most are women.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'children',
+          question: 'Do you have children?',
+          options: [
+            { label: 'No children', percent: 45 },
+            { label: '1 child', percent: 18 },
+            { label: '2 children', percent: 22 },
+            { label: '3+ children', percent: 15 }
+          ],
+          insight: {
+            stat: (p) => `${p}%`,
+            label: 'of adults',
+            getText: (opt) => {
+              const insights = {
+                'No children': 'Childlessness is rising in developed countries. In the US, about 44% of adults under 50 have no children.',
+                '1 child': 'One-child families are most common in East Asia and parts of Europe. China\'s one-child policy (1980-2015) shaped a generation.',
+                '2 children': 'Two children is close to the "replacement rate" needed to maintain population. Many countries are below this.',
+                '3+ children': 'Larger families are most common in Sub-Saharan Africa, where the average is 4.6 children per woman.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'siblings',
+          question: 'How many siblings do you have?',
+          options: [
+            { label: 'None (only child)', percent: 15 },
+            { label: '1 sibling', percent: 30 },
+            { label: '2 siblings', percent: 25 },
+            { label: '3+ siblings', percent: 30 }
+          ],
+          insight: {
+            stat: (p) => `${p}%`,
+            label: 'share this',
+            getText: (opt) => {
+              const insights = {
+                'None (only child)': 'Only children are most common in urban China (up to 90% in cities) and increasingly in Europe.',
+                '1 sibling': 'Having one sibling is typical in developed countries where the fertility rate is around 2.',
+                '2 siblings': 'Growing up with two siblings was the norm for Baby Boomers but is now less common in many countries.',
+                '3+ siblings': 'Large families remain common in parts of Africa, the Middle East, and religious communities worldwide.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'pets',
+          question: 'Do you have a pet?',
+          options: [
+            { label: 'No pets', percent: 43 },
+            { label: 'Dog(s)', percent: 33 },
+            { label: 'Cat(s)', percent: 23 },
+            { label: 'Other pet(s)', percent: 12 }
+          ],
+          insight: {
+            stat: (p) => `${p}%`,
+            label: 'of households',
+            getText: (opt) => {
+              const insights = {
+                'No pets': 'Pet ownership varies dramatically by country. In South Korea, only 15% have pets, while in Argentina it\'s 80%.',
+                'Dog(s)': 'There are about 900 million dogs in the world. Dogs were domesticated 15,000-40,000 years ago.',
+                'Cat(s)': 'There are about 600 million domestic cats globally. Cats domesticated themselves about 10,000 years ago.',
+                'Other pet(s)': 'Fish are actually the most numerous pets by count - there are over 140 million pet fish in the US alone.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'swimming',
+          question: 'Can you swim?',
+          options: [
+            { label: 'Yes, confidently', percent: 40 },
+            { label: 'Somewhat', percent: 15 },
+            { label: 'No', percent: 45 }
+          ],
+          insight: {
+            stat: (p) => `${p}%`,
+            label: 'of people',
+            getText: (opt) => {
+              const insights = {
+                'Yes, confidently': 'Swimming ability varies hugely by country. In the Netherlands, over 95% can swim. In Bangladesh, only about 40%.',
+                'Somewhat': 'Partial swimming ability is common - many people can stay afloat but wouldn\'t feel safe in deep water.',
+                'No': 'About half of humanity cannot swim. Drowning is one of the leading causes of accidental death worldwide.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'travel',
+          question: 'Have you ever traveled to another country?',
+          options: [
+            { label: 'Never', percent: 60 },
+            { label: '1-3 countries', percent: 25 },
+            { label: '4-10 countries', percent: 10 },
+            { label: '10+ countries', percent: 5 }
+          ],
+          insight: {
+            stat: (p) => p <= 5 ? '1 in 20' : `${p}%`,
+            label: 'have this travel experience',
+            getText: (opt) => {
+              const insights = {
+                'Never': 'Most humans never leave their country of birth. Only about 4% of the world\'s population travels internationally each year.',
+                '1-3 countries': 'Visiting a few countries puts you ahead of most of humanity in travel experience.',
+                '4-10 countries': 'Visiting multiple countries requires significant resources. You\'ve seen more of the world than 85% of people.',
+                '10+ countries': 'You are in a very small minority of well-traveled people. The most-traveled person has visited all 193 UN countries.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'tongueRoll',
+          question: 'Can you roll your tongue?',
+          options: [
+            { label: 'Yes', percent: 70 },
+            { label: 'No', percent: 30 }
+          ],
+          insight: {
+            stat: (p) => `${p}%`,
+            label: 'of people',
+            getText: (opt) => {
+              const insights = {
+                'Yes': 'Tongue rolling was long thought to be purely genetic, but studies show it can sometimes be learned. Identical twins don\'t always share the ability.',
+                'No': 'Not being able to roll your tongue puts you in the minority. Despite popular belief, it\'s not a simple single-gene trait.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'religion',
+          question: 'What best describes your religious or spiritual beliefs?',
+          options: [
+            { label: 'Christianity', percent: 31.1 },
+            { label: 'Islam', percent: 24.9 },
+            { label: 'Hinduism', percent: 15.2 },
+            { label: 'Buddhism', percent: 6.6 },
+            { label: 'Other religion', percent: 6.0 },
+            { label: 'Non-religious', percent: 15.6 }
+          ],
+          insight: {
+            stat: (p) => `${p.toFixed(1)}%`,
+            label: 'of humanity',
+            getText: (opt) => {
+              const insights = {
+                'Christianity': 'Christianity is the largest religion with 2.4 billion adherents. It\'s majority in 157 countries.',
+                'Islam': 'Islam is the fastest-growing major religion and may surpass Christianity in adherents by 2075.',
+                'Hinduism': 'Hinduism is the world\'s oldest major religion, with roots going back over 4,000 years.',
+                'Buddhism': 'Buddhism has about 520 million followers, mostly in East and Southeast Asia.',
+                'Other religion': 'This includes Judaism, Sikhism, indigenous religions, and thousands of other belief systems.',
+                'Non-religious': 'The non-religious population is growing, especially in Europe, North America, and East Asia.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'diet',
+          question: 'How would you describe your diet?',
+          options: [
+            { label: 'Omnivore (eat everything)', percent: 86 },
+            { label: 'Vegetarian', percent: 8 },
+            { label: 'Vegan', percent: 1 },
+            { label: 'Pescatarian', percent: 3 },
+            { label: 'Other dietary restriction', percent: 2 }
+          ],
+          insight: {
+            stat: (p) => p <= 3 ? '1 in ' + Math.round(100/p) : `${p}%`,
+            label: 'follow this diet',
+            getText: (opt) => {
+              const insights = {
+                'Omnivore (eat everything)': 'Most humans eat an omnivorous diet. Meat consumption is rising globally, especially in developing countries.',
+                'Vegetarian': 'India has the highest vegetarian population at about 40%. Globally, vegetarianism is growing.',
+                'Vegan': 'Veganism remains rare globally but is growing fastest in Western countries. Only about 1% of the world is vegan.',
+                'Pescatarian': 'Fish-based diets are common in coastal communities. About 3 billion people rely on seafood as a primary protein source.',
+                'Other dietary restriction': 'This includes halal, kosher, gluten-free, and medical dietary requirements affecting billions.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'sleep',
+          question: 'How much sleep do you typically get?',
+          options: [
+            { label: 'Less than 6 hours', percent: 20 },
+            { label: '6-7 hours', percent: 35 },
+            { label: '7-8 hours', percent: 30 },
+            { label: 'More than 8 hours', percent: 15 }
+          ],
+          insight: {
+            stat: (p) => `${p}%`,
+            label: 'of people',
+            getText: (opt) => {
+              const insights = {
+                'Less than 6 hours': 'Chronic sleep deprivation affects about 1.5 billion people. It\'s linked to numerous health problems.',
+                '6-7 hours': 'This is the most common sleep duration but below the recommended 7-9 hours for adults.',
+                '7-8 hours': 'You\'re getting the recommended amount of sleep. This is associated with better health outcomes.',
+                'More than 8 hours': 'Long sleep duration is less common and can sometimes indicate underlying health conditions, or just good self-care.'
+              };
+              return insights[opt.label];
+            }
+          }
+        },
+        {
+          id: 'coffee',
+          question: 'Do you drink coffee?',
+          options: [
+            { label: 'Daily', percent: 47 },
+            { label: 'Sometimes', percent: 23 },
+            { label: 'Rarely', percent: 12 },
+            { label: 'Never', percent: 18 }
+          ],
+          insight: {
+            stat: (p) => `${p}%`,
+            label: 'of adults',
+            getText: (opt) => {
+              const insights = {
+                'Daily': 'About 2 billion cups of coffee are consumed daily worldwide. Finland has the highest per capita consumption.',
+                'Sometimes': 'Occasional coffee drinking is common. Global coffee consumption has been rising about 2% per year.',
+                'Rarely': 'Infrequent coffee drinking often relates to caffeine sensitivity or cultural preferences for tea.',
+                'Never': 'Non-coffee drinkers are more common in tea-drinking cultures like China, India, and the UK.'
+              };
+              return insights[opt.label];
+            }
+          }
+        }
+      ];
+
+      // ============================================
+      // ARCHETYPES
+      // ============================================
+      const ARCHETYPES = [
+        {
+          id: 'statistical-norm',
+          name: 'The Statistical Norm',
+          description: 'You align remarkably well with global averages. Your combination of traits represents what is most common across humanity.',
+          check: (score) => score > 0.15
+        },
+        {
+          id: 'unicorn',
+          name: 'The Unicorn',
+          description: 'Your combination of traits is extraordinarily rare. The chances of finding someone exactly like you are infinitesimally small.',
+          check: (score, rareCount) => score < 0.00001 || rareCount >= 8
+        },
+        {
+          id: 'regional-majority',
+          name: 'The Regional Majority',
+          description: 'While your traits may be common in your region, they\'re less typical on a global scale. Location shapes who we are.',
+          check: (score, rareCount, answers) => answers.continent && ['North America', 'Europe', 'Oceania'].includes(answers.continent) && score < 0.01
+        },
+        {
+          id: 'genetic-lottery',
+          name: 'The Genetic Lottery',
+          description: 'Your physical traits are notably uncommon. Nature gave you a unique combination of characteristics.',
+          check: (score, rareCount, answers, rareTraits) => rareTraits.filter(t => ['eyeColor', 'hairColor', 'handedness', 'height'].includes(t.id)).length >= 2
+        },
+        {
+          id: 'one-percenter',
+          name: 'The One Percenter',
+          description: 'You have multiple traits that each put you in the top 1%. This combination is exceptionally rare.',
+          check: (score, rareCount) => rareCount >= 5
+        },
+        {
+          id: 'global-citizen',
+          name: 'The Global Citizen',
+          description: 'Your experiences span beyond typical boundaries. Travel, languages, and diverse experiences set you apart.',
+          check: (score, rareCount, answers) =>
+            (answers.travel === '10+ countries' || answers.languages === '4+ languages' || answers.languages === '3 languages')
+        },
+        {
+          id: 'outlier',
+          name: 'The Outlier',
+          description: 'Across many dimensions, you consistently fall outside the norm. You\'re used to being different.',
+          check: (score, rareCount) => rareCount >= 4 && score < 0.001
+        },
+        {
+          id: 'common-thread',
+          name: 'The Common Thread',
+          description: 'Your traits connect you to the majority of humanity. You share something meaningful with billions of people.',
+          check: (score) => score > 0.05
+        },
+        {
+          id: 'life-less-traveled',
+          name: 'The Road Less Traveled',
+          description: 'Your life choices and circumstances have led you down an uncommon path. Your story is uniquely yours.',
+          check: (score, rareCount, answers, rareTraits) =>
+            rareTraits.filter(t => ['education', 'travel', 'relationship', 'children'].includes(t.id)).length >= 2
+        },
+        {
+          id: 'balanced',
+          name: 'The Balanced',
+          description: 'You have a mix of common and rare traits. Like most of humanity, you\'re unique in some ways and typical in others.',
+          check: (score, rareCount) => rareCount >= 1 && rareCount <= 3 && score > 0.0001 && score < 0.05
+        },
+        {
+          id: 'mirror',
+          name: 'The Mirror of Humanity',
+          description: 'Looking at you is like looking at a reflection of the human average. You embody the center of the bell curve.',
+          check: (score) => score > 0.1
+        },
+        {
+          id: 'unique',
+          name: 'Uniquely You',
+          description: 'Your specific combination of traits, while not extremely rare individually, creates a unique whole. There\'s no one quite like you.',
+          check: () => true // fallback
+        }
+      ];
+
+      // ============================================
+      // STATE
+      // ============================================
+      let currentQuestion = 0;
+      let answers = {};
+      let populationPercent = 100;
+      let answeredQuestions = [];
+      let skippedQuestions = [];
+
+      // ============================================
+      // DOM ELEMENTS
+      // ============================================
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const startScreen = document.getElementById('start-screen');
+      const questionScreen = document.getElementById('question-screen');
+      const insightPanel = document.getElementById('insight-panel');
+      const resultsScreen = document.getElementById('results-screen');
+
+      // ============================================
+      // CANVAS - DOT VISUALIZATION
+      // ============================================
+      const TOTAL_DOTS = 100000;
+      const PEOPLE_PER_DOT = 80000;
+      let dots = [];
+      let activeDots = TOTAL_DOTS;
+      let targetActiveDots = TOTAL_DOTS;
+      let width, height;
+
+      function initCanvas() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        initDots();
+        animate();
+      }
+
+      function initDots() {
+        dots = [];
+        const cols = Math.ceil(Math.sqrt(TOTAL_DOTS * (width / height)));
+        const rows = Math.ceil(TOTAL_DOTS / cols);
+        const spacingX = width / cols;
+        const spacingY = height / rows;
+
+        for (let i = 0; i < TOTAL_DOTS; i++) {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          dots.push({
+            x: col * spacingX + spacingX / 2 + (Math.random() - 0.5) * spacingX * 0.3,
+            y: row * spacingY + spacingY / 2 + (Math.random() - 0.5) * spacingY * 0.3,
+            baseX: col * spacingX + spacingX / 2,
+            baseY: row * spacingY + spacingY / 2,
+            active: true,
+            opacity: 1,
+            targetOpacity: 1
+          });
+        }
+      }
+
+      function updateDots() {
+        // Calculate how many dots should be active
+        const newActiveDots = Math.round(TOTAL_DOTS * (populationPercent / 100));
+
+        if (newActiveDots !== targetActiveDots) {
+          targetActiveDots = newActiveDots;
+
+          // Randomly deactivate dots
+          const activeDotIndices = dots.map((d, i) => d.active ? i : -1).filter(i => i >= 0);
+          const toDeactivate = activeDotIndices.length - targetActiveDots;
+
+          if (toDeactivate > 0) {
+            // Shuffle and pick dots to deactivate
+            for (let i = activeDotIndices.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [activeDotIndices[i], activeDotIndices[j]] = [activeDotIndices[j], activeDotIndices[i]];
+            }
+
+            for (let i = 0; i < toDeactivate; i++) {
+              dots[activeDotIndices[i]].targetOpacity = 0;
+            }
+          }
+        }
+
+        // Animate opacity
+        dots.forEach(dot => {
+          if (dot.opacity !== dot.targetOpacity) {
+            dot.opacity += (dot.targetOpacity - dot.opacity) * 0.05;
+            if (Math.abs(dot.opacity - dot.targetOpacity) < 0.01) {
+              dot.opacity = dot.targetOpacity;
+              dot.active = dot.opacity > 0;
+            }
+          }
+        });
+
+        activeDots = dots.filter(d => d.active).length;
+      }
+
+      function drawDots() {
+        ctx.fillStyle = '#D1D1D1';
+        ctx.fillRect(0, 0, width, height);
+
+        const dotSize = Math.max(0.8, Math.min(2, width / 800));
+
+        dots.forEach(dot => {
+          if (dot.opacity > 0.01) {
+            const alpha = dot.opacity * 0.7;
+            ctx.fillStyle = dot.opacity > 0.5
+              ? `rgba(15, 15, 15, ${alpha})`
+              : `rgba(110, 110, 110, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(dot.x, dot.y, dotSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+
+      function animate() {
+        updateDots();
+        drawDots();
+        requestAnimationFrame(animate);
+      }
+
+      // ============================================
+      // QUESTION LOGIC
+      // ============================================
+      function getQuestion(index) {
+        const q = QUESTIONS[index];
+        if (q.dependsOn && q.getOptions) {
+          return {
+            ...q,
+            options: q.getOptions(answers)
+          };
+        }
+        return q;
+      }
+
+      function showQuestion(index) {
+        const q = getQuestion(index);
+
+        document.getElementById('progress-fill').style.width = `${((index + 1) / QUESTIONS.length) * 100}%`;
+        document.getElementById('question-number').textContent = `Question ${index + 1} of ${QUESTIONS.length}`;
+        document.getElementById('question-text').textContent = q.question;
+
+        const optionsContainer = document.getElementById('options');
+        optionsContainer.innerHTML = '';
+
+        q.options.forEach(opt => {
+          if (opt.skip) return; // Don't show "don't know" type options as buttons
+
+          const btn = document.createElement('button');
+          btn.className = 'option-btn';
+          btn.innerHTML = `
+            <span>${opt.label}</span>
+            <span class="percent">${opt.percent.toFixed(1)}%</span>
+          `;
+          btn.addEventListener('click', () => selectOption(q, opt));
+          optionsContainer.appendChild(btn);
+        });
+
+        // Add "don't know" option if exists
+        const skipOpt = q.options.find(o => o.skip);
+        if (skipOpt) {
+          const skipBtn = document.createElement('button');
+          skipBtn.className = 'option-btn';
+          skipBtn.innerHTML = `<span>${skipOpt.label}</span>`;
+          skipBtn.addEventListener('click', () => skipQuestion());
+          optionsContainer.appendChild(skipBtn);
+        }
+
+        questionScreen.style.display = 'block';
+        startScreen.style.display = 'none';
+        insightPanel.style.display = 'none';
+        resultsScreen.style.display = 'none';
+      }
+
+      function selectOption(question, option) {
+        answers[question.id] = option.label;
+        answeredQuestions.push({ question, option });
+
+        // Calculate new population percentage
+        populationPercent *= (option.percent / 100);
+
+        showInsight(question, option);
+      }
+
+      function showInsight(question, option) {
+        const insight = question.insight;
+        const stat = insight.stat(option.percent);
+        const label = typeof insight.label === 'function' ? insight.label(option.percent) : insight.label;
+        const text = insight.getText(option, answers);
+
+        document.getElementById('insight-stat').textContent = stat;
+        document.getElementById('insight-label').textContent = label;
+        document.getElementById('insight-text').textContent = text;
+
+        const remainingPeople = Math.round(8000000000 * (populationPercent / 100));
+        document.getElementById('remaining-count').textContent = formatNumber(remainingPeople);
+
+        questionScreen.style.display = 'none';
+        insightPanel.style.display = 'block';
+      }
+
+      function skipQuestion() {
+        skippedQuestions.push(QUESTIONS[currentQuestion].id);
+        nextQuestion();
+      }
+
+      function nextQuestion() {
+        currentQuestion++;
+
+        // Skip questions that depend on unanswered questions
+        while (currentQuestion < QUESTIONS.length) {
+          const q = QUESTIONS[currentQuestion];
+          if (q.dependsOn && !answers[q.dependsOn]) {
+            skippedQuestions.push(q.id);
+            currentQuestion++;
+          } else {
+            break;
+          }
+        }
+
+        if (currentQuestion >= QUESTIONS.length) {
+          showResults();
+        } else {
+          showQuestion(currentQuestion);
+        }
+      }
+
+      function showResults() {
+        questionScreen.style.display = 'none';
+        insightPanel.style.display = 'none';
+        resultsScreen.style.display = 'block';
+
+        const finalPeople = Math.round(8000000000 * (populationPercent / 100));
+        document.getElementById('final-stat').textContent = formatNumber(finalPeople);
+
+        // Calculate rarity of each trait
+        const rareTraits = answeredQuestions
+          .filter(aq => aq.option.percent < 20)
+          .map(aq => ({
+            id: aq.question.id,
+            label: aq.option.label,
+            percent: aq.option.percent,
+            question: aq.question.question
+          }))
+          .sort((a, b) => a.percent - b.percent);
+
+        // Determine archetype
+        const rareCount = rareTraits.length;
+        let archetype = ARCHETYPES.find(a => a.check(populationPercent / 100, rareCount, answers, rareTraits));
+        if (!archetype) archetype = ARCHETYPES[ARCHETYPES.length - 1];
+
+        document.getElementById('archetype-name').textContent = archetype.name;
+        document.getElementById('results-description').textContent = archetype.description;
+
+        // Show rare traits
+        const traitList = document.getElementById('trait-list');
+        traitList.innerHTML = '<h3>Your Rarest Traits</h3>';
+
+        if (rareTraits.length === 0) {
+          traitList.innerHTML += '<p style="font-size: 0.875rem; color: var(--text-secondary);">All your traits are relatively common!</p>';
+        } else {
+          rareTraits.slice(0, 5).forEach(trait => {
+            const rarityClass = trait.percent < 5 ? 'very-rare' : trait.percent < 10 ? 'rare' : '';
+            const div = document.createElement('div');
+            div.className = 'trait-item';
+            div.innerHTML = `
+              <span>${trait.label}</span>
+              <span class="rarity ${rarityClass}">${trait.percent < 1 ? '<1' : trait.percent.toFixed(1)}% of people</span>
+            `;
+            traitList.appendChild(div);
+          });
+        }
+      }
+
+      function formatNumber(num) {
+        if (num >= 1000000000) {
+          return (num / 1000000000).toFixed(2) + 'B';
+        } else if (num >= 1000000) {
+          return (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+          return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toLocaleString();
+      }
+
+      function restart() {
+        currentQuestion = 0;
+        answers = {};
+        populationPercent = 100;
+        answeredQuestions = [];
+        skippedQuestions = [];
+
+        // Reset dots
+        dots.forEach(dot => {
+          dot.active = true;
+          dot.opacity = 1;
+          dot.targetOpacity = 1;
+        });
+        targetActiveDots = TOTAL_DOTS;
+
+        resultsScreen.style.display = 'none';
+        startScreen.style.display = 'block';
+      }
+
+      // ============================================
+      // EVENT LISTENERS
+      // ============================================
+      document.getElementById('start-btn').addEventListener('click', () => {
+        startScreen.style.display = 'none';
+        showQuestion(0);
+      });
+
+      document.getElementById('skip-btn').addEventListener('click', skipQuestion);
+      document.getElementById('continue-btn').addEventListener('click', nextQuestion);
+      document.getElementById('restart-btn').addEventListener('click', restart);
+
+      window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        initDots();
+      });
+
+      // Initialize
+      initCanvas();
+
+    })();
+  </script>
+</body>
+</html>
