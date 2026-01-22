@@ -121,11 +121,12 @@
       height: 150px;
       border-radius: 6px;
       overflow: hidden;
-      z-index: 50;
+      z-index: 100;
       opacity: 0;
       transition: opacity 0.3s ease;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      background: #0A0A0A;
     }
 
     #preview-container.visible {
@@ -409,7 +410,11 @@
         const pw = previewCanvas.width;
         const ph = previewCanvas.height;
 
-        // Draw video feed
+        // Skip if canvas not ready
+        if (pw === 0 || ph === 0) return;
+
+        // Clear and draw video feed
+        previewCtx.clearRect(0, 0, pw, ph);
         previewCtx.drawImage(video, 0, 0, pw, ph);
 
         // Draw face mesh landmarks
@@ -624,6 +629,10 @@
       function start() {
         startPrompt.classList.add('hidden');
         loadingEl.classList.add('visible');
+
+        // Initialize preview canvas size
+        previewCanvas.width = 200;
+        previewCanvas.height = 150;
 
         handleResize();
         initTracking();
