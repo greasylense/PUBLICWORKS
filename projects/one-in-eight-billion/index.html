@@ -20,7 +20,7 @@
       --accent: #0047FF;
       --accent-glow: rgba(0, 71, 255, 0.4);
       --warm: #FF4D00;
-      --glass: rgba(10, 10, 10, 0.85);
+      --glass: rgba(10, 10, 10, 0.98);
       --glass-border: rgba(255, 255, 255, 0.1);
       --font-display: 'Space Grotesk', system-ui, sans-serif;
       --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
@@ -78,13 +78,14 @@
 
     /* Glass Card */
     .glass-card {
-      background: var(--glass);
+      background: rgba(10, 10, 10, 1);
       backdrop-filter: blur(40px);
       -webkit-backdrop-filter: blur(40px);
-      border: 1px solid var(--glass-border);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       padding: 3rem;
       max-width: 560px;
       width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.1);
     }
 
     /* Start Screen */
