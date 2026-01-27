@@ -18,17 +18,8 @@
     "date": "2025-01"
   },
   {
-    "id": "breath",
-    "number": "003",
-    "name": "Breath",
-    "description": "Meditative breathwork guide with calming visuals",
-    "status": "live",
-    "url": "projects/breath/",
-    "date": "2025-01"
-  },
-  {
     "id": "landscape",
-    "number": "004",
+    "number": "003",
     "name": "Landscape",
     "description": "Infinite glitch landscape collage generator",
     "status": "live",
@@ -37,7 +28,7 @@
   },
   {
     "id": "public-archive",
-    "number": "005",
+    "number": "004",
     "name": "The Public Archive",
     "description": "Visual essay on humanity's data footprint",
     "status": "live",
