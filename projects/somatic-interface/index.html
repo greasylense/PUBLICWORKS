@@ -15,8 +15,8 @@
     #start .sub{font-size:0.7rem;color:#6E6E6E;margin-bottom:0.5rem}
     #start .desc{max-width:360px;text-align:center;margin:1.2rem;font-size:0.75rem;color:#6E6E6E;line-height:1.6}
     #start .cta{font-size:0.6rem;color:#0047FF;text-transform:uppercase;letter-spacing:0.15em}
-    #video{position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);z-index:1;background:#000}
-    #canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;transform:scaleX(-1);z-index:2;background:transparent}
+    #video{position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);z-index:1;background:#000;opacity:0.1;filter:grayscale(100%) contrast(120%)}
+    #canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;transform:scaleX(-1);z-index:2;background:transparent;filter:drop-shadow(0 0 4px rgba(0, 71, 255, 0.5))}
     #start.hide{opacity:0;pointer-events:none;z-index:-1}
     #hud{position:fixed;bottom:1.5rem;right:1.5rem;font-size:0.55rem;color:#0F0F0F;background:rgba(209,209,209,0.85);padding:0.5rem 0.7rem;border:1px solid #0F0F0F;z-index:999}
     #hud div{margin-bottom:0.15rem}
@@ -60,10 +60,17 @@
     let ac, master, comp, delay, delayGain, reverb, revGain;
     let padVoices = [], lead, bass, stab;
     let arpTime = 0, arpIndex = 0;
-    let lastGesture = '', currentChord = 'I';
+    let lastGesture = '', currentChord = 'I', arpPattern = 'UP';
     let expressionMod = 0.5; // face expression modifier
 
     // Musical constants - warm 7th chords
+    const ARP_PATTERNS = {
+      UP: (i, len) => i % len,
+      DOWN: (i, len) => (len - 1) - (i % len),
+      CONVERGE: (i, len) => [0, len-1, 1, len-2][i % 4] % len,
+      RANDOM: (i, len) => Math.floor(Math.random() * len)
+    };
+
     const CHORDS = {
       I:   [0, 4, 7, 11],   // Cmaj7
       ii:  [2, 5, 9, 12],   // Dm7
@@ -129,20 +136,23 @@
         const o2 = ac.createOscillator();
         const f = ac.createBiquadFilter();
         const g = ac.createGain();
+        const pan = ac.createStereoPanner();
 
         o1.type = 'sawtooth';
         o2.type = 'triangle';
         o2.detune.value = 6 + i * 2;
         f.type = 'lowpass';
         f.frequency.value = 350;
-        f.Q.value = 0.8;
+        f.Q.value = 1;
         g.gain.value = 0;
+        pan.pan.value = (i % 2 === 0 ? -1 : 1) * 0.4;
 
         o1.connect(f);
         o2.connect(f);
         f.connect(g);
-        g.connect(master);
-        g.connect(reverb);
+        g.connect(pan);
+        pan.connect(master);
+        pan.connect(reverb);
         o1.start();
         o2.start();
 
@@ -154,9 +164,9 @@
       const lo2 = ac.createOscillator();
       const lf = ac.createBiquadFilter();
       const lg = ac.createGain();
-      lo1.type = 'square';
-      lo2.type = 'sawtooth';
-      lo2.detune.value = -4;
+      lo1.type = 'triangle';
+      lo2.type = 'square';
+      lo2.detune.value = -5;
       lf.type = 'lowpass';
       lf.frequency.value = 1200;
       lf.Q.value = 5;
@@ -261,6 +271,7 @@
       const rHand = getHand('Right');
       const lHand = getHand('Left');
       const gesture = detectGesture(rHand);
+      const lGesture = detectGesture(lHand);
 
       // Update HUD
       const gestureIcons = {
@@ -275,7 +286,7 @@
       document.getElementById('gIcon').textContent = gestureIcons[gesture] || '○';
       document.getElementById('gName').textContent = gesture.toUpperCase();
       document.getElementById('hR').textContent = rHand ? 'ACTIVE' : '—';
-      document.getElementById('hL').textContent = lHand ? 'ARP' : '—';
+      document.getElementById('hL').textContent = lHand ? `ARP: ${arpPattern}` : '—';
 
       // Choose chord from right hand Y position
       let chordIdx = 0;
@@ -379,11 +390,16 @@
 
       // ===== ARPEGGIATOR (left hand) =====
       if (lHand && lHand[8]) {
+        if (lGesture === 'open') arpPattern = 'UP';
+        else if (lGesture === 'fist') arpPattern = 'DOWN';
+        else if (lGesture === 'peace') arpPattern = 'CONVERGE';
+        else if (lGesture === 'point') arpPattern = 'RANDOM';
+
         const tip = lHand[8];
         const wrist = lHand[0];
 
         // Speed from X position (left = slow, right = fast)
-        const bpm = 90 + tip.x * 140;
+        const bpm = 120 + (tip.x - 0.5) * 100;
         const stepTime = 60 / bpm / 2;
 
         // Filter brightness from Y
@@ -395,7 +411,8 @@
 
           // Extended arp pattern
           const pattern = [...chord, chord[0] + 12, chord[2] + 12, chord[1] + 12];
-          const note = pattern[arpIndex % pattern.length];
+          const idx = ARP_PATTERNSarpPattern;
+          const note = pattern[idx];
           const freq = mtof(ROOT + 12 + note);
 
           lead.o1.frequency.setTargetAtTime(freq, t, 0.008);
@@ -499,37 +516,44 @@
 
       // Draw face mesh
       if (faceLandmarks) {
-        const col = '0, 71, 255'; // accent blue
+        const col = '0, 255, 200'; // Cyan for TouchDesigner vibe
+        
+        // Plexus Effect: Connect nearby points
+        const stride = 6;
+        const nodes = [];
+        
+        for (let i = 0; i < faceLandmarks.length; i += stride) {
+          const pt = faceLandmarks[i];
+          nodes.push({x: pt.x * W, y: pt.y * H});
+        }
 
-        // Face contour
-        const contour = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10];
-        ctx.strokeStyle = `rgba(${col}, 0.4)`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        contour.forEach((idx, i) => {
-          const pt = faceLandmarks[idx];
-          if (!pt) return;
-          const x = pt.x * W, y = pt.y * H;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-        ctx.closePath();
-        ctx.stroke();
+        ctx.lineWidth = 0.5;
+        
+        // Draw connections
+        for (let i = 0; i < nodes.length; i++) {
+          const n1 = nodes[i];
+          // Draw point
+          ctx.fillStyle = `rgba(${col}, 0.6)`;
+          ctx.fillRect(n1.x - 1, n1.y - 1, 2, 2);
 
-        // Key points with IDs
-        const keyPts = [1, 33, 133, 362, 263, 61, 291, 13, 14];
-        keyPts.forEach((idx, i) => {
-          const pt = faceLandmarks[idx];
-          if (!pt) return;
-          const x = pt.x * W, y = pt.y * H;
-          ctx.fillStyle = `rgb(${col})`;
-          ctx.beginPath();
-          ctx.arc(x, y, 3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = `rgba(${col}, 0.7)`;
-          ctx.font = '7px IBM Plex Mono';
-          ctx.fillText(`F${idx}`, x + 5, y - 3);
-        });
+          // Connect to neighbors
+          for (let j = i + 1; j < nodes.length; j++) {
+            const n2 = nodes[j];
+            const dx = n1.x - n2.x;
+            const dy = n1.y - n2.y;
+            const distSq = dx*dx + dy*dy;
+            
+            // Threshold for connection
+            if (distSq < 2500) { // approx 50px distance
+              const alpha = 1 - (distSq / 2500);
+              ctx.strokeStyle = `rgba(${col}, ${alpha * 0.4})`;
+              ctx.beginPath();
+              ctx.moveTo(n1.x, n1.y);
+              ctx.lineTo(n2.x, n2.y);
+              ctx.stroke();
+            }
+          }
+        }
 
         // Face bounding box
         let fx1 = Infinity, fy1 = Infinity, fx2 = -Infinity, fy2 = -Infinity;
@@ -543,7 +567,7 @@
         });
         if (fx1 !== Infinity) {
           ctx.strokeStyle = `rgba(${col}, 0.5)`;
-          ctx.strokeRect(fx1 - 15, fy1 - 15, fx2 - fx1 + 30, fy2 - fy1 + 30);
+          ctx.strokeRect(fx1 - 20, fy1 - 20, fx2 - fx1 + 40, fy2 - fy1 + 40);
           ctx.fillStyle = `rgb(${col})`;
           ctx.font = '8px IBM Plex Mono';
           ctx.fillText('FACE_MESH', fx1 - 15, fy1 - 20);
@@ -553,7 +577,7 @@
       // Draw hands
       hands.forEach((hand, hi) => {
         const isRight = handedness[hi] === 'Right';
-        const col = isRight ? '255, 77, 0' : '15, 15, 15'; // alert orange vs dark
+        const col = isRight ? '255, 77, 0' : '0, 120, 255'; // Orange vs Blue
 
         // Traces from fingertips
         [4, 8, 12, 16, 20].forEach(i => {
@@ -569,7 +593,7 @@
           [13,17],[17,18],[18,19],[19,20],
           [0,17]
         ];
-        ctx.strokeStyle = `rgba(${col}, 0.5)`;
+        ctx.strokeStyle = `rgba(${col}, 0.8)`;
         ctx.lineWidth = 1;
         ctx.beginPath();
         bones.forEach(([a, b]) => {
