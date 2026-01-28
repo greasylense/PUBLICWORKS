@@ -4,114 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Somatic Interface — PUBLICWORKS</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #D1D1D1;
-      --text: #0F0F0F;
-      --muted: #6E6E6E;
-      --accent: #0047FF;
-      --alert: #FF4D00;
-    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'IBM Plex Mono', monospace;
-      background: var(--bg);
-      color: var(--text);
+      background: #0a0a0a;
+      color: #e0e0e0;
       overflow: hidden;
     }
-
     #back {
       position: fixed;
       top: 1.5rem; left: 1.5rem;
-      font-size: 0.75rem;
-      color: var(--muted);
+      font-size: 0.7rem;
+      color: #666;
       text-decoration: none;
       z-index: 999;
     }
-    #back:hover { color: var(--accent); }
+    #back:hover { color: #fff; }
 
     #start {
-      position: fixed;
-      inset: 0;
-      background: var(--bg);
+      position: fixed; inset: 0;
+      background: #0a0a0a;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 900;
       cursor: pointer;
-      transition: opacity 0.5s;
+      transition: opacity 0.6s;
     }
     #start.hide { opacity: 0; pointer-events: none; }
-    #start h1 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(2rem, 5vw, 3rem);
-      font-weight: 700;
-    }
-    #start .sub {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-bottom: 0.5rem;
-    }
-    #start .desc {
-      max-width: 380px;
-      text-align: center;
-      margin: 1.5rem;
-      font-size: 0.85rem;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-    #start .cta {
-      font-size: 0.7rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-    #start .hint {
-      position: absolute;
-      bottom: 2rem;
-      font-size: 0.6rem;
-      color: var(--muted);
-    }
+    #start h1 { font-size: 2.5rem; font-weight: 400; letter-spacing: -0.02em; }
+    #start .sub { font-size: 0.7rem; color: #666; margin-bottom: 0.5rem; }
+    #start .desc { max-width: 350px; text-align: center; margin: 1.5rem; font-size: 0.8rem; color: #666; line-height: 1.6; }
+    #start .cta { font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 0.15em; }
+    #start .hint { position: absolute; bottom: 2rem; font-size: 0.55rem; color: #444; }
 
-    #status {
-      position: fixed;
-      bottom: 1.5rem; left: 1.5rem;
-      font-size: 0.6rem;
-      color: var(--accent);
-      z-index: 999;
-      text-transform: uppercase;
-    }
-
-    #video {
-      position: fixed;
-      inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1);
-    }
-
-    #canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      transform: scaleX(-1);
-    }
+    #status { position: fixed; bottom: 1.5rem; left: 1.5rem; font-size: 0.55rem; color: #0f0; z-index: 999; }
+    #video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.4; }
+    #canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; transform: scaleX(-1); }
 
     #hud {
-      position: fixed;
-      bottom: 1.5rem; right: 1.5rem;
-      font-size: 0.55rem;
-      color: var(--text);
-      background: rgba(209,209,209,0.9);
-      padding: 0.5rem 0.7rem;
-      border: 1px solid var(--text);
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      font-size: 0.5rem; color: #888;
+      background: rgba(0,0,0,0.7);
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #333;
       z-index: 999;
     }
     #hud div { margin-bottom: 0.1rem; }
@@ -123,7 +62,7 @@
   <div id="start">
     <div class="sub">005</div>
     <h1>Somatic Interface</h1>
-    <p class="desc">Your body becomes the instrument. Hands play melodies. Your face conducts harmony.</p>
+    <p class="desc">Your body becomes the instrument. Right hand conducts harmony. Left hand plays melody.</p>
     <p class="cta">Click to begin</p>
     <span class="hint">Camera + headphones</span>
   </div>
@@ -133,9 +72,10 @@
   <canvas id="canvas"></canvas>
 
   <div id="hud" style="display:none">
-    <div>CHORD: <span id="hChord">I</span></div>
-    <div>HANDS: <span id="hHands">0</span></div>
-    <div>FACE: <span id="hFace">NO</span></div>
+    <div>CHORD: <span id="hC">I</span></div>
+    <div>L_HAND: <span id="hL">--</span></div>
+    <div>R_HAND: <span id="hR">--</span></div>
+    <div>FACE: <span id="hF">--</span></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
@@ -148,372 +88,418 @@
     const ctx = canvas.getContext('2d');
     const startEl = document.getElementById('start');
     const statusEl = document.getElementById('status');
-    const hudEl = document.getElementById('hud');
 
-    let W = window.innerWidth;
-    let H = window.innerHeight;
-    let active = false;
-
-    // Tracking data
+    let W, H;
     let hands = [];
+    let handedness = [];
     let face = null;
+    let frameId = 18300;
 
-    // Trail for index finger
-    const trail = [];
-    const TRAIL_MAX = 20;
+    // Trails
+    const traces = [];
+    const MAX_TRACES = 150;
 
-    // ===== AUDIO =====
-    let ctx_a, master, reverb, padVoices = [], lead, bass;
-    let arpTime = 0, arpIdx = 0;
-
-    const CHORDS = { I:[0,4,7], ii:[2,5,9], IV:[5,9,12], V:[7,11,14], vi:[9,12,16] };
-    const CHORD_LIST = ['I','ii','IV','V','vi'];
+    // Audio
+    let actx, padVoices=[], lead, bass;
+    let arpT=0, arpI=0;
+    const CHORDS = {I:[0,4,7], ii:[2,5,9], IV:[5,9,12], V:[7,11,14], vi:[9,12,16]};
+    const CL = ['I','ii','IV','V','vi'];
     const ROOT = 48;
-    const mtof = m => 440 * Math.pow(2, (m-69)/12);
+    const mtof = m => 440*Math.pow(2,(m-69)/12);
 
-    function setupAudio() {
-      ctx_a = new AudioContext();
+    function initAudio() {
+      actx = new AudioContext();
+      const master = actx.createGain();
+      master.gain.value = 0.55;
+      master.connect(actx.destination);
 
-      master = ctx_a.createGain();
-      master.gain.value = 0.6;
-      master.connect(ctx_a.destination);
+      const rev = actx.createConvolver();
+      const len = actx.sampleRate*2;
+      const imp = actx.createBuffer(2,len,actx.sampleRate);
+      for(let c=0;c<2;c++){const d=imp.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,1.8);}
+      rev.buffer=imp;
+      const rg=actx.createGain();rg.gain.value=0.3;
+      rev.connect(rg);rg.connect(actx.destination);
 
-      // Reverb
-      reverb = ctx_a.createConvolver();
-      const len = ctx_a.sampleRate * 2;
-      const imp = ctx_a.createBuffer(2, len, ctx_a.sampleRate);
-      for (let c = 0; c < 2; c++) {
-        const d = imp.getChannelData(c);
-        for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/len, 1.8);
-      }
-      reverb.buffer = imp;
-      const revGain = ctx_a.createGain();
-      revGain.gain.value = 0.25;
-      reverb.connect(revGain);
-      revGain.connect(ctx_a.destination);
-
-      // Pad voices (3)
-      for (let i = 0; i < 3; i++) {
-        const o = ctx_a.createOscillator();
-        const f = ctx_a.createBiquadFilter();
-        const g = ctx_a.createGain();
-        o.type = 'triangle';
-        f.type = 'lowpass'; f.frequency.value = 600;
-        g.gain.value = 0;
-        o.connect(f); f.connect(g);
-        g.connect(master); g.connect(reverb);
-        o.start();
+      for(let i=0;i<3;i++){
+        const o=actx.createOscillator(),f=actx.createBiquadFilter(),g=actx.createGain();
+        o.type='triangle';f.type='lowpass';f.frequency.value=500;g.gain.value=0;
+        o.connect(f);f.connect(g);g.connect(master);g.connect(rev);o.start();
         padVoices.push({o,f,g});
       }
 
-      // Lead
-      const lo = ctx_a.createOscillator();
-      const lf = ctx_a.createBiquadFilter();
-      const lg = ctx_a.createGain();
-      lo.type = 'sawtooth';
-      lf.type = 'lowpass'; lf.frequency.value = 1500; lf.Q.value = 3;
-      lg.gain.value = 0;
-      lo.connect(lf); lf.connect(lg);
-      lg.connect(master); lg.connect(reverb);
-      lo.start();
-      lead = {o:lo, f:lf, g:lg};
+      const lo=actx.createOscillator(),lf=actx.createBiquadFilter(),lg=actx.createGain();
+      lo.type='sawtooth';lf.type='lowpass';lf.frequency.value=1200;lf.Q.value=4;lg.gain.value=0;
+      lo.connect(lf);lf.connect(lg);lg.connect(master);lg.connect(rev);lo.start();
+      lead={o:lo,f:lf,g:lg};
 
-      // Bass
-      const bo = ctx_a.createOscillator();
-      const bf = ctx_a.createBiquadFilter();
-      const bg = ctx_a.createGain();
-      bo.type = 'sine';
-      bf.type = 'lowpass'; bf.frequency.value = 180;
-      bg.gain.value = 0;
-      bo.connect(bf); bf.connect(bg);
-      bg.connect(master);
-      bo.start();
-      bass = {o:bo, f:bf, g:bg};
+      const bo=actx.createOscillator(),bf=actx.createBiquadFilter(),bg=actx.createGain();
+      bo.type='sine';bf.type='lowpass';bf.frequency.value=150;bg.gain.value=0;
+      bo.connect(bf);bf.connect(bg);bg.connect(master);bo.start();
+      bass={o:bo,f:bf,g:bg};
+    }
+
+    function getHand(label) {
+      for(let i=0;i<hands.length;i++){
+        if(handedness[i]===label) return hands[i];
+      }
+      return null;
     }
 
     function updateAudio() {
-      if (!ctx_a) return;
-      const t = ctx_a.currentTime;
+      if(!actx)return;
+      const t=actx.currentTime;
+      const rHand = getHand('Right');
+      const lHand = getHand('Left');
 
-      // Chord from face Y
-      let ci = 0;
-      if (face && face[1]) {
-        ci = Math.floor(face[1].y * CHORD_LIST.length);
-        ci = Math.max(0, Math.min(CHORD_LIST.length-1, ci));
-      }
-      const chordName = CHORD_LIST[ci];
-      const chord = CHORDS[chordName];
-      document.getElementById('hChord').textContent = chordName;
-
-      // Pad + Bass (face activates)
-      if (face) {
-        const fy = face[1] ? face[1].y : 0.5;
-        const filt = 300 + (1-fy) * 1200;
-        chord.forEach((n, i) => {
-          if (!padVoices[i]) return;
-          padVoices[i].o.frequency.setTargetAtTime(mtof(ROOT+n), t, 0.15);
-          padVoices[i].f.frequency.setTargetAtTime(filt, t, 0.1);
-          padVoices[i].g.gain.setTargetAtTime(0.08, t, 0.2);
-        });
-        bass.o.frequency.setTargetAtTime(mtof(ROOT+chord[0]-12), t, 0.15);
-        bass.g.gain.setTargetAtTime(0.14, t, 0.2);
+      // Right hand controls harmony
+      let ci=2; // default IV
+      if(rHand && rHand[8]){
+        ci = Math.floor(rHand[8].y * CL.length);
+        ci = Math.max(0,Math.min(CL.length-1,ci));
+        document.getElementById('hR').textContent = 'YES';
       } else {
-        padVoices.forEach(v => v.g.gain.setTargetAtTime(0, t, 0.4));
-        bass.g.gain.setTargetAtTime(0, t, 0.4);
+        document.getElementById('hR').textContent = '--';
+      }
+      const chordName = CL[ci];
+      const chord = CHORDS[chordName];
+      document.getElementById('hC').textContent = chordName;
+
+      // Pad + Bass (right hand activates)
+      if(rHand){
+        const ry = rHand[8]?rHand[8].y:0.5;
+        const filt = 250+(1-ry)*1500;
+        chord.forEach((n,i)=>{
+          if(!padVoices[i])return;
+          padVoices[i].o.frequency.setTargetAtTime(mtof(ROOT+n),t,0.12);
+          padVoices[i].f.frequency.setTargetAtTime(filt,t,0.08);
+          padVoices[i].g.gain.setTargetAtTime(0.09,t,0.2);
+        });
+        bass.o.frequency.setTargetAtTime(mtof(ROOT+chord[0]-12),t,0.12);
+        bass.g.gain.setTargetAtTime(0.15,t,0.2);
+      } else {
+        padVoices.forEach(v=>v.g.gain.setTargetAtTime(0,t,0.5));
+        bass.g.gain.setTargetAtTime(0,t,0.5);
       }
 
-      // Arp from hand
-      if (hands[0] && hands[0][8]) {
-        const tip = hands[0][8];
-        const bpm = 90 + tip.x * 110;
-        const step = 60 / bpm / 2;
-        const filt = 600 + (1-tip.y) * 3500;
+      // Left hand controls arpeggiator
+      if(lHand && lHand[8]){
+        document.getElementById('hL').textContent = 'YES';
+        const tip = lHand[8];
+        const bpm = 80 + tip.x*140;
+        const step = 60/bpm/2;
+        const filt = 500+(1-tip.y)*4000;
 
-        if (t - arpTime > step) {
-          arpTime = t;
-          const pat = [...chord, chord[0]+12];
-          const note = pat[arpIdx % pat.length];
-          lead.o.frequency.setTargetAtTime(mtof(ROOT+12+note), t, 0.01);
-          lead.f.frequency.setTargetAtTime(filt, t, 0.02);
+        if(t-arpT>step){
+          arpT=t;
+          const pat=[...chord,chord[0]+12];
+          const note=pat[arpI%pat.length];
+          lead.o.frequency.setTargetAtTime(mtof(ROOT+12+note),t,0.01);
+          lead.f.frequency.setTargetAtTime(filt,t,0.02);
           lead.g.gain.cancelScheduledValues(t);
-          lead.g.gain.setValueAtTime(0.18, t);
-          lead.g.gain.exponentialRampToValueAtTime(0.01, t + step*0.85);
-          arpIdx++;
+          lead.g.gain.setValueAtTime(0.2,t);
+          lead.g.gain.exponentialRampToValueAtTime(0.01,t+step*0.8);
+          arpI++;
         }
       } else {
-        lead.g.gain.setTargetAtTime(0, t, 0.15);
+        document.getElementById('hL').textContent = '--';
+        lead.g.gain.setTargetAtTime(0,t,0.15);
       }
     }
 
-    // ===== TRACKING =====
-    async function setupTracking() {
-      statusEl.style.display = 'block';
-      statusEl.textContent = 'Camera...';
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720 }
-      });
-      video.srcObject = stream;
+    async function initTracking() {
+      statusEl.style.display='block';
+      statusEl.textContent='Camera...';
+      const stream = await navigator.mediaDevices.getUserMedia({video:{width:1280,height:720}});
+      video.srcObject=stream;
       await video.play();
 
-      statusEl.textContent = 'Hand model...';
-
-      const handModel = new Hands({
-        locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${f}`
+      statusEl.textContent='Hands...';
+      const hm = new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${f}`});
+      hm.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:0.7,minTrackingConfidence:0.5});
+      hm.onResults(r=>{
+        hands=r.multiHandLandmarks||[];
+        handedness=(r.multiHandedness||[]).map(h=>h.label);
       });
-      handModel.setOptions({
-        maxNumHands: 2,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.7,
-        minTrackingConfidence: 0.5
-      });
-      handModel.onResults(r => {
-        hands = r.multiHandLandmarks || [];
-        document.getElementById('hHands').textContent = hands.length;
-      });
-      await handModel.initialize();
+      await hm.initialize();
 
-      statusEl.textContent = 'Face model...';
-
-      const faceModel = new FaceMesh({
-        locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${f}`
+      statusEl.textContent='Face...';
+      const fm = new FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${f}`});
+      fm.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:0.7,minTrackingConfidence:0.5});
+      fm.onResults(r=>{
+        face=r.multiFaceLandmarks?.[0]||null;
+        document.getElementById('hF').textContent=face?'YES':'--';
       });
-      faceModel.setOptions({
-        maxNumFaces: 1,
-        refineLandmarks: true,
-        minDetectionConfidence: 0.7,
-        minTrackingConfidence: 0.5
-      });
-      faceModel.onResults(r => {
-        face = (r.multiFaceLandmarks && r.multiFaceLandmarks[0]) ? r.multiFaceLandmarks[0] : null;
-        document.getElementById('hFace').textContent = face ? 'YES' : 'NO';
-      });
-      await faceModel.initialize();
+      await fm.initialize();
 
-      statusEl.textContent = 'Ready';
+      statusEl.style.display='none';
 
-      // Process frames
-      async function process() {
-        if (!active) return;
-        await handModel.send({image: video});
-        await faceModel.send({image: video});
-        requestAnimationFrame(process);
-      }
-
-      active = true;
-      process();
-      statusEl.style.display = 'none';
+      (async function proc(){
+        await hm.send({image:video});
+        await fm.send({image:video});
+        requestAnimationFrame(proc);
+      })();
     }
 
-    // ===== DRAWING =====
-    function draw() {
-      ctx.clearRect(0, 0, W, H);
+    function addTrace(x,y,col){
+      traces.push({x,y,col,age:0});
+      if(traces.length>MAX_TRACES)traces.shift();
+    }
 
-      // Hand trails
-      if (hands[0] && hands[0][8]) {
-        trail.push({x: hands[0][8].x, y: hands[0][8].y});
-        if (trail.length > TRAIL_MAX) trail.shift();
-      }
+    function drawBox(x,y,w,h,label,col){
+      ctx.strokeStyle=col;
+      ctx.lineWidth=1;
+      ctx.strokeRect(x,y,w,h);
+      ctx.fillStyle=col;
+      ctx.font='9px IBM Plex Mono';
+      ctx.fillText(label,x+3,y-4);
+    }
 
-      // Draw trail
-      if (trail.length > 1) {
-        for (let i = 1; i < trail.length; i++) {
-          const a = i / trail.length;
-          ctx.strokeStyle = `rgba(0, 71, 255, ${a * 0.7})`;
-          ctx.lineWidth = a * 8;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(trail[i-1].x * W, trail[i-1].y * H);
-          ctx.lineTo(trail[i].x * W, trail[i].y * H);
-          ctx.stroke();
-        }
-      }
+    function drawId(x,y,id,col='#888'){
+      ctx.fillStyle=col;
+      ctx.font='8px IBM Plex Mono';
+      ctx.fillText(id,x+5,y-3);
+    }
+
+    function draw(){
+      ctx.fillStyle='rgba(10,10,10,0.12)';
+      ctx.fillRect(0,0,W,H);
+
+      frameId++;
+
+      // Draw traces (fading)
+      traces.forEach(tr=>{
+        tr.age++;
+        const a = Math.max(0,1-tr.age/80);
+        ctx.fillStyle=tr.col.replace(')',`,${a})`).replace('rgb','rgba');
+        ctx.beginPath();
+        ctx.arc(tr.x,tr.y,1.5,0,Math.PI*2);
+        ctx.fill();
+      });
+      // Remove old traces
+      while(traces.length>0 && traces[0].age>80) traces.shift();
 
       // Hands
-      hands.forEach((hand, hi) => {
-        const col = hi === 0 ? '#0047FF' : '#FF4D00';
+      hands.forEach((hand,hi)=>{
+        const label = handedness[hi]||'';
+        const col = label==='Right'?'rgb(200,80,100)':'rgb(200,200,200)';
+        const colFade = label==='Right'?'rgba(200,80,100,0.3)':'rgba(200,200,200,0.3)';
 
-        // Skeleton
-        const bones = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
-        ctx.strokeStyle = col;
-        ctx.lineWidth = 2;
-        ctx.globalAlpha = 0.5;
+        // Add traces for all points
+        hand.forEach(pt=>{
+          addTrace(pt.x*W,pt.y*H,col);
+        });
+
+        // Skeleton connections
+        const bones=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+        ctx.strokeStyle=colFade;
+        ctx.lineWidth=1;
         ctx.beginPath();
-        bones.forEach(([a,b]) => {
-          ctx.moveTo(hand[a].x*W, hand[a].y*H);
-          ctx.lineTo(hand[b].x*W, hand[b].y*H);
+        bones.forEach(([a,b])=>{
+          ctx.moveTo(hand[a].x*W,hand[a].y*H);
+          ctx.lineTo(hand[b].x*W,hand[b].y*H);
         });
         ctx.stroke();
-        ctx.globalAlpha = 1;
 
-        // Points
-        hand.forEach((pt, i) => {
-          const x = pt.x * W, y = pt.y * H;
-          const tip = [4,8,12,16,20].includes(i);
-
-          // Glow on tips
-          if (tip) {
-            ctx.fillStyle = col.replace(')', ', 0.25)').replace('#', 'rgba(').replace(/([A-Fa-f0-9]{2})/g, (m) => parseInt(m,16)+',');
-            // Simple glow
-            ctx.beginPath();
-            ctx.arc(x, y, 18, 0, Math.PI*2);
-            ctx.fillStyle = `${col}33`;
-            ctx.fill();
-          }
-
-          ctx.fillStyle = col;
+        // Extended connection lines (wrist to all tips)
+        [4,8,12,16,20].forEach(tip=>{
+          ctx.strokeStyle=colFade;
           ctx.beginPath();
-          ctx.arc(x, y, tip ? 7 : 3, 0, Math.PI*2);
+          ctx.moveTo(hand[0].x*W,hand[0].y*H);
+          ctx.lineTo(hand[tip].x*W,hand[tip].y*H);
+          ctx.stroke();
+        });
+
+        // Points with IDs
+        hand.forEach((pt,i)=>{
+          const x=pt.x*W,y=pt.y*H;
+          const isTip=[4,8,12,16,20].includes(i);
+
+          ctx.fillStyle=col;
+          ctx.beginPath();
+          ctx.arc(x,y,isTip?5:2,0,Math.PI*2);
           ctx.fill();
 
-          if (tip) {
-            ctx.fillStyle = '#0F0F0F';
-            ctx.font = '9px IBM Plex Mono';
-            ctx.fillText(i, x+10, y-5);
+          if(isTip){
+            drawId(x,y,frameId+i,col);
+            // Small box around tip
+            ctx.strokeStyle=col;
+            ctx.lineWidth=1;
+            ctx.strokeRect(x-8,y-8,16,16);
           }
         });
 
-        // Bounding box
-        let x1=Infinity, y1=Infinity, x2=-Infinity, y2=-Infinity;
-        hand.forEach(p => {
-          x1 = Math.min(x1, p.x*W); y1 = Math.min(y1, p.y*H);
-          x2 = Math.max(x2, p.x*W); y2 = Math.max(y2, p.y*H);
+        // Main bounding box
+        let x1=Infinity,y1=Infinity,x2=-Infinity,y2=-Infinity;
+        hand.forEach(p=>{x1=Math.min(x1,p.x*W);y1=Math.min(y1,p.y*H);x2=Math.max(x2,p.x*W);y2=Math.max(y2,p.y*H);});
+        drawBox(x1-25,y1-25,x2-x1+50,y2-y1+50,`${label.toUpperCase()}_HAND`,col);
+
+        // Secondary boxes for finger groups
+        [[1,2,3,4],[5,6,7,8],[9,10,11,12]].forEach((group,gi)=>{
+          let gx1=Infinity,gy1=Infinity,gx2=-Infinity,gy2=-Infinity;
+          group.forEach(i=>{
+            gx1=Math.min(gx1,hand[i].x*W);gy1=Math.min(gy1,hand[i].y*H);
+            gx2=Math.max(gx2,hand[i].x*W);gy2=Math.max(gy2,hand[i].y*H);
+          });
+          ctx.strokeStyle=colFade;
+          ctx.strokeRect(gx1-5,gy1-5,gx2-gx1+10,gy2-gy1+10);
+          drawId(gx1-5,gy1-5,frameId+gi*100,'#555');
         });
-        ctx.strokeStyle = col;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x1-20, y1-20, x2-x1+40, y2-y1+40);
-        ctx.fillStyle = col;
-        ctx.font = '10px IBM Plex Mono';
-        ctx.fillText(`HAND_${hi}`, x1-20, y1-25);
       });
 
       // Face
-      if (face) {
-        const pts = [1, 33, 263, 61, 291, 10, 152];
-        const links = [[10,1],[1,152],[33,1],[263,1],[61,291],[33,61],[263,291]];
+      if(face){
+        const col='rgb(200,80,100)';
+        const colFade='rgba(200,80,100,0.25)';
 
-        ctx.strokeStyle = '#FF4D00';
-        ctx.lineWidth = 1.5;
-        ctx.globalAlpha = 0.4;
+        // Add traces for face contour
+        const contour=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109,10];
+        contour.forEach(i=>{
+          if(face[i])addTrace(face[i].x*W,face[i].y*H,col);
+        });
+
+        // Face contour lines
+        ctx.strokeStyle=colFade;
+        ctx.lineWidth=1;
         ctx.beginPath();
-        links.forEach(([a,b]) => {
-          if (face[a] && face[b]) {
-            ctx.moveTo(face[a].x*W, face[a].y*H);
-            ctx.lineTo(face[b].x*W, face[b].y*H);
+        contour.forEach((idx,i)=>{
+          const p=face[idx];
+          if(!p)return;
+          if(i===0)ctx.moveTo(p.x*W,p.y*H);
+          else ctx.lineTo(p.x*W,p.y*H);
+        });
+        ctx.stroke();
+
+        // Eye contours
+        const lEye=[33,7,163,144,145,153,154,155,133,33];
+        const rEye=[362,382,381,380,374,373,390,249,263,362];
+        [lEye,rEye].forEach(eye=>{
+          ctx.beginPath();
+          eye.forEach((idx,i)=>{
+            const p=face[idx];if(!p)return;
+            if(i===0)ctx.moveTo(p.x*W,p.y*H);
+            else ctx.lineTo(p.x*W,p.y*H);
+          });
+          ctx.stroke();
+        });
+
+        // Lip contour
+        const lips=[61,146,91,181,84,17,314,405,321,375,291,61];
+        ctx.beginPath();
+        lips.forEach((idx,i)=>{
+          const p=face[idx];if(!p)return;
+          if(i===0)ctx.moveTo(p.x*W,p.y*H);
+          else ctx.lineTo(p.x*W,p.y*H);
+        });
+        ctx.stroke();
+
+        // Key points with connections
+        const keyPts=[1,33,263,61,291,10,152,234,454];
+        const keyLinks=[[10,1],[1,152],[33,1],[263,1],[61,291],[234,33],[454,263],[33,61],[263,291]];
+
+        ctx.strokeStyle=colFade;
+        ctx.beginPath();
+        keyLinks.forEach(([a,b])=>{
+          if(face[a]&&face[b]){
+            ctx.moveTo(face[a].x*W,face[a].y*H);
+            ctx.lineTo(face[b].x*W,face[b].y*H);
           }
         });
         ctx.stroke();
-        ctx.globalAlpha = 1;
 
-        pts.forEach(i => {
-          const p = face[i];
-          if (!p) return;
-          // Glow
+        keyPts.forEach(i=>{
+          const p=face[i];if(!p)return;
+          ctx.fillStyle=col;
           ctx.beginPath();
-          ctx.arc(p.x*W, p.y*H, 12, 0, Math.PI*2);
-          ctx.fillStyle = '#FF4D0033';
+          ctx.arc(p.x*W,p.y*H,4,0,Math.PI*2);
           ctx.fill();
-          // Point
-          ctx.beginPath();
-          ctx.arc(p.x*W, p.y*H, 5, 0, Math.PI*2);
-          ctx.fillStyle = '#FF4D00';
-          ctx.fill();
+          drawId(p.x*W,p.y*H,frameId+i,col);
+          ctx.strokeStyle=col;
+          ctx.strokeRect(p.x*W-6,p.y*H-6,12,12);
         });
 
-        // Face box
-        let x1=Infinity, y1=Infinity, x2=-Infinity, y2=-Infinity;
-        face.forEach(p => {
-          x1 = Math.min(x1, p.x*W); y1 = Math.min(y1, p.y*H);
-          x2 = Math.max(x2, p.x*W); y2 = Math.max(y2, p.y*H);
+        // Face bounding box
+        let x1=Infinity,y1=Infinity,x2=-Infinity,y2=-Infinity;
+        face.forEach(p=>{x1=Math.min(x1,p.x*W);y1=Math.min(y1,p.y*H);x2=Math.max(x2,p.x*W);y2=Math.max(y2,p.y*H);});
+        drawBox(x1-30,y1-30,x2-x1+60,y2-y1+60,'FACE_0',col);
+
+        // Secondary boxes for features
+        [[33,133],[263,362],[61,291]].forEach((pair,i)=>{
+          const labels=['L_EYE','R_EYE','MOUTH'];
+          let fx1=Infinity,fy1=Infinity,fx2=-Infinity,fy2=-Infinity;
+          pair.forEach(idx=>{
+            if(face[idx]){
+              fx1=Math.min(fx1,face[idx].x*W-15);fy1=Math.min(fy1,face[idx].y*H-10);
+              fx2=Math.max(fx2,face[idx].x*W+15);fy2=Math.max(fy2,face[idx].y*H+10);
+            }
+          });
+          if(fx1!==Infinity){
+            drawBox(fx1,fy1,fx2-fx1,fy2-fy1,labels[i],'rgba(200,80,100,0.5)');
+          }
         });
-        ctx.strokeStyle = '#FF4D00';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x1-25, y1-25, x2-x1+50, y2-y1+50);
-        ctx.fillStyle = '#FF4D00';
-        ctx.font = '10px IBM Plex Mono';
-        ctx.fillText('FACE_0', x1-25, y1-30);
       }
 
-      // Connection lines hand to face
-      if (hands[0] && hands[0][8] && face && face[1]) {
-        const hx = hands[0][8].x*W, hy = hands[0][8].y*H;
-        const fx = face[1].x*W, fy = face[1].y*H;
-        const d = Math.hypot(hx-fx, hy-fy);
-        if (d < 300) {
-          ctx.strokeStyle = `rgba(0, 71, 255, ${0.3 * (1-d/300)})`;
-          ctx.lineWidth = 1;
+      // Connection lines between hands and face
+      hands.forEach(hand=>{
+        if(!hand||!hand[8])return;
+        const hx=hand[8].x*W,hy=hand[8].y*H;
+
+        if(face&&face[1]){
+          const fx=face[1].x*W,fy=face[1].y*H;
+          const d=Math.hypot(hx-fx,hy-fy);
+          if(d<400){
+            ctx.strokeStyle=`rgba(200,200,200,${0.2*(1-d/400)})`;
+            ctx.lineWidth=1;
+            ctx.setLineDash([4,4]);
+            ctx.beginPath();
+            ctx.moveTo(hx,hy);
+            ctx.lineTo(fx,fy);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+
+        // Connect hands to each other
+        const other = hands.find(h=>h!==hand);
+        if(other&&other[8]){
+          const ox=other[8].x*W,oy=other[8].y*H;
+          ctx.strokeStyle='rgba(200,200,200,0.15)';
+          ctx.lineWidth=1;
           ctx.beginPath();
-          ctx.moveTo(hx, hy);
-          ctx.lineTo(fx, fy);
+          ctx.moveTo(hx,hy);
+          ctx.lineTo(ox,oy);
           ctx.stroke();
         }
-      }
+      });
+
+      // Frame ID in corner
+      ctx.fillStyle='#444';
+      ctx.font='9px IBM Plex Mono';
+      ctx.fillText(`F:${frameId}`,10,H-10);
     }
 
-    function loop() {
+    function loop(){
       draw();
       updateAudio();
       requestAnimationFrame(loop);
     }
 
-    function resize() {
-      W = window.innerWidth;
-      H = window.innerHeight;
-      canvas.width = W;
-      canvas.height = H;
+    function resize(){
+      W=window.innerWidth;H=window.innerHeight;
+      canvas.width=W;canvas.height=H;
     }
 
-    async function begin() {
+    async function begin(){
       startEl.classList.add('hide');
       resize();
-      await setupTracking();
-      setupAudio();
-      hudEl.style.display = 'block';
+      await initTracking();
+      initAudio();
+      document.getElementById('hud').style.display='block';
       loop();
     }
 
-    startEl.onclick = begin;
-    window.onresize = resize;
+    startEl.onclick=begin;
+    window.onresize=resize;
   </script>
 </body>
 </html>
