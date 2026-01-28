@@ -7,17 +7,18 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'IBM Plex Mono',monospace;background:#D1D1D1;color:#0F0F0F;overflow:hidden}
+    body{font-family:'IBM Plex Mono',monospace;background:#000;color:#0F0F0F;overflow:hidden}
     #back{position:fixed;top:1.5rem;left:1.5rem;font-size:0.7rem;color:#6E6E6E;text-decoration:none;z-index:999;transition:color 0.15s}
     #back:hover{color:#0047FF}
     #start{position:fixed;inset:0;background:#D1D1D1;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:900;cursor:pointer;transition:opacity 0.5s}
-    #start.hide{opacity:0;pointer-events:none}
+    #start.hide{display:none}
     #start h1{font-size:2.2rem;font-weight:400;letter-spacing:-0.02em;color:#0F0F0F}
     #start .sub{font-size:0.7rem;color:#6E6E6E;margin-bottom:0.5rem}
     #start .desc{max-width:360px;text-align:center;margin:1.2rem;font-size:0.75rem;color:#6E6E6E;line-height:1.6}
     #start .cta{font-size:0.6rem;color:#0047FF;text-transform:uppercase;letter-spacing:0.15em}
-    #video{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0.85}
-    #canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;transform:scaleX(-1)}
+    #video{position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);z-index:1;background:#000}
+    #canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;transform:scaleX(-1);z-index:2}
+    #start.hide{opacity:0;pointer-events:none;z-index:-1}
     #hud{position:fixed;bottom:1.5rem;right:1.5rem;font-size:0.55rem;color:#0F0F0F;background:rgba(209,209,209,0.85);padding:0.5rem 0.7rem;border:1px solid #0F0F0F;z-index:999}
     #hud div{margin-bottom:0.15rem}
     #gesture{position:fixed;top:1.5rem;right:1.5rem;font-size:0.6rem;color:#0047FF;background:rgba(209,209,209,0.85);padding:0.4rem 0.6rem;border:1px solid #0047FF;z-index:999}
@@ -479,9 +480,8 @@
     }
 
     function draw() {
-      // Semi-transparent clear for trails
-      ctx.fillStyle = 'rgba(209, 209, 209, 0.25)';
-      ctx.fillRect(0, 0, W, H);
+      // Clear canvas completely so video shows through
+      ctx.clearRect(0, 0, W, H);
       frameCount++;
 
       // Draw traces
