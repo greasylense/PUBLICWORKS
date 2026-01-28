@@ -8,36 +8,26 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --bg: #0A0A0A;
-      --text: #E8E8E8;
-      --text-secondary: #6E6E6E;
-      --font-display: 'Space Grotesk', system-ui, sans-serif;
-      --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
-    }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
-      font-family: var(--font-mono);
-      background: var(--bg);
-      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      background: #0A0A0A;
+      color: #E8E8E8;
       min-height: 100vh;
       overflow: hidden;
     }
 
     #back-link {
       position: fixed;
-      top: 1.5rem;
-      left: 1.5rem;
+      top: 1.5rem; left: 1.5rem;
       font-size: 0.7rem;
-      color: rgba(255,255,255,0.5);
+      color: rgba(255,255,255,0.4);
       text-decoration: none;
       z-index: 100;
-      transition: color 0.15s ease;
+      transition: color 0.15s;
     }
     #back-link:hover { color: #fff; }
 
@@ -45,71 +35,58 @@
       position: fixed;
       top: 0; left: 0;
       width: 100vw; height: 100vh;
-      background: var(--bg);
+      background: #0A0A0A;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 200;
       cursor: pointer;
-      transition: opacity 0.8s ease;
+      transition: opacity 0.8s;
     }
     .start-prompt.hidden { opacity: 0; pointer-events: none; }
-
     .start-prompt h1 {
-      font-family: var(--font-display);
-      font-size: clamp(1.8rem, 6vw, 3.5rem);
+      font-size: clamp(2rem, 6vw, 4rem);
       font-weight: 400;
       letter-spacing: -0.03em;
       margin-bottom: 1rem;
-      text-align: center;
     }
     .start-prompt h1 span {
       display: block;
-      font-size: 0.4em;
-      color: var(--text-secondary);
+      font-size: 0.35em;
+      color: #6E6E6E;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       margin-bottom: 0.5em;
     }
     .start-prompt p {
       font-size: 0.75rem;
-      color: var(--text-secondary);
+      color: #6E6E6E;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      animation: pulse 2s ease-in-out infinite;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 1; }
-    }
-    .start-prompt .description {
-      max-width: 500px;
+    .start-prompt .desc {
+      max-width: 450px;
       text-align: center;
-      margin: 2rem 1rem;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      line-height: 1.8;
+      margin: 1.5rem 1rem;
+      font-size: 0.8rem;
+      color: #6E6E6E;
+      line-height: 1.7;
       text-transform: none;
       letter-spacing: 0;
-      animation: none;
     }
     .start-prompt .hint {
       position: absolute;
       bottom: 2rem;
-      font-size: 0.625rem;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
+      font-size: 0.6rem;
+      color: #444;
     }
 
     .loading {
       position: fixed;
       bottom: 1.5rem; left: 1.5rem;
-      font-size: 0.625rem;
+      font-size: 0.6rem;
       color: #0f0;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
       z-index: 100;
     }
 
@@ -120,6 +97,7 @@
       object-fit: cover;
       transform: scaleX(-1);
       z-index: 1;
+      filter: saturate(0.8) brightness(0.9);
     }
 
     #canvas {
@@ -131,76 +109,42 @@
       transform: scaleX(-1);
     }
 
-    .controls {
-      position: fixed;
-      top: 1.5rem; right: 1.5rem;
-      display: flex;
-      gap: 0.5rem;
-      z-index: 100;
-    }
-    .control-btn {
-      background: rgba(0,0,0,0.6);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: rgba(255,255,255,0.6);
-      font-family: var(--font-mono);
-      font-size: 0.6rem;
-      padding: 0.4rem 0.6rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .control-btn:hover { border-color: #fff; color: #fff; }
-    .control-btn.active { background: rgba(255,255,255,0.9); color: #000; border-color: #fff; }
-
     .stats {
       position: fixed;
       bottom: 1.5rem; right: 1.5rem;
-      font-size: 0.6rem;
-      color: rgba(255,255,255,0.6);
+      font-size: 0.55rem;
+      color: rgba(255,255,255,0.5);
       text-align: right;
       z-index: 100;
       font-variant-numeric: tabular-nums;
-      background: rgba(0,0,0,0.6);
-      padding: 0.6rem 0.8rem;
-      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.5);
+      padding: 0.5rem 0.7rem;
+      border: 1px solid rgba(255,255,255,0.1);
     }
-    .stats div { margin-bottom: 0.2rem; }
-    .stats div:last-child { margin-bottom: 0; }
+    .stats div { margin-bottom: 0.15rem; }
   </style>
 </head>
 <body>
   <a href="../../" id="back-link">← PUBLICWORKS</a>
 
   <div class="start-prompt" id="start-prompt">
-    <h1>
-      <span>Project 005</span>
-      Somatic Interface
-    </h1>
-    <p class="description">
-      An exploration of the dissolving boundary between body and machine.
-      Your hands and face become instruments—conducting light and sound
-      through the digital membrane.
+    <h1><span>005</span>Somatic Interface</h1>
+    <p class="desc">
+      Your body becomes the instrument. Move your hands through space
+      to play melodies. Let your face conduct the harmony.
     </p>
     <p>Click to begin</p>
-    <span class="hint">Requires camera • Headphones recommended</span>
+    <span class="hint">Camera required • Headphones recommended</span>
   </div>
 
-  <div class="loading" id="loading" style="display: none;">INIT...</div>
-
+  <div class="loading" id="loading" style="display: none;">INIT</div>
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas"></canvas>
 
-  <div class="controls" id="controls" style="display: none;">
-    <button class="control-btn active" data-mode="track">Track</button>
-    <button class="control-btn" data-mode="mesh">Mesh</button>
-    <button class="control-btn" data-mode="minimal">Min</button>
-  </div>
-
   <div class="stats" id="stats" style="display: none;">
+    <div id="stat-key">KEY: C MAJ</div>
+    <div id="stat-chord">CHORD: --</div>
     <div id="stat-hands">HANDS: 0</div>
-    <div id="stat-face">FACE: --</div>
-    <div id="stat-freq">FREQ: -- HZ</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -211,137 +155,343 @@
     (function() {
       'use strict';
 
-      const startPrompt = document.getElementById('start-prompt');
-      const loadingEl = document.getElementById('loading');
-      const video = document.getElementById('video');
-      const canvas = document.getElementById('canvas');
+      const $ = id => document.getElementById(id);
+      const startPrompt = $('start-prompt');
+      const loadingEl = $('loading');
+      const video = $('video');
+      const canvas = $('canvas');
       const ctx = canvas.getContext('2d');
-      const controlsEl = document.getElementById('controls');
-      const statsEl = document.getElementById('stats');
+      const statsEl = $('stats');
 
-      let width = window.innerWidth;
-      let height = window.innerHeight;
+      let W = window.innerWidth;
+      let H = window.innerHeight;
       let isRunning = false;
-      let audioStarted = false;
-      let currentMode = 'track';
-
       let hands = [];
       let face = null;
-      let frameCount = 0;
 
-      // Audio
+      // Particle system
+      const particles = [];
+      const trails = { left: [], right: [] };
+      const TRAIL_LENGTH = 25;
+
+      // ============== MUSICAL AUDIO ENGINE ==============
       let audioCtx = null;
-      let oscillators = [];
-      const SCALE = [130.81, 164.81, 196.00, 261.63, 329.63, 392.00, 523.25, 659.25];
+      let masterGain, reverbGain, delayNode, compressor;
+      let padOscs = [];
+      let leadOscs = [];
+      let bassOsc = null;
+      let arpInterval = null;
+      let currentChord = [0, 4, 7]; // Major triad
+      let arpIndex = 0;
+      let lastArpTime = 0;
+
+      // Musical scales and chords
+      const SCALES = {
+        major: [0, 2, 4, 5, 7, 9, 11],
+        minor: [0, 2, 3, 5, 7, 8, 10],
+        pentatonic: [0, 2, 4, 7, 9],
+        dorian: [0, 2, 3, 5, 7, 9, 10]
+      };
+
+      const CHORDS = {
+        I: [0, 4, 7],
+        ii: [2, 5, 9],
+        iii: [4, 7, 11],
+        IV: [5, 9, 12],
+        V: [7, 11, 14],
+        vi: [9, 12, 16],
+        iim7: [2, 5, 9, 12],
+        Imaj7: [0, 4, 7, 11],
+        IVmaj7: [5, 9, 12, 16]
+      };
+
+      const CHORD_NAMES = ['I', 'ii', 'iii', 'IV', 'V', 'vi'];
+      const ROOT = 48; // C3 MIDI note
+
+      function midiToFreq(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
 
       function initAudio() {
-        if (audioStarted) return;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        const master = audioCtx.createGain();
-        master.gain.value = 0.12;
+        // Compressor for glue
+        compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.value = -24;
+        compressor.knee.value = 30;
+        compressor.ratio.value = 4;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.25;
+        compressor.connect(audioCtx.destination);
 
-        const reverb = audioCtx.createConvolver();
-        const len = audioCtx.sampleRate * 1.5;
-        const impulse = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+        // Master gain
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.7;
+        masterGain.connect(compressor);
+
+        // Reverb
+        const convolver = audioCtx.createConvolver();
+        const reverbLen = audioCtx.sampleRate * 2.5;
+        const impulse = audioCtx.createBuffer(2, reverbLen, audioCtx.sampleRate);
         for (let ch = 0; ch < 2; ch++) {
           const data = impulse.getChannelData(ch);
-          for (let i = 0; i < len; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+          for (let i = 0; i < reverbLen; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / reverbLen, 2);
           }
         }
-        reverb.buffer = impulse;
+        convolver.buffer = impulse;
 
-        const dry = audioCtx.createGain();
-        dry.gain.value = 0.6;
-        const wet = audioCtx.createGain();
-        wet.gain.value = 0.4;
+        reverbGain = audioCtx.createGain();
+        reverbGain.gain.value = 0.3;
+        convolver.connect(reverbGain);
+        reverbGain.connect(compressor);
 
-        master.connect(dry);
-        master.connect(reverb);
-        reverb.connect(wet);
-        dry.connect(audioCtx.destination);
-        wet.connect(audioCtx.destination);
+        // Delay
+        delayNode = audioCtx.createDelay(1);
+        delayNode.delayTime.value = 0.375; // Dotted eighth
+        const delayFeedback = audioCtx.createGain();
+        delayFeedback.gain.value = 0.35;
+        const delayFilter = audioCtx.createBiquadFilter();
+        delayFilter.type = 'lowpass';
+        delayFilter.frequency.value = 2000;
+        delayNode.connect(delayFilter);
+        delayFilter.connect(delayFeedback);
+        delayFeedback.connect(delayNode);
+        const delayWet = audioCtx.createGain();
+        delayWet.gain.value = 0.25;
+        delayNode.connect(delayWet);
+        delayWet.connect(compressor);
 
+        // === PAD SYNTH (face controlled) ===
         for (let i = 0; i < 4; i++) {
-          const osc = audioCtx.createOscillator();
+          const osc1 = audioCtx.createOscillator();
+          const osc2 = audioCtx.createOscillator();
           const filter = audioCtx.createBiquadFilter();
           const gain = audioCtx.createGain();
 
-          osc.type = 'sine';
+          osc1.type = 'sawtooth';
+          osc2.type = 'triangle';
+          osc2.detune.value = 7; // Slight detune for width
+
           filter.type = 'lowpass';
-          filter.frequency.value = 800;
-          filter.Q.value = 2;
+          filter.frequency.value = 400;
+          filter.Q.value = 1;
+
           gain.gain.value = 0;
+
+          osc1.connect(filter);
+          osc2.connect(filter);
+          filter.connect(gain);
+          gain.connect(masterGain);
+          gain.connect(convolver);
+
+          osc1.start();
+          osc2.start();
+
+          padOscs.push({ osc1, osc2, filter, gain });
+        }
+
+        // === LEAD SYNTH (hand controlled - arpeggiator) ===
+        for (let i = 0; i < 3; i++) {
+          const osc = audioCtx.createOscillator();
+          const filter = audioCtx.createBiquadFilter();
+          const gain = audioCtx.createGain();
+          const panner = audioCtx.createStereoPanner();
+
+          osc.type = i === 0 ? 'sawtooth' : 'square';
+          filter.type = 'lowpass';
+          filter.frequency.value = 1500;
+          filter.Q.value = 3;
+          gain.gain.value = 0;
+          panner.pan.value = (i - 1) * 0.3;
 
           osc.connect(filter);
           filter.connect(gain);
-          gain.connect(master);
-          osc.start();
+          gain.connect(panner);
+          panner.connect(masterGain);
+          panner.connect(delayNode);
+          panner.connect(convolver);
 
-          oscillators.push({ osc, filter, gain });
+          osc.start();
+          leadOscs.push({ osc, filter, gain, panner });
         }
 
-        const drone = audioCtx.createOscillator();
-        const droneFilter = audioCtx.createBiquadFilter();
-        const droneGain = audioCtx.createGain();
-        drone.type = 'sawtooth';
-        drone.frequency.value = 55;
-        droneFilter.type = 'lowpass';
-        droneFilter.frequency.value = 120;
-        droneFilter.Q.value = 8;
-        droneGain.gain.value = 0;
-        drone.connect(droneFilter);
-        droneFilter.connect(droneGain);
-        droneGain.connect(master);
-        drone.start();
-        oscillators.push({ osc: drone, filter: droneFilter, gain: droneGain, isDrone: true });
+        // === BASS (root note) ===
+        const bassOsc1 = audioCtx.createOscillator();
+        const bassOsc2 = audioCtx.createOscillator();
+        const bassFilter = audioCtx.createBiquadFilter();
+        const bassGain = audioCtx.createGain();
 
-        audioStarted = true;
+        bassOsc1.type = 'sine';
+        bassOsc2.type = 'triangle';
+        bassOsc2.detune.value = -1200; // One octave down
+
+        bassFilter.type = 'lowpass';
+        bassFilter.frequency.value = 200;
+
+        bassGain.gain.value = 0;
+
+        bassOsc1.connect(bassFilter);
+        bassOsc2.connect(bassFilter);
+        bassFilter.connect(bassGain);
+        bassGain.connect(masterGain);
+
+        bassOsc1.start();
+        bassOsc2.start();
+
+        bassOsc = { osc1: bassOsc1, osc2: bassOsc2, filter: bassFilter, gain: bassGain };
       }
 
       function updateAudio() {
-        if (!audioStarted) return;
+        if (!audioCtx) return;
         const now = audioCtx.currentTime;
 
-        if (hands.length > 0 && hands[0]) {
-          const tips = [8, 12, 16, 20];
-          tips.forEach((idx, i) => {
-            const tip = hands[0][idx];
-            if (!tip) return;
-            const { osc, filter, gain } = oscillators[i];
-            const freq = SCALE[Math.floor(tip.x * (SCALE.length - 1))];
-            osc.frequency.setTargetAtTime(freq, now, 0.1);
-            filter.frequency.setTargetAtTime(200 + (1 - tip.y) * 1500, now, 0.1);
-            gain.gain.setTargetAtTime(0.1, now, 0.05);
+        // Determine chord based on face Y position
+        let chordIdx = 0;
+        if (face && face[1]) {
+          chordIdx = Math.floor(face[1].y * CHORD_NAMES.length);
+          chordIdx = Math.max(0, Math.min(CHORD_NAMES.length - 1, chordIdx));
+        }
+        const chordName = CHORD_NAMES[chordIdx];
+        currentChord = CHORDS[chordName] || CHORDS.I;
+        $('stat-chord').textContent = `CHORD: ${chordName}`;
+
+        // === PAD (face controlled) ===
+        if (face) {
+          const faceX = face[1] ? face[1].x : 0.5;
+          const faceY = face[1] ? face[1].y : 0.5;
+
+          // Filter opens as face moves up
+          const padFilter = 200 + (1 - faceY) * 1200;
+
+          currentChord.slice(0, 4).forEach((interval, i) => {
+            if (!padOscs[i]) return;
+            const { osc1, osc2, filter, gain } = padOscs[i];
+            const freq = midiToFreq(ROOT + interval);
+
+            osc1.frequency.setTargetAtTime(freq, now, 0.3);
+            osc2.frequency.setTargetAtTime(freq, now, 0.3);
+            filter.frequency.setTargetAtTime(padFilter, now, 0.1);
+
+            // Volume based on face presence
+            gain.gain.setTargetAtTime(0.08, now, 0.5);
           });
+
+          // Bass follows root
+          const bassFreq = midiToFreq(ROOT + currentChord[0] - 12);
+          bassOsc.osc1.frequency.setTargetAtTime(bassFreq, now, 0.2);
+          bassOsc.osc2.frequency.setTargetAtTime(bassFreq, now, 0.2);
+          bassOsc.filter.frequency.setTargetAtTime(150 + (1 - faceY) * 200, now, 0.1);
+          bassOsc.gain.gain.setTargetAtTime(0.15, now, 0.3);
         } else {
-          for (let i = 0; i < 4; i++) {
-            oscillators[i].gain.gain.setTargetAtTime(0, now, 0.3);
+          // Fade out pads and bass
+          padOscs.forEach(p => p.gain.gain.setTargetAtTime(0, now, 0.8));
+          bassOsc.gain.gain.setTargetAtTime(0, now, 0.5);
+        }
+
+        // === LEAD / ARPEGGIATOR (hand controlled) ===
+        if (hands.length > 0 && hands[0]) {
+          const hand = hands[0];
+          const indexTip = hand[8];
+
+          if (indexTip) {
+            // X controls arp speed (BPM 80-200)
+            const bpm = 80 + indexTip.x * 120;
+            const arpSpeed = 60 / bpm / 2; // Eighth notes
+
+            // Y controls filter
+            const leadFilter = 400 + (1 - indexTip.y) * 4000;
+
+            // Trigger arp notes
+            if (now - lastArpTime > arpSpeed) {
+              lastArpTime = now;
+
+              // Arp pattern through chord + octave
+              const arpPattern = [...currentChord, currentChord[0] + 12, ...currentChord.slice().reverse()];
+              const noteInterval = arpPattern[arpIndex % arpPattern.length];
+              const noteFreq = midiToFreq(ROOT + 12 + noteInterval); // One octave up from pad
+
+              leadOscs.forEach((lead, i) => {
+                const detune = (i - 1) * 5;
+                lead.osc.frequency.setTargetAtTime(noteFreq, now, 0.01);
+                lead.osc.detune.setTargetAtTime(detune, now, 0.01);
+                lead.filter.frequency.setTargetAtTime(leadFilter, now, 0.05);
+
+                // Envelope
+                lead.gain.gain.cancelScheduledValues(now);
+                lead.gain.gain.setValueAtTime(0.001, now);
+                lead.gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+                lead.gain.gain.exponentialRampToValueAtTime(0.06, now + 0.1);
+                lead.gain.gain.exponentialRampToValueAtTime(0.001, now + arpSpeed * 0.9);
+              });
+
+              arpIndex++;
+
+              // Spawn particles on note
+              spawnNoteParticle(indexTip.x * W, indexTip.y * H);
+            }
+          }
+        } else {
+          // Fade lead
+          leadOscs.forEach(l => l.gain.gain.setTargetAtTime(0, now, 0.3));
+        }
+
+        // Second hand modulates
+        if (hands.length > 1 && hands[1]) {
+          const hand2 = hands[1];
+          const tip = hand2[8];
+          if (tip) {
+            // Modulate reverb and delay
+            reverbGain.gain.setTargetAtTime(0.2 + tip.y * 0.4, now, 0.1);
+            delayNode.delayTime.setTargetAtTime(0.2 + tip.x * 0.4, now, 0.1);
           }
         }
-
-        const droneOsc = oscillators[4];
-        if (face && face[1]) {
-          droneOsc.gain.gain.setTargetAtTime(0.05, now, 0.3);
-          droneOsc.filter.frequency.setTargetAtTime(60 + (1 - face[1].y) * 300, now, 0.1);
-        } else {
-          droneOsc.gain.gain.setTargetAtTime(0, now, 0.5);
-        }
-
-        const freq = hands.length > 0 && hands[0] && hands[0][8]
-          ? SCALE[Math.floor(hands[0][8].x * (SCALE.length - 1))].toFixed(0)
-          : '--';
-        document.getElementById('stat-freq').textContent = `FREQ: ${freq} HZ`;
       }
 
-      // MediaPipe
-      let handsDetector = null;
-      let faceDetector = null;
+      // ============== PARTICLE SYSTEM ==============
+      class Particle {
+        constructor(x, y, color, size, life, vx, vy) {
+          this.x = x; this.y = y;
+          this.color = color;
+          this.size = size;
+          this.life = this.maxLife = life;
+          this.vx = vx; this.vy = vy;
+        }
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.vx *= 0.98;
+          this.vy *= 0.98;
+          this.life--;
+        }
+        draw() {
+          const alpha = this.life / this.maxLife;
+          ctx.fillStyle = this.color.replace('A)', `${alpha})`);
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size * alpha, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
 
+      function spawnNoteParticle(x, y) {
+        for (let i = 0; i < 8; i++) {
+          const angle = (Math.PI * 2 / 8) * i;
+          const speed = 2 + Math.random() * 3;
+          particles.push(new Particle(
+            x, y,
+            'rgba(100,255,200,A)',
+            3 + Math.random() * 4,
+            30 + Math.random() * 20,
+            Math.cos(angle) * speed,
+            Math.sin(angle) * speed
+          ));
+        }
+      }
+
+      // ============== MEDIAPIPE ==============
       async function initTracking() {
         loadingEl.style.display = 'block';
-        loadingEl.textContent = 'CAMERA...';
+        loadingEl.textContent = 'CAMERA';
 
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
@@ -350,10 +500,10 @@
           video.srcObject = stream;
           await video.play();
 
-          loadingEl.textContent = 'MODELS...';
+          loadingEl.textContent = 'MODELS';
 
-          handsDetector = new Hands({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+          const handsDetector = new Hands({
+            locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
           });
           handsDetector.setOptions({
             maxNumHands: 2,
@@ -361,13 +511,13 @@
             minDetectionConfidence: 0.6,
             minTrackingConfidence: 0.5
           });
-          handsDetector.onResults((r) => {
+          handsDetector.onResults(r => {
             hands = r.multiHandLandmarks || [];
-            document.getElementById('stat-hands').textContent = `HANDS: ${hands.length}`;
+            $('stat-hands').textContent = `HANDS: ${hands.length}`;
           });
 
-          faceDetector = new FaceMesh({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+          const faceDetector = new FaceMesh({
+            locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
           });
           faceDetector.setOptions({
             maxNumFaces: 1,
@@ -375,9 +525,8 @@
             minDetectionConfidence: 0.6,
             minTrackingConfidence: 0.5
           });
-          faceDetector.onResults((r) => {
-            face = r.multiFaceLandmarks && r.multiFaceLandmarks[0] ? r.multiFaceLandmarks[0] : null;
-            document.getElementById('stat-face').textContent = `FACE: ${face ? 'OK' : '--'}`;
+          faceDetector.onResults(r => {
+            face = r.multiFaceLandmarks?.[0] || null;
           });
 
           const camera = new Camera(video, {
@@ -386,8 +535,7 @@
               await handsDetector.send({ image: video });
               await faceDetector.send({ image: video });
             },
-            width: 1280,
-            height: 720
+            width: 1280, height: 720
           });
           camera.start();
 
@@ -399,82 +547,62 @@
         }
       }
 
-      // Drawing helpers
-      function drawBox(x, y, w, h, label, color = 'rgba(255,255,255,0.8)') {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, w, h);
-
-        if (label) {
-          ctx.fillStyle = color;
-          ctx.font = '10px IBM Plex Mono';
-          ctx.fillText(label, x + 2, y - 4);
-        }
-      }
-
-      function drawPoint(x, y, id, color = 'rgba(255,255,255,0.9)') {
-        // Small box around point
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x - 4, y - 4, 8, 8);
-
-        // Center dot
-        ctx.fillStyle = color;
-        ctx.fillRect(x - 1, y - 1, 2, 2);
-
-        // ID label
-        if (id !== undefined) {
-          ctx.fillStyle = 'rgba(255,255,255,0.6)';
-          ctx.font = '8px IBM Plex Mono';
-          ctx.fillText(id, x + 6, y - 2);
-        }
-      }
-
-      function drawLine(x1, y1, x2, y2, color = 'rgba(255,255,255,0.3)') {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-      }
-
-      // Get bounding box from landmarks
-      function getBounds(landmarks) {
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        landmarks.forEach(lm => {
-          const x = lm.x * width;
-          const y = lm.y * height;
-          minX = Math.min(minX, x);
-          minY = Math.min(minY, y);
-          maxX = Math.max(maxX, x);
-          maxY = Math.max(maxY, y);
-        });
-        return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
-      }
-
-      // Track mode - like the reference image
+      // ============== DRAWING ==============
       function drawTrack() {
-        ctx.clearRect(0, 0, width, height);
+        // Semi-transparent clear for trails
+        ctx.fillStyle = 'rgba(10,10,10,0.15)';
+        ctx.fillRect(0, 0, W, H);
+
+        // Update and draw particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+          particles[i].update();
+          particles[i].draw();
+          if (particles[i].life <= 0) particles.splice(i, 1);
+        }
 
         // Draw hands
         hands.forEach((hand, hi) => {
           if (!hand) return;
 
-          // Bounding box
-          const bounds = getBounds(hand);
-          const padding = 20;
-          drawBox(
-            bounds.x - padding,
-            bounds.y - padding,
-            bounds.w + padding * 2,
-            bounds.h + padding * 2,
-            `HAND_${hi}`,
-            'rgba(0,255,150,0.7)'
-          );
+          const trailKey = hi === 0 ? 'left' : 'right';
+          const color = hi === 0 ? [100, 255, 180] : [180, 100, 255];
+
+          // Store trail point
+          if (hand[8]) {
+            trails[trailKey].push({ x: hand[8].x * W, y: hand[8].y * H, t: Date.now() });
+            if (trails[trailKey].length > TRAIL_LENGTH) trails[trailKey].shift();
+          }
+
+          // Draw trail with glow
+          if (trails[trailKey].length > 1) {
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            for (let i = 1; i < trails[trailKey].length; i++) {
+              const p0 = trails[trailKey][i - 1];
+              const p1 = trails[trailKey][i];
+              const alpha = i / trails[trailKey].length;
+
+              // Glow layer
+              ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},${alpha * 0.3})`;
+              ctx.lineWidth = 20 * alpha;
+              ctx.beginPath();
+              ctx.moveTo(p0.x, p0.y);
+              ctx.lineTo(p1.x, p1.y);
+              ctx.stroke();
+
+              // Core line
+              ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},${alpha * 0.9})`;
+              ctx.lineWidth = 3 * alpha;
+              ctx.beginPath();
+              ctx.moveTo(p0.x, p0.y);
+              ctx.lineTo(p1.x, p1.y);
+              ctx.stroke();
+            }
+          }
 
           // Skeleton connections
-          const connections = [
+          const conns = [
             [0,1],[1,2],[2,3],[3,4],
             [0,5],[5,6],[6,7],[7,8],
             [5,9],[9,10],[10,11],[11,12],
@@ -483,276 +611,177 @@
             [0,17]
           ];
 
-          connections.forEach(([a, b]) => {
-            if (hand[a] && hand[b]) {
-              drawLine(
-                hand[a].x * width, hand[a].y * height,
-                hand[b].x * width, hand[b].y * height,
-                'rgba(0,255,150,0.4)'
-              );
+          ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},0.4)`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          conns.forEach(([a, b]) => {
+            ctx.moveTo(hand[a].x * W, hand[a].y * H);
+            ctx.lineTo(hand[b].x * W, hand[b].y * H);
+          });
+          ctx.stroke();
+
+          // Landmarks
+          hand.forEach((lm, i) => {
+            const x = lm.x * W;
+            const y = lm.y * H;
+            const isTip = [4,8,12,16,20].includes(i);
+
+            if (isTip) {
+              // Glow
+              const grad = ctx.createRadialGradient(x, y, 0, x, y, 25);
+              grad.addColorStop(0, `rgba(${color[0]},${color[1]},${color[2]},0.6)`);
+              grad.addColorStop(1, `rgba(${color[0]},${color[1]},${color[2]},0)`);
+              ctx.fillStyle = grad;
+              ctx.beginPath();
+              ctx.arc(x, y, 25, 0, Math.PI * 2);
+              ctx.fill();
+
+              // Point
+              ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
+              ctx.beginPath();
+              ctx.arc(x, y, 6, 0, Math.PI * 2);
+              ctx.fill();
+
+              // Label
+              ctx.fillStyle = 'rgba(255,255,255,0.7)';
+              ctx.font = '9px IBM Plex Mono';
+              ctx.fillText(i, x + 10, y - 5);
+            } else {
+              ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},0.6)`;
+              ctx.beginPath();
+              ctx.arc(x, y, 3, 0, Math.PI * 2);
+              ctx.fill();
             }
           });
 
-          // All landmark points with IDs
-          hand.forEach((lm, i) => {
-            const x = lm.x * width;
-            const y = lm.y * height;
-            const isTip = [4,8,12,16,20].includes(i);
-            drawPoint(x, y, i, isTip ? 'rgba(0,255,150,1)' : 'rgba(0,255,150,0.6)');
+          // Bounding box
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          hand.forEach(lm => {
+            minX = Math.min(minX, lm.x * W);
+            minY = Math.min(minY, lm.y * H);
+            maxX = Math.max(maxX, lm.x * W);
+            maxY = Math.max(maxY, lm.y * H);
           });
-
-          // Coordinate readout for index finger
-          if (hand[8]) {
-            const tip = hand[8];
-            ctx.fillStyle = 'rgba(0,255,150,0.8)';
-            ctx.font = '9px IBM Plex Mono';
-            ctx.fillText(
-              `X:${(tip.x * width).toFixed(0)} Y:${(tip.y * height).toFixed(0)}`,
-              tip.x * width + 12,
-              tip.y * height + 12
-            );
-          }
+          const pad = 25;
+          ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},0.5)`;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(minX - pad, minY - pad, maxX - minX + pad*2, maxY - minY + pad*2);
+          ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},0.8)`;
+          ctx.font = '10px IBM Plex Mono';
+          ctx.fillText(`HAND_${hi}`, minX - pad + 4, minY - pad - 6);
         });
 
         // Draw face
         if (face) {
-          const bounds = getBounds(face);
-          const padding = 30;
-          drawBox(
-            bounds.x - padding,
-            bounds.y - padding,
-            bounds.w + padding * 2,
-            bounds.h + padding * 2,
-            'FACE_0',
-            'rgba(255,100,150,0.7)'
-          );
+          const keyPts = [1, 33, 263, 61, 291, 10, 152];
 
-          // Key face landmarks
-          const keyPoints = [
-            { idx: 1, label: 'NOSE' },
-            { idx: 33, label: 'L_EYE' },
-            { idx: 263, label: 'R_EYE' },
-            { idx: 61, label: 'L_MOUTH' },
-            { idx: 291, label: 'R_MOUTH' },
-            { idx: 10, label: 'TOP' },
-            { idx: 152, label: 'CHIN' },
-            { idx: 234, label: 'L_EAR' },
-            { idx: 454, label: 'R_EAR' }
-          ];
-
-          // Connection lines between key points
-          const faceConns = [
-            [10, 1], [1, 152],  // vertical center
-            [33, 1], [263, 1],  // eyes to nose
-            [61, 291],          // mouth
-            [33, 61], [263, 291], // eye to mouth
-            [234, 33], [454, 263] // ears to eyes
-          ];
-
-          faceConns.forEach(([a, b]) => {
+          // Face connections
+          const faceConns = [[10,1],[1,152],[33,1],[263,1],[61,291],[33,61],[263,291]];
+          ctx.strokeStyle = 'rgba(255,120,180,0.3)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          faceConns.forEach(([a,b]) => {
             if (face[a] && face[b]) {
-              drawLine(
-                face[a].x * width, face[a].y * height,
-                face[b].x * width, face[b].y * height,
-                'rgba(255,100,150,0.3)'
-              );
-            }
-          });
-
-          keyPoints.forEach(({ idx, label }) => {
-            const p = face[idx];
-            if (!p) return;
-            drawPoint(p.x * width, p.y * height, idx, 'rgba(255,100,150,0.9)');
-          });
-
-          // Nose coordinates
-          if (face[1]) {
-            ctx.fillStyle = 'rgba(255,100,150,0.8)';
-            ctx.font = '9px IBM Plex Mono';
-            ctx.fillText(
-              `X:${(face[1].x * width).toFixed(0)} Y:${(face[1].y * height).toFixed(0)}`,
-              face[1].x * width + 12,
-              face[1].y * height + 12
-            );
-          }
-        }
-
-        // Cross-connections between hands and face
-        if (hands.length > 0 && face) {
-          hands.forEach(hand => {
-            if (!hand || !hand[8]) return;
-            const tip = hand[8];
-            [1, 33, 263].forEach(faceIdx => {
-              if (!face[faceIdx]) return;
-              const fp = face[faceIdx];
-              const dist = Math.hypot((tip.x - fp.x) * width, (tip.y - fp.y) * height);
-              if (dist < 250) {
-                drawLine(
-                  tip.x * width, tip.y * height,
-                  fp.x * width, fp.y * height,
-                  `rgba(100,200,255,${0.4 * (1 - dist/250)})`
-                );
-              }
-            });
-          });
-        }
-
-        // Frame counter
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.font = '9px IBM Plex Mono';
-        ctx.fillText(`F:${frameCount++}`, 10, height - 10);
-      }
-
-      // Mesh mode - full wireframe
-      function drawMesh() {
-        ctx.clearRect(0, 0, width, height);
-
-        hands.forEach((hand) => {
-          if (!hand) return;
-
-          const connections = [
-            [0,1],[1,2],[2,3],[3,4],
-            [0,5],[5,6],[6,7],[7,8],
-            [5,9],[9,10],[10,11],[11,12],
-            [9,13],[13,14],[14,15],[15,16],
-            [13,17],[17,18],[18,19],[19,20],
-            [0,17]
-          ];
-
-          ctx.strokeStyle = 'rgba(0,255,150,0.5)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          connections.forEach(([a, b]) => {
-            if (hand[a] && hand[b]) {
-              ctx.moveTo(hand[a].x * width, hand[a].y * height);
-              ctx.lineTo(hand[b].x * width, hand[b].y * height);
+              ctx.moveTo(face[a].x * W, face[a].y * H);
+              ctx.lineTo(face[b].x * W, face[b].y * H);
             }
           });
           ctx.stroke();
 
-          hand.forEach((lm) => {
-            ctx.fillStyle = 'rgba(0,255,150,0.8)';
-            ctx.fillRect(lm.x * width - 2, lm.y * height - 2, 4, 4);
-          });
-        });
-
-        if (face) {
-          // Draw full face mesh
-          ctx.strokeStyle = 'rgba(255,100,150,0.15)';
-          ctx.lineWidth = 0.5;
-
-          // Triangulate by drawing lines between nearby points
-          for (let i = 0; i < face.length; i += 1) {
-            const p1 = face[i];
-            for (let j = i + 1; j < Math.min(i + 10, face.length); j++) {
-              const p2 = face[j];
-              const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-              if (dist < 0.05) {
-                ctx.beginPath();
-                ctx.moveTo(p1.x * width, p1.y * height);
-                ctx.lineTo(p2.x * width, p2.y * height);
-                ctx.stroke();
-              }
-            }
-          }
-
-          // Face contour
-          const outline = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288,
-            397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136,
-            172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10];
-
-          ctx.strokeStyle = 'rgba(255,100,150,0.5)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          outline.forEach((idx, i) => {
+          // Key points with glow
+          keyPts.forEach(idx => {
             const p = face[idx];
             if (!p) return;
-            if (i === 0) ctx.moveTo(p.x * width, p.y * height);
-            else ctx.lineTo(p.x * width, p.y * height);
-          });
-          ctx.stroke();
-        }
-      }
+            const x = p.x * W, y = p.y * H;
 
-      // Minimal mode
-      function drawMinimal() {
-        ctx.clearRect(0, 0, width, height);
-
-        hands.forEach(hand => {
-          if (!hand) return;
-          [4, 8, 12, 16, 20].forEach(idx => {
-            const p = hand[idx];
-            ctx.fillStyle = 'rgba(0,255,150,0.9)';
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, 18);
+            grad.addColorStop(0, 'rgba(255,120,180,0.5)');
+            grad.addColorStop(1, 'rgba(255,120,180,0)');
+            ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(p.x * width, p.y * height, 6, 0, Math.PI * 2);
+            ctx.arc(x, y, 18, 0, Math.PI * 2);
             ctx.fill();
-          });
-        });
 
-        if (face && face[1]) {
-          ctx.fillStyle = 'rgba(255,100,150,0.9)';
-          ctx.beginPath();
-          ctx.arc(face[1].x * width, face[1].y * height, 8, 0, Math.PI * 2);
-          ctx.fill();
+            ctx.fillStyle = 'rgba(255,120,180,0.9)';
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = '8px IBM Plex Mono';
+            ctx.fillText(idx, x + 8, y - 4);
+          });
+
+          // Face bounding box
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          face.forEach(lm => {
+            minX = Math.min(minX, lm.x * W);
+            minY = Math.min(minY, lm.y * H);
+            maxX = Math.max(maxX, lm.x * W);
+            maxY = Math.max(maxY, lm.y * H);
+          });
+          const pad = 35;
+          ctx.strokeStyle = 'rgba(255,120,180,0.4)';
+          ctx.strokeRect(minX - pad, minY - pad, maxX - minX + pad*2, maxY - minY + pad*2);
+          ctx.fillStyle = 'rgba(255,120,180,0.7)';
+          ctx.font = '10px IBM Plex Mono';
+          ctx.fillText('FACE_0', minX - pad + 4, minY - pad - 6);
+        }
+
+        // Cross-connections (hand to face)
+        if (hands.length > 0 && face) {
+          ctx.strokeStyle = 'rgba(100,200,255,0.2)';
+          ctx.lineWidth = 1;
+          hands.forEach(hand => {
+            if (!hand?.[8] || !face?.[1]) return;
+            const t = hand[8], f = face[1];
+            const dist = Math.hypot((t.x - f.x) * W, (t.y - f.y) * H);
+            if (dist < 300) {
+              ctx.globalAlpha = 1 - dist / 300;
+              ctx.beginPath();
+              ctx.moveTo(t.x * W, t.y * H);
+              ctx.lineTo(f.x * W, f.y * H);
+              ctx.stroke();
+              ctx.globalAlpha = 1;
+            }
+          });
         }
       }
-
-      const drawModes = { track: drawTrack, mesh: drawMesh, minimal: drawMinimal };
 
       function animate() {
         if (!isRunning) return;
-        drawModes[currentMode]();
+        drawTrack();
         updateAudio();
         requestAnimationFrame(animate);
       }
 
-      function setup() {
-        canvas.width = width;
-        canvas.height = height;
-      }
-
       async function start() {
         startPrompt.classList.add('hidden');
-        setup();
+        canvas.width = W;
+        canvas.height = H;
         const ok = await initTracking();
         if (!ok) return;
         initAudio();
-        controlsEl.style.display = 'flex';
         statsEl.style.display = 'block';
         isRunning = true;
         animate();
       }
 
-      controlsEl.addEventListener('click', (e) => {
-        if (e.target.classList.contains('control-btn')) {
-          document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
-          e.target.classList.add('active');
-          currentMode = e.target.dataset.mode;
-        }
-      });
-
-      function handleResize() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
+      function resize() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = W;
+        canvas.height = H;
       }
 
       startPrompt.addEventListener('click', start);
-      window.addEventListener('resize', handleResize);
-
+      window.addEventListener('resize', resize);
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) isRunning = false;
         else if (startPrompt.classList.contains('hidden')) {
           isRunning = true;
           animate();
         }
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === '1') document.querySelector('[data-mode="track"]').click();
-        if (e.key === '2') document.querySelector('[data-mode="mesh"]').click();
-        if (e.key === '3') document.querySelector('[data-mode="minimal"]').click();
       });
 
     })();
