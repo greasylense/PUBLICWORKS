@@ -34,5 +34,14 @@
     "status": "live",
     "url": "projects/public-archive/",
     "date": "2026-01"
+  },
+  {
+    "id": "somatic-interface",
+    "number": "005",
+    "name": "Somatic Interface",
+    "description": "Hand and face tracking audiovisual instrument",
+    "status": "live",
+    "url": "projects/somatic-interface/",
+    "date": "2026-01"
   }
 ]
