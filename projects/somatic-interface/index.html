@@ -3,62 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#D1D1D1">
   <title>Somatic Interface — PUBLICWORKS</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #D1D1D1;
+      --text: #0F0F0F;
+      --text-dim: #6E6E6E;
+      --accent: #0047FF;
+      --alert: #FF4D00;
+    }
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'IBM Plex Mono',monospace;background:#000;color:#0F0F0F;overflow:hidden}
-    #back{position:fixed;top:1.5rem;left:1.5rem;font-size:0.7rem;color:rgba(255,255,255,0.5);text-decoration:none;z-index:999;transition:color 0.15s}
-    #back:hover{color:#0047FF}
-    #start{position:fixed;inset:0;background:#D1D1D1;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:900;cursor:pointer;transition:opacity 0.5s}
+    body{font-family:'IBM Plex Mono',monospace;background:var(--bg);color:var(--text);overflow:hidden}
+
+    /* Start Screen */
+    #start{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:900;cursor:pointer}
     #start.hide{display:none}
-    #start h1{font-size:2.2rem;font-weight:400;letter-spacing:-0.02em;color:#0F0F0F}
-    #start .sub{font-size:0.7rem;color:#6E6E6E;margin-bottom:0.5rem}
-    #start .concept{max-width:420px;text-align:center;margin:1.5rem 1rem;font-size:0.85rem;color:#0F0F0F;line-height:1.7}
-    #start .desc{max-width:380px;text-align:center;margin:0.5rem 1rem 1.5rem;font-size:0.7rem;color:#6E6E6E;line-height:1.6}
-    #start .cta{font-size:0.6rem;color:#0047FF;text-transform:uppercase;letter-spacing:0.15em}
-    #start .req{position:absolute;bottom:2rem;font-size:0.55rem;color:#999;text-transform:uppercase;letter-spacing:0.1em}
+    #start h1{font-family:'Space Grotesk',sans-serif;font-size:2.5rem;font-weight:700;letter-spacing:-0.03em;color:var(--text);margin-bottom:0.5rem}
+    #start .sub{font-size:0.7rem;color:var(--text-dim);margin-bottom:2rem}
+    #start .instructions{display:flex;gap:3rem;margin:2rem 0}
+    #start .hand-info{text-align:center;max-width:200px}
+    #start .hand-info h3{font-family:'Space Grotesk',sans-serif;font-size:0.9rem;color:var(--text);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.05em}
+    #start .hand-info.left h3{color:var(--accent)}
+    #start .hand-info.right h3{color:var(--alert)}
+    #start .hand-info ul{list-style:none;font-size:0.65rem;color:var(--text-dim);line-height:2}
+    #start .hand-info li span{color:var(--text);font-weight:500}
+    #start .cta{font-size:0.7rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.15em;margin-top:2rem;padding:0.8rem 2rem;border:1px solid var(--accent);transition:all 0.2s}
+    #start .cta:hover{background:var(--accent);color:var(--bg)}
+    #start .req{position:absolute;bottom:2rem;font-size:0.5rem;color:var(--text-dim)}
+
+    /* Main */
+    #back{position:fixed;top:1.5rem;left:1.5rem;font-size:0.7rem;color:var(--text-dim);text-decoration:none;z-index:999}
+    #back:hover{color:var(--accent)}
     #video{position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);z-index:1;background:#000}
-    #canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;transform:scaleX(-1);z-index:2;background:transparent}
-    #hud{position:fixed;bottom:1.5rem;right:1.5rem;font-size:0.6rem;color:#fff;background:rgba(0,0,0,0.8);padding:0.7rem 1rem;border:1px solid rgba(255,255,255,0.3);z-index:999}
-    #hud div{margin-bottom:0.25rem}
-    #hud .val{color:#0047FF;font-weight:500}
-    #gesture{position:fixed;top:1.5rem;right:1.5rem;font-size:1rem;color:#FF4D00;background:rgba(0,0,0,0.8);padding:0.6rem 1rem;border:2px solid #FF4D00;z-index:999;min-width:140px;text-align:center}
-    #guide{position:fixed;bottom:1.5rem;left:1.5rem;font-size:0.5rem;color:rgba(255,255,255,0.6);background:rgba(0,0,0,0.8);padding:0.6rem 0.8rem;border:1px solid rgba(255,255,255,0.15);z-index:999;line-height:1.9}
-    #guide .title{color:#0047FF;font-size:0.55rem;margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.1em}
-    #guide .row{display:flex;justify-content:space-between;gap:0.8rem}
-    #guide .key{color:rgba(255,255,255,0.35)}
+    #canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;transform:scaleX(-1);z-index:2}
+
+    /* HUD */
+    #hud{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg);padding:1rem 1.2rem;border:1px solid var(--text);z-index:999;font-size:0.6rem;line-height:1.8}
+    #hud .row{display:flex;justify-content:space-between;gap:2rem}
+    #hud .label{color:var(--text-dim)}
+    #hud .val{color:var(--text);font-weight:500}
+    #hud .accent{color:var(--accent)}
+    #hud .alert{color:var(--alert)}
+
+    #left-status{position:fixed;bottom:1.5rem;left:1.5rem;background:var(--bg);padding:0.8rem 1rem;border:1px solid var(--accent);z-index:999;font-size:0.7rem;color:var(--accent);min-width:120px;text-align:center}
+    #right-status{position:fixed;top:1.5rem;right:1.5rem;background:var(--bg);padding:0.8rem 1rem;border:1px solid var(--alert);z-index:999;font-size:0.7rem;color:var(--alert);min-width:120px;text-align:center}
   </style>
 </head>
 <body>
-  <a href="../../" id="back">← PUBLICWORKS</a>
+  <a href="../../" id="back" style="display:none">← PUBLICWORKS</a>
+
   <div id="start">
     <div class="sub">005</div>
     <h1>Somatic Interface</h1>
-    <p class="concept">Your body becomes the instrument. Move your hands to shape sound — every gesture triggers something different. No skill required, just movement.</p>
-    <p class="desc">Right hand = harmony + effects. Left hand = melody speed + brightness. Make a fist to change patterns. Open palm to drop the bass. Peace sign for stabs. Just play.</p>
-    <p class="cta">Click to begin</p>
-    <p class="req">Requires webcam + audio</p>
+
+    <div class="instructions">
+      <div class="hand-info left">
+        <h3>Left Hand</h3>
+        <p style="font-size:0.6rem;color:var(--text-dim);margin-bottom:0.8rem">Effects & Triggers</p>
+        <ul>
+          <li><span>Open Palm</span> — Bass Drop</li>
+          <li><span>Peace Sign</span> — Chord Stab</li>
+          <li><span>Thumbs Up</span> — Kick Drum</li>
+          <li><span>Point Up</span> — Filter Open</li>
+          <li><span>Fist</span> — Mute All</li>
+        </ul>
+      </div>
+
+      <div class="hand-info right">
+        <h3>Right Hand</h3>
+        <p style="font-size:0.6rem;color:var(--text-dim);margin-bottom:0.8rem">Harmony & Melody</p>
+        <ul>
+          <li><span>Up/Down</span> — Change Chord</li>
+          <li><span>Left/Right</span> — Arp Speed</li>
+          <li><span>Present</span> — Pad + Arp Play</li>
+          <li><span>Rotation</span> — Arp Pattern</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="cta">Click to Begin</div>
+    <p class="req">Requires camera and audio permissions</p>
   </div>
+
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas"></canvas>
 
-  <div id="hud" style="display:none">
-    <div>CHORD <span class="val" id="hC">I</span></div>
-    <div>PATTERN <span class="val" id="hP">UP</span></div>
-    <div>BPM <span class="val" id="hB">120</span></div>
+  <div id="left-status" style="display:none">
+    <span id="leftGesture">WAITING</span>
   </div>
 
-  <div id="gesture" style="display:none"><span id="gName">READY</span></div>
+  <div id="right-status" style="display:none">
+    <span id="rightStatus">WAITING</span>
+  </div>
 
-  <div id="guide" style="display:none">
-    <div class="title">Gestures</div>
-    <div class="row"><span class="key">Fist</span><span>Change Pattern</span></div>
-    <div class="row"><span class="key">Palm</span><span>Bass Drop</span></div>
-    <div class="row"><span class="key">Peace</span><span>Chord Stab</span></div>
-    <div class="row"><span class="key">Thumbs Up</span><span>Kick Drum</span></div>
-    <div class="row"><span class="key">Point</span><span>Filter Sweep</span></div>
-    <div class="row"><span class="key">L Hand</span><span>Arp Speed/Tone</span></div>
+  <div id="hud" style="display:none">
+    <div class="row"><span class="label">CHORD</span><span class="val" id="hChord">I</span></div>
+    <div class="row"><span class="label">PATTERN</span><span class="val accent" id="hPattern">UP</span></div>
+    <div class="row"><span class="label">BPM</span><span class="val alert" id="hBpm">120</span></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
@@ -76,30 +119,33 @@
     let faceLandmarks = null;
     let frameCount = 0;
 
+    // Audio analysis for face warping
+    let analyser, freqData;
+    let bassLevel = 0, midLevel = 0, highLevel = 0;
+
     // ============ AUDIO ENGINE ============
-    let ac, master, comp, delay, delayGain, reverb, revGain, filter;
+    let ac, master, comp, delay, delayGain, reverb, revGain, globalFilter;
     let padVoices = [], lead, bass, stab;
     let arpTime = 0, arpIndex = 0;
-    let lastGesture = '', currentChord = 'I';
     let patternIndex = 0;
-    let lastFistTime = 0;
+    let lastLeftGesture = '';
+    let isMuted = false;
     let bassDropActive = false;
 
-    // Arpeggiator patterns - musical and interesting
+    // Arp patterns
     const ARP_PATTERNS = [
-      { name: 'UP', fn: (c) => [...c] },
-      { name: 'DOWN', fn: (c) => [...c].reverse() },
-      { name: 'BOUNCE', fn: (c) => [...c, ...c.slice(1,-1).reverse()] },
-      { name: 'THIRDS', fn: (c) => [c[0], c[2], c[1], c[3], c[0]+12, c[2]+12] },
-      { name: 'OCTAVE', fn: (c) => [c[0], c[0]+12, c[1], c[1]+12] },
-      { name: 'SPREAD', fn: (c) => [c[0], c[3]+12, c[1], c[2]+12] },
+      { name: 'UP', fn: c => [...c] },
+      { name: 'DOWN', fn: c => [...c].reverse() },
+      { name: 'BOUNCE', fn: c => [...c, ...c.slice(1,-1).reverse()] },
+      { name: 'SPREAD', fn: c => [c[0], c[3]+12, c[1], c[2]+12] },
     ];
 
+    // Chords - all sound good together
     const CHORDS = {
-      I:   [0, 4, 7, 11],   // Cmaj7
-      vi:  [9, 12, 16, 19], // Am7
-      IV:  [5, 9, 12, 16],  // Fmaj7
-      V:   [7, 11, 14, 17], // G7
+      I:  [0, 4, 7, 11],   // Cmaj7
+      vi: [9, 12, 16, 19], // Am7
+      IV: [5, 9, 12, 16],  // Fmaj7
+      V:  [7, 11, 14, 17], // G7
     };
     const PROGRESSION = ['I', 'vi', 'IV', 'V'];
     const ROOT = 48;
@@ -108,113 +154,115 @@
     function initAudio() {
       ac = new AudioContext();
 
-      // Punchy compressor
+      // Analyser for face warping
+      analyser = ac.createAnalyser();
+      analyser.fftSize = 256;
+      freqData = new Uint8Array(analyser.frequencyBinCount);
+
+      // Smooth compressor
       comp = ac.createDynamicsCompressor();
-      comp.threshold.value = -15;
-      comp.knee.value = 8;
-      comp.ratio.value = 8;
-      comp.attack.value = 0.003;
-      comp.release.value = 0.15;
-      comp.connect(ac.destination);
+      comp.threshold.value = -12;
+      comp.knee.value = 10;
+      comp.ratio.value = 6;
+      comp.attack.value = 0.005;
+      comp.release.value = 0.2;
+      comp.connect(analyser);
+      analyser.connect(ac.destination);
 
       master = ac.createGain();
-      master.gain.value = 0.6;
+      master.gain.value = 0.55;
       master.connect(comp);
 
-      // Global filter for sweeps
-      filter = ac.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = 8000;
-      filter.Q.value = 1;
-      filter.connect(master);
+      // Global filter
+      globalFilter = ac.createBiquadFilter();
+      globalFilter.type = 'lowpass';
+      globalFilter.frequency.value = 8000;
+      globalFilter.Q.value = 0.7;
+      globalFilter.connect(master);
 
-      // Lush delay
+      // Delay
       delay = ac.createDelay(1);
-      delay.delayTime.value = 0.333;
+      delay.delayTime.value = 0.35;
       const fb = ac.createGain();
-      fb.gain.value = 0.45;
+      fb.gain.value = 0.4;
       const dlp = ac.createBiquadFilter();
       dlp.type = 'lowpass';
-      dlp.frequency.value = 3000;
+      dlp.frequency.value = 2500;
       delay.connect(dlp);
       dlp.connect(fb);
       fb.connect(delay);
       delayGain = ac.createGain();
-      delayGain.gain.value = 0.35;
+      delayGain.gain.value = 0.3;
       delay.connect(delayGain);
       delayGain.connect(comp);
 
-      // Big reverb
+      // Reverb
       reverb = ac.createConvolver();
-      const revLen = ac.sampleRate * 3;
+      const revLen = ac.sampleRate * 2.5;
       const imp = ac.createBuffer(2, revLen, ac.sampleRate);
       for (let c = 0; c < 2; c++) {
         const d = imp.getChannelData(c);
         for (let i = 0; i < revLen; i++) {
-          d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / revLen, 1.5);
+          d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / revLen, 1.6);
         }
       }
       reverb.buffer = imp;
       revGain = ac.createGain();
-      revGain.gain.value = 0.5;
+      revGain.gain.value = 0.45;
       reverb.connect(revGain);
       revGain.connect(comp);
 
-      // WARM PAD - always sounds good
+      // PAD - Warm and full
       for (let i = 0; i < 4; i++) {
         const o1 = ac.createOscillator();
         const o2 = ac.createOscillator();
-        const o3 = ac.createOscillator();
         const f = ac.createBiquadFilter();
         const g = ac.createGain();
         o1.type = 'sawtooth';
-        o2.type = 'sawtooth';
-        o3.type = 'triangle';
-        o2.detune.value = 7;
-        o3.detune.value = -5;
+        o2.type = 'triangle';
+        o2.detune.value = 6 + i * 3;
         f.type = 'lowpass';
-        f.frequency.value = 800;
-        f.Q.value = 1;
+        f.frequency.value = 600;
+        f.Q.value = 0.8;
         g.gain.value = 0;
-        o1.connect(f); o2.connect(f); o3.connect(f);
+        o1.connect(f); o2.connect(f);
         f.connect(g);
-        g.connect(filter);
+        g.connect(globalFilter);
         g.connect(reverb);
-        o1.start(); o2.start(); o3.start();
-        padVoices.push({ o1, o2, o3, f, g });
+        o1.start(); o2.start();
+        padVoices.push({ o1, o2, f, g });
       }
 
-      // PLUCKY LEAD
+      // LEAD - Arpeggio
       const lo1 = ac.createOscillator();
       const lo2 = ac.createOscillator();
       const lf = ac.createBiquadFilter();
       const lg = ac.createGain();
       lo1.type = 'sawtooth';
       lo2.type = 'square';
-      lo2.detune.value = 3;
+      lo2.detune.value = 4;
       lf.type = 'lowpass';
       lf.frequency.value = 2000;
-      lf.Q.value = 8;
+      lf.Q.value = 6;
       lg.gain.value = 0;
       lo1.connect(lf); lo2.connect(lf);
       lf.connect(lg);
-      lg.connect(filter);
+      lg.connect(globalFilter);
       lg.connect(delay);
       lg.connect(reverb);
       lo1.start(); lo2.start();
       lead = { o1: lo1, o2: lo2, f: lf, g: lg };
 
-      // DEEP BASS
+      // BASS
       const bo1 = ac.createOscillator();
       const bo2 = ac.createOscillator();
       const bf = ac.createBiquadFilter();
       const bg = ac.createGain();
       bo1.type = 'sine';
-      bo2.type = 'sawtooth';
+      bo2.type = 'triangle';
       bo2.detune.value = -1200;
       bf.type = 'lowpass';
-      bf.frequency.value = 200;
-      bf.Q.value = 2;
+      bf.frequency.value = 180;
       bg.gain.value = 0;
       bo1.connect(bf); bo2.connect(bf);
       bf.connect(bg);
@@ -222,91 +270,94 @@
       bo1.start(); bo2.start();
       bass = { o1: bo1, o2: bo2, f: bf, g: bg };
 
-      // STAB SYNTH
+      // STAB
       const so1 = ac.createOscillator();
       const so2 = ac.createOscillator();
-      const so3 = ac.createOscillator();
       const sf = ac.createBiquadFilter();
       const sg = ac.createGain();
       so1.type = 'sawtooth';
       so2.type = 'square';
-      so3.type = 'sawtooth';
-      so2.detune.value = 5;
-      so3.detune.value = -1200;
+      so2.detune.value = 7;
       sf.type = 'lowpass';
-      sf.frequency.value = 3000;
-      sf.Q.value = 4;
+      sf.frequency.value = 2500;
+      sf.Q.value = 3;
       sg.gain.value = 0;
-      so1.connect(sf); so2.connect(sf); so3.connect(sf);
+      so1.connect(sf); so2.connect(sf);
       sf.connect(sg);
-      sg.connect(filter);
+      sg.connect(globalFilter);
       sg.connect(delay);
       sg.connect(reverb);
-      so1.start(); so2.start(); so3.start();
-      stab = { o1: so1, o2: so2, o3: so3, f: sf, g: sg };
+      so1.start(); so2.start();
+      stab = { o1: so1, o2: so2, f: sf, g: sg };
+    }
+
+    function getAudioLevels() {
+      if (!analyser) return;
+      analyser.getByteFrequencyData(freqData);
+      // Bass: 0-10, Mid: 10-50, High: 50-128
+      let b = 0, m = 0, h = 0;
+      for (let i = 0; i < 10; i++) b += freqData[i];
+      for (let i = 10; i < 50; i++) m += freqData[i];
+      for (let i = 50; i < 128; i++) h += freqData[i];
+      bassLevel = b / 10 / 255;
+      midLevel = m / 40 / 255;
+      highLevel = h / 78 / 255;
     }
 
     function triggerKick() {
-      if (!ac) return;
+      if (!ac || isMuted) return;
       const t = ac.currentTime;
-      // Layered kick
       const ko = ac.createOscillator();
       const ko2 = ac.createOscillator();
       const kg = ac.createGain();
       ko.type = 'sine';
       ko2.type = 'triangle';
-      ko.frequency.setValueAtTime(150, t);
-      ko.frequency.exponentialRampToValueAtTime(30, t + 0.15);
-      ko2.frequency.setValueAtTime(80, t);
-      ko2.frequency.exponentialRampToValueAtTime(20, t + 0.1);
-      kg.gain.setValueAtTime(0.6, t);
-      kg.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      ko.frequency.setValueAtTime(140, t);
+      ko.frequency.exponentialRampToValueAtTime(35, t + 0.12);
+      ko2.frequency.setValueAtTime(70, t);
+      ko2.frequency.exponentialRampToValueAtTime(25, t + 0.08);
+      kg.gain.setValueAtTime(0.5, t);
+      kg.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
       ko.connect(kg); ko2.connect(kg);
       kg.connect(master);
       ko.start(t); ko2.start(t);
-      ko.stop(t + 0.35); ko2.stop(t + 0.35);
+      ko.stop(t + 0.3); ko2.stop(t + 0.3);
     }
 
     function triggerStab(chord) {
-      if (!ac) return;
+      if (!ac || isMuted) return;
       const t = ac.currentTime;
-      // Play full chord stab
       chord.forEach((n, i) => {
         const freq = mtof(ROOT + 12 + n);
         setTimeout(() => {
           stab.o1.frequency.setTargetAtTime(freq, ac.currentTime, 0.001);
           stab.o2.frequency.setTargetAtTime(freq, ac.currentTime, 0.001);
-          stab.o3.frequency.setTargetAtTime(freq/2, ac.currentTime, 0.001);
           stab.g.gain.cancelScheduledValues(ac.currentTime);
-          stab.g.gain.setValueAtTime(0.25, ac.currentTime);
-          stab.g.gain.setTargetAtTime(0.001, ac.currentTime + 0.05, 0.15);
-        }, i * 30);
+          stab.g.gain.setValueAtTime(0.22, ac.currentTime);
+          stab.g.gain.setTargetAtTime(0.001, ac.currentTime + 0.03, 0.12);
+        }, i * 25);
       });
-      // Extra delay on stabs
-      delayGain.gain.setTargetAtTime(0.55, t, 0.05);
-      setTimeout(() => {
-        delayGain.gain.setTargetAtTime(0.35, ac.currentTime, 0.3);
-      }, 500);
+      delayGain.gain.setTargetAtTime(0.5, t, 0.03);
+      setTimeout(() => delayGain.gain.setTargetAtTime(0.3, ac.currentTime, 0.2), 400);
     }
 
     function triggerBassDrop(chord) {
-      if (!ac || bassDropActive) return;
+      if (!ac || bassDropActive || isMuted) return;
       bassDropActive = true;
       const t = ac.currentTime;
       const note = chord[0] - 12;
 
-      bass.o1.frequency.setTargetAtTime(mtof(ROOT + note), t, 0.01);
-      bass.o2.frequency.setTargetAtTime(mtof(ROOT + note), t, 0.01);
-      bass.f.frequency.setValueAtTime(1500, t);
-      bass.f.frequency.exponentialRampToValueAtTime(80, t + 0.3);
-      bass.g.gain.setValueAtTime(0.35, t);
-      bass.g.gain.setTargetAtTime(0.15, t + 0.1, 0.2);
+      bass.o1.frequency.setTargetAtTime(mtof(ROOT + note), t, 0.005);
+      bass.o2.frequency.setTargetAtTime(mtof(ROOT + note), t, 0.005);
+      bass.f.frequency.setValueAtTime(1200, t);
+      bass.f.frequency.exponentialRampToValueAtTime(80, t + 0.25);
+      bass.g.gain.setValueAtTime(0.4, t);
+      bass.g.gain.setTargetAtTime(0.15, t + 0.08, 0.15);
 
-      // Filter sweep on everything
-      filter.frequency.setValueAtTime(200, t);
-      filter.frequency.exponentialRampToValueAtTime(8000, t + 0.5);
+      globalFilter.frequency.setValueAtTime(300, t);
+      globalFilter.frequency.exponentialRampToValueAtTime(8000, t + 0.4);
 
-      setTimeout(() => { bassDropActive = false; }, 800);
+      setTimeout(() => { bassDropActive = false; }, 600);
     }
 
     function detectGesture(hand) {
@@ -336,116 +387,129 @@
     function updateAudio() {
       if (!ac) return;
       const t = ac.currentTime;
-      const rHand = getHand('Right');
       const lHand = getHand('Left');
-      const gesture = detectGesture(rHand);
+      const rHand = getHand('Right');
 
-      // Update display
-      document.getElementById('gName').textContent = gesture.toUpperCase();
-      document.getElementById('hP').textContent = ARP_PATTERNS[patternIndex].name;
+      // Get audio levels for face warping
+      getAudioLevels();
 
-      // Chord from right hand Y
-      let chordIdx = 0;
-      if (rHand && rHand[9]) {
-        chordIdx = Math.floor(rHand[9].y * PROGRESSION.length);
-        chordIdx = Math.max(0, Math.min(PROGRESSION.length - 1, chordIdx));
-      }
-      currentChord = PROGRESSION[chordIdx];
-      const chord = CHORDS[currentChord];
-      document.getElementById('hC').textContent = currentChord;
+      // ===== LEFT HAND - Effects & Triggers =====
+      const leftGesture = detectGesture(lHand);
+      document.getElementById('leftGesture').textContent = leftGesture === 'none' ? 'NO HAND' : leftGesture.toUpperCase();
 
-      // ===== GESTURE EFFECTS =====
-
-      // FIST = Change arp pattern
-      if (gesture === 'fist' && lastGesture !== 'fist' && t - lastFistTime > 0.5) {
-        patternIndex = (patternIndex + 1) % ARP_PATTERNS.length;
-        lastFistTime = t;
-        arpIndex = 0; // Reset arp
+      // Fist = Mute
+      if (leftGesture === 'fist') {
+        isMuted = true;
+        globalFilter.frequency.setTargetAtTime(200, t, 0.05);
+        master.gain.setTargetAtTime(0.1, t, 0.1);
+      } else {
+        isMuted = false;
+        master.gain.setTargetAtTime(0.55, t, 0.15);
       }
 
-      // THUMBS UP = Kick
-      if (gesture === 'thumbsup' && lastGesture !== 'thumbsup') {
-        triggerKick();
-      }
-
-      // PEACE = Stab
-      if (gesture === 'peace' && lastGesture !== 'peace') {
-        triggerStab(chord);
-      }
-
-      // PALM = Bass drop
-      if (gesture === 'palm' && lastGesture !== 'palm') {
+      // Palm = Bass Drop
+      if (leftGesture === 'palm' && lastLeftGesture !== 'palm') {
+        const chord = CHORDS[PROGRESSION[0]];
         triggerBassDrop(chord);
       }
 
-      // POINT = Filter sweep up
-      if (gesture === 'point') {
-        const ry = rHand[8] ? rHand[8].y : 0.5;
-        const freq = 500 + (1 - ry) * 6000;
-        filter.frequency.setTargetAtTime(freq, t, 0.05);
-        lead.f.Q.value = 12;
-      } else {
-        filter.frequency.setTargetAtTime(8000, t, 0.2);
-        lead.f.Q.value = 6;
+      // Peace = Stab
+      if (leftGesture === 'peace' && lastLeftGesture !== 'peace') {
+        const chordIdx = rHand && rHand[9] ? Math.floor(rHand[9].y * 4) : 0;
+        const chord = CHORDS[PROGRESSION[Math.max(0, Math.min(3, chordIdx))]];
+        triggerStab(chord);
       }
 
-      lastGesture = gesture;
+      // Thumbs Up = Kick
+      if (leftGesture === 'thumbsup' && lastLeftGesture !== 'thumbsup') {
+        triggerKick();
+      }
 
-      // ===== PAD - Always playing when right hand visible =====
+      // Point = Filter Open
+      if (leftGesture === 'point' && lHand) {
+        const y = lHand[8] ? lHand[8].y : 0.5;
+        const freq = 800 + (1 - y) * 7000;
+        globalFilter.frequency.setTargetAtTime(freq, t, 0.03);
+      } else if (leftGesture !== 'fist') {
+        globalFilter.frequency.setTargetAtTime(8000, t, 0.15);
+      }
+
+      lastLeftGesture = leftGesture;
+
+      // ===== RIGHT HAND - Harmony & Arp =====
       if (rHand) {
+        document.getElementById('rightStatus').textContent = 'PLAYING';
+
         const ry = rHand[9] ? rHand[9].y : 0.5;
-        const filterFreq = 400 + (1 - ry) * 2000;
+        const rx = rHand[9] ? rHand[9].x : 0.5;
 
-        chord.forEach((note, i) => {
-          if (!padVoices[i]) return;
-          const freq = mtof(ROOT + note);
-          padVoices[i].o1.frequency.setTargetAtTime(freq, t, 0.2);
-          padVoices[i].o2.frequency.setTargetAtTime(freq, t, 0.2);
-          padVoices[i].o3.frequency.setTargetAtTime(freq, t, 0.2);
-          padVoices[i].f.frequency.setTargetAtTime(filterFreq, t, 0.1);
-          padVoices[i].g.gain.setTargetAtTime(0.07, t, 0.3);
-        });
+        // Chord from Y
+        let chordIdx = Math.floor(ry * PROGRESSION.length);
+        chordIdx = Math.max(0, Math.min(PROGRESSION.length - 1, chordIdx));
+        const chordName = PROGRESSION[chordIdx];
+        const chord = CHORDS[chordName];
+        document.getElementById('hChord').textContent = chordName;
 
-        // Constant bass
-        const bassNote = chord[0] - 12;
-        bass.o1.frequency.setTargetAtTime(mtof(ROOT + bassNote), t, 0.15);
-        bass.o2.frequency.setTargetAtTime(mtof(ROOT + bassNote), t, 0.15);
-        if (!bassDropActive) {
-          bass.g.gain.setTargetAtTime(0.12, t, 0.2);
+        // Pattern from hand rotation
+        const wrist = rHand[0];
+        const middle = rHand[9];
+        const angle = Math.atan2(middle.x - wrist.x, middle.y - wrist.y);
+        const pIdx = Math.floor(((angle + Math.PI) / (Math.PI * 2)) * ARP_PATTERNS.length);
+        patternIndex = Math.abs(pIdx) % ARP_PATTERNS.length;
+        document.getElementById('hPattern').textContent = ARP_PATTERNS[patternIndex].name;
+
+        // Pad plays
+        if (!isMuted) {
+          const padFilter = 400 + (1 - ry) * 1500;
+          chord.forEach((note, i) => {
+            if (!padVoices[i]) return;
+            const freq = mtof(ROOT + note);
+            padVoices[i].o1.frequency.setTargetAtTime(freq, t, 0.25);
+            padVoices[i].o2.frequency.setTargetAtTime(freq, t, 0.25);
+            padVoices[i].f.frequency.setTargetAtTime(padFilter, t, 0.1);
+            padVoices[i].g.gain.setTargetAtTime(0.065, t, 0.25);
+          });
+
+          // Bass
+          const bassNote = chord[0] - 12;
+          bass.o1.frequency.setTargetAtTime(mtof(ROOT + bassNote), t, 0.15);
+          bass.o2.frequency.setTargetAtTime(mtof(ROOT + bassNote), t, 0.15);
+          if (!bassDropActive) {
+            bass.g.gain.setTargetAtTime(0.11, t, 0.2);
+          }
         }
-      } else {
-        padVoices.forEach(v => v.g.gain.setTargetAtTime(0, t, 0.5));
-        bass.g.gain.setTargetAtTime(0, t, 0.4);
-      }
 
-      // ===== ARPEGGIATOR - Left hand =====
-      if (lHand && lHand[8]) {
-        const tip = lHand[8];
-        const bpm = 70 + tip.x * 180;
+        // Arp speed from X
+        const bpm = 80 + rx * 160;
         const stepTime = 60 / bpm / 2;
-        const brightness = 1000 + (1 - tip.y) * 4000;
+        document.getElementById('hBpm').textContent = Math.round(bpm);
 
-        document.getElementById('hB').textContent = Math.round(bpm);
+        // Arp brightness from Y
+        const brightness = 1200 + (1 - ry) * 3500;
 
-        if (t - arpTime > stepTime) {
+        // Play arp
+        if (!isMuted && t - arpTime > stepTime) {
           arpTime = t;
           const pattern = ARP_PATTERNS[patternIndex].fn(chord);
           const note = pattern[arpIndex % pattern.length];
           const freq = mtof(ROOT + 12 + note);
 
-          lead.o1.frequency.setTargetAtTime(freq, t, 0.005);
-          lead.o2.frequency.setTargetAtTime(freq, t, 0.005);
-          lead.f.frequency.setTargetAtTime(brightness, t, 0.01);
+          lead.o1.frequency.setTargetAtTime(freq, t, 0.003);
+          lead.o2.frequency.setTargetAtTime(freq, t, 0.003);
+          lead.f.frequency.setTargetAtTime(brightness, t, 0.008);
 
           lead.g.gain.cancelScheduledValues(t);
-          lead.g.gain.setValueAtTime(0.18, t);
-          lead.g.gain.setTargetAtTime(0.001, t + 0.02, stepTime * 0.4);
+          lead.g.gain.setValueAtTime(0.16, t);
+          lead.g.gain.setTargetAtTime(0.001, t + 0.015, stepTime * 0.35);
 
           arpIndex++;
         }
       } else {
-        lead.g.gain.setTargetAtTime(0, t, 0.2);
-        document.getElementById('hB').textContent = '—';
+        document.getElementById('rightStatus').textContent = 'NO HAND';
+        document.getElementById('hBpm').textContent = '—';
+        padVoices.forEach(v => v.g.gain.setTargetAtTime(0, t, 0.4));
+        bass.g.gain.setTargetAtTime(0, t, 0.35);
+        lead.g.gain.setTargetAtTime(0, t, 0.15);
       }
     }
 
@@ -506,110 +570,71 @@
       ctx.clearRect(0, 0, W, H);
       frameCount++;
 
-      // ===== FACE OBFUSCATION - Dense grid of points and boxes =====
+      // ===== FACE - Warped by audio =====
       if (faceLandmarks) {
-        const allPts = faceLandmarks;
+        const pts = faceLandmarks;
 
-        // Draw ALL face mesh points - creates dense coverage
-        ctx.fillStyle = 'rgba(0, 71, 255, 0.6)';
-        for (let i = 0; i < allPts.length; i++) {
-          const pt = allPts[i];
-          const x = pt.x * W;
-          const y = pt.y * H;
+        // Calculate face center
+        let cx = 0, cy = 0;
+        pts.forEach(p => { cx += p.x; cy += p.y; });
+        cx = (cx / pts.length) * W;
+        cy = (cy / pts.length) * H;
 
-          // Vary size based on position
-          const size = 2 + Math.sin(i * 0.5 + frameCount * 0.1) * 1;
+        // Draw warped face mesh
+        ctx.fillStyle = 'rgba(0, 71, 255, 0.7)';
+
+        for (let i = 0; i < pts.length; i++) {
+          let x = pts[i].x * W;
+          let y = pts[i].y * H;
+
+          // Warp based on audio
+          const dx = x - cx;
+          const dy = y - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          // Bass pushes outward
+          const bassWarp = 1 + bassLevel * 0.4;
+          // Mids create wobble
+          const midWobble = Math.sin(i * 0.3 + frameCount * 0.15) * midLevel * 15;
+          // Highs add jitter
+          const highJitter = (Math.random() - 0.5) * highLevel * 8;
+
+          x = cx + dx * bassWarp + midWobble + highJitter;
+          y = cy + dy * bassWarp + highJitter;
+
+          // Size varies with bass
+          const size = 2 + bassLevel * 4;
           ctx.fillRect(x - size/2, y - size/2, size, size);
         }
 
-        // Grid overlay on face
+        // Bounding box
         let fx1 = Infinity, fy1 = Infinity, fx2 = -Infinity, fy2 = -Infinity;
-        allPts.forEach(pt => {
-          fx1 = Math.min(fx1, pt.x * W);
-          fy1 = Math.min(fy1, pt.y * H);
-          fx2 = Math.max(fx2, pt.x * W);
-          fy2 = Math.max(fy2, pt.y * H);
+        pts.forEach(p => {
+          const x = p.x * W, y = p.y * H;
+          fx1 = Math.min(fx1, x); fy1 = Math.min(fy1, y);
+          fx2 = Math.max(fx2, x); fy2 = Math.max(fy2, y);
         });
 
-        // Multiple bounding boxes
-        ctx.strokeStyle = 'rgba(0, 71, 255, 0.5)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 5; i++) {
-          const inset = i * 8;
-          ctx.strokeRect(fx1 - 20 + inset, fy1 - 20 + inset,
-                        fx2 - fx1 + 40 - inset*2, fy2 - fy1 + 40 - inset*2);
-        }
+        // Expand box with bass
+        const expand = bassLevel * 30;
+        fx1 -= expand; fy1 -= expand;
+        fx2 += expand; fy2 += expand;
 
-        // Scan lines across face
-        ctx.strokeStyle = 'rgba(0, 71, 255, 0.2)';
-        const scanY = fy1 + ((frameCount * 3) % (fy2 - fy1));
-        ctx.beginPath();
-        ctx.moveTo(fx1 - 30, scanY);
-        ctx.lineTo(fx2 + 30, scanY);
-        ctx.stroke();
+        ctx.strokeStyle = `rgba(0, 71, 255, ${0.3 + bassLevel * 0.5})`;
+        ctx.lineWidth = 1 + bassLevel * 2;
+        ctx.strokeRect(fx1 - 15, fy1 - 15, fx2 - fx1 + 30, fy2 - fy1 + 30);
 
-        // Grid lines
-        ctx.strokeStyle = 'rgba(0, 71, 255, 0.15)';
-        const gridSize = 15;
-        for (let x = fx1; x < fx2; x += gridSize) {
-          ctx.beginPath();
-          ctx.moveTo(x, fy1 - 10);
-          ctx.lineTo(x, fy2 + 10);
-          ctx.stroke();
-        }
-        for (let y = fy1; y < fy2; y += gridSize) {
-          ctx.beginPath();
-          ctx.moveTo(fx1 - 10, y);
-          ctx.lineTo(fx2 + 10, y);
-          ctx.stroke();
-        }
-
-        // Data labels
-        ctx.fillStyle = 'rgba(0, 71, 255, 0.7)';
+        // Label
+        ctx.fillStyle = 'rgba(0, 71, 255, 0.6)';
         ctx.font = '9px IBM Plex Mono';
-        ctx.fillText('FACE_MESH', fx1 - 20, fy1 - 30);
-        ctx.fillText(`${allPts.length} POINTS`, fx1 - 20, fy1 - 18);
-
-        ctx.font = '7px IBM Plex Mono';
-        ctx.fillStyle = 'rgba(0, 71, 255, 0.4)';
-        ctx.fillText(`X:${(fx1/W).toFixed(2)} Y:${(fy1/H).toFixed(2)}`, fx1 - 20, fy2 + 35);
-
-        // Corner brackets
-        const bracketSize = 20;
-        ctx.strokeStyle = 'rgba(0, 71, 255, 0.8)';
-        ctx.lineWidth = 2;
-        // Top-left
-        ctx.beginPath();
-        ctx.moveTo(fx1 - 25, fy1 - 15);
-        ctx.lineTo(fx1 - 25, fy1 - 25);
-        ctx.lineTo(fx1 - 15, fy1 - 25);
-        ctx.stroke();
-        // Top-right
-        ctx.beginPath();
-        ctx.moveTo(fx2 + 15, fy1 - 25);
-        ctx.lineTo(fx2 + 25, fy1 - 25);
-        ctx.lineTo(fx2 + 25, fy1 - 15);
-        ctx.stroke();
-        // Bottom-left
-        ctx.beginPath();
-        ctx.moveTo(fx1 - 25, fy2 + 15);
-        ctx.lineTo(fx1 - 25, fy2 + 25);
-        ctx.lineTo(fx1 - 15, fy2 + 25);
-        ctx.stroke();
-        // Bottom-right
-        ctx.beginPath();
-        ctx.moveTo(fx2 + 15, fy2 + 25);
-        ctx.lineTo(fx2 + 25, fy2 + 25);
-        ctx.lineTo(fx2 + 25, fy2 + 15);
-        ctx.stroke();
+        ctx.fillText('FACE_MESH', fx1 - 15, fy1 - 20);
       }
 
-      // ===== HANDS - Bold and pronounced =====
+      // ===== HANDS =====
       hands.forEach((hand, hi) => {
         const isRight = handedness[hi] === 'Right';
-        const col = isRight ? '255, 77, 0' : '0, 200, 255';
+        const col = isRight ? '255, 77, 0' : '0, 71, 255';
 
-        // Thick skeleton
         const bones = [
           [0,1],[1,2],[2,3],[3,4],
           [0,5],[5,6],[6,7],[7,8],
@@ -619,9 +644,9 @@
           [0,17]
         ];
 
-        // Glow effect
-        ctx.strokeStyle = `rgba(${col}, 0.3)`;
-        ctx.lineWidth = 8;
+        // Skeleton glow
+        ctx.strokeStyle = `rgba(${col}, 0.25)`;
+        ctx.lineWidth = 6;
         ctx.lineCap = 'round';
         ctx.beginPath();
         bones.forEach(([a, b]) => {
@@ -630,7 +655,7 @@
         });
         ctx.stroke();
 
-        // Main lines
+        // Skeleton
         ctx.strokeStyle = `rgba(${col}, 0.8)`;
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -640,76 +665,46 @@
         });
         ctx.stroke();
 
-        // Big points on tips
+        // Fingertips
         [4, 8, 12, 16, 20].forEach(i => {
           const x = hand[i].x * W;
           const y = hand[i].y * H;
 
-          // Outer glow
           ctx.fillStyle = `rgba(${col}, 0.3)`;
           ctx.beginPath();
-          ctx.arc(x, y, 15, 0, Math.PI * 2);
+          ctx.arc(x, y, 12, 0, Math.PI * 2);
           ctx.fill();
 
-          // Inner circle
           ctx.fillStyle = `rgba(${col}, 0.9)`;
           ctx.beginPath();
-          ctx.arc(x, y, 6, 0, Math.PI * 2);
+          ctx.arc(x, y, 5, 0, Math.PI * 2);
           ctx.fill();
-
-          // Crosshair
-          ctx.strokeStyle = `rgba(${col}, 0.6)`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(x - 20, y); ctx.lineTo(x + 20, y);
-          ctx.moveTo(x, y - 20); ctx.lineTo(x, y + 20);
-          ctx.stroke();
         });
 
-        // Small points on joints
+        // Joints
         hand.forEach((pt, i) => {
           if ([4, 8, 12, 16, 20].includes(i)) return;
-          ctx.fillStyle = `rgba(${col}, 0.5)`;
+          ctx.fillStyle = `rgba(${col}, 0.4)`;
           ctx.beginPath();
-          ctx.arc(pt.x * W, pt.y * H, 3, 0, Math.PI * 2);
+          ctx.arc(pt.x * W, pt.y * H, 2, 0, Math.PI * 2);
           ctx.fill();
         });
 
-        // Bounding box
+        // Box
         let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
         hand.forEach(p => {
-          x1 = Math.min(x1, p.x * W);
-          y1 = Math.min(y1, p.y * H);
-          x2 = Math.max(x2, p.x * W);
-          y2 = Math.max(y2, p.y * H);
+          x1 = Math.min(x1, p.x * W); y1 = Math.min(y1, p.y * H);
+          x2 = Math.max(x2, p.x * W); y2 = Math.max(y2, p.y * H);
         });
 
-        // Double box
-        ctx.strokeStyle = `rgba(${col}, 0.4)`;
+        ctx.strokeStyle = `rgba(${col}, 0.6)`;
         ctx.lineWidth = 1;
-        ctx.strokeRect(x1 - 30, y1 - 30, x2 - x1 + 60, y2 - y1 + 60);
-        ctx.strokeStyle = `rgba(${col}, 0.8)`;
-        ctx.lineWidth = 2;
         ctx.strokeRect(x1 - 15, y1 - 15, x2 - x1 + 30, y2 - y1 + 30);
 
-        // Label
-        ctx.fillStyle = `rgba(${col}, 1)`;
-        ctx.font = 'bold 11px IBM Plex Mono';
-        ctx.fillText(`${isRight ? 'R' : 'L'}_HAND`, x1 - 15, y1 - 22);
-
-        // Gesture indicator for right hand
-        if (isRight) {
-          const gesture = detectGesture(hand);
-          ctx.fillStyle = `rgba(${col}, 0.7)`;
-          ctx.font = '9px IBM Plex Mono';
-          ctx.fillText(gesture.toUpperCase(), x1 - 15, y2 + 35);
-        }
+        ctx.fillStyle = `rgba(${col}, 0.8)`;
+        ctx.font = '9px IBM Plex Mono';
+        ctx.fillText(isRight ? 'RIGHT' : 'LEFT', x1 - 15, y1 - 20);
       });
-
-      // Frame counter
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.font = '8px IBM Plex Mono';
-      ctx.fillText(`F:${String(frameCount).padStart(5, '0')}`, 12, H - 12);
     }
 
     function loop() {
@@ -727,17 +722,18 @@
 
     async function begin() {
       startEl.classList.add('hide');
+      document.getElementById('back').style.display = 'block';
       resize();
       await initTracking();
       initAudio();
       document.getElementById('hud').style.display = 'block';
-      document.getElementById('gesture').style.display = 'block';
-      document.getElementById('guide').style.display = 'block';
+      document.getElementById('left-status').style.display = 'block';
+      document.getElementById('right-status').style.display = 'block';
       loop();
     }
 
-    startEl.onclick = begin;
-    window.onresize = resize;
+    startEl.addEventListener('click', begin);
+    window.addEventListener('resize', resize);
   </script>
 </body>
 </html>
