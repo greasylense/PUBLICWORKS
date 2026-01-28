@@ -22,30 +22,30 @@
     #start.hide{display:none}
     #start h1{font-family:'Space Grotesk',sans-serif;font-size:3rem;font-weight:700;letter-spacing:-0.04em;color:var(--text)}
     #start .sub{font-size:0.7rem;color:var(--text-dim);margin-top:0.5rem}
-    #start .cta{font-size:0.8rem;color:var(--text);margin-top:3rem;padding:1rem 2.5rem;border:3px solid var(--text);font-weight:500;transition:all 0.15s}
+    #start .cta{font-size:0.8rem;color:var(--text);margin-top:3rem;padding:1rem 2.5rem;border:1px solid var(--text);font-weight:500;transition:all 0.15s}
     #start .cta:hover{background:var(--text);color:var(--bg)}
 
     /* Main */
     #back{position:fixed;top:1.5rem;left:1.5rem;font-size:0.7rem;color:var(--text);text-decoration:none;z-index:999;font-weight:500}
     #back:hover{color:var(--accent)}
-    #video{position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;transform:scaleX(-1);z-index:1;background:#000}
-    #canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;transform:scaleX(-1);z-index:2}
+    #glCanvas{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1;background:#000}
+    #canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:2}
 
-    /* Brutalist HUD */
-    .hud-panel{position:fixed;background:var(--bg);z-index:999;font-size:0.6rem;border:3px solid var(--text)}
+    /* TouchDesigner HUD - thin lines */
+    .hud-panel{position:fixed;background:rgba(209,209,209,0.9);z-index:999;font-size:0.6rem;border:1px solid var(--text)}
 
     #info{bottom:1.5rem;right:1.5rem;padding:1rem 1.2rem;min-width:150px}
     #info .row{display:flex;justify-content:space-between;margin-bottom:0.4rem}
     #info .label{color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em}
     #info .val{font-weight:500}
 
-    #left-guide{bottom:1.5rem;left:1.5rem;padding:1rem;border-color:var(--accent);max-width:180px}
+    #left-guide{bottom:1.5rem;left:1.5rem;padding:0.8rem;border-color:var(--accent);max-width:160px}
     #left-guide h4{color:var(--accent);font-size:0.65rem;margin-bottom:0.6rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:500}
     #left-guide .item{display:flex;justify-content:space-between;margin-bottom:0.3rem;font-size:0.55rem}
     #left-guide .gesture{color:var(--text)}
     #left-guide .effect{color:var(--text-dim)}
 
-    #right-guide{top:1.5rem;right:1.5rem;padding:1rem;border-color:var(--alert);max-width:180px}
+    #right-guide{top:1.5rem;right:1.5rem;padding:0.8rem;border-color:var(--alert);max-width:160px}
     #right-guide h4{color:var(--alert);font-size:0.65rem;margin-bottom:0.6rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:500}
     #right-guide .item{display:flex;justify-content:space-between;margin-bottom:0.3rem;font-size:0.55rem}
     #right-guide .gesture{color:var(--text)}
@@ -64,7 +64,8 @@
     <div class="cta">Enter</div>
   </div>
 
-  <video id="video" autoplay playsinline></video>
+  <video id="video" autoplay playsinline style="display:none"></video>
+  <canvas id="glCanvas"></canvas>
   <canvas id="canvas"></canvas>
 
   <!-- On-screen guides -->
@@ -101,15 +102,23 @@
 
   <script>
     const video = document.getElementById('video');
+    const glCanvas = document.getElementById('glCanvas');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const startEl = document.getElementById('start');
     const statusEl = document.getElementById('status');
 
+    // WebGL setup
+    let gl, program, posBuffer, texBuffer;
+    let videoTexture, faceMaskTexture;
+    let uTime, uBass, uMid, uHigh, uFaceCenter, uFaceRadius;
+
     let W, H;
     let hands = [], handedness = [];
     let faceLandmarks = null;
     let frameCount = 0;
+    let faceCenter = { x: 0.5, y: 0.5 };
+    let faceRadius = 0.2;
 
     // Audio analysis
     let analyser, freqData;
@@ -292,6 +301,157 @@
       smoothBass += (bassLevel - smoothBass) * 0.3;
       smoothMid += (midLevel - smoothMid) * 0.25;
       smoothHigh += (highLevel - smoothHigh) * 0.2;
+    }
+
+    // WebGL for video warping
+    function initWebGL() {
+      gl = glCanvas.getContext('webgl');
+      if (!gl) { console.error('WebGL not supported'); return; }
+
+      // Vertex shader
+      const vsSource = `
+        attribute vec2 aPos;
+        attribute vec2 aTex;
+        varying vec2 vTex;
+        void main() {
+          gl_Position = vec4(aPos, 0.0, 1.0);
+          vTex = aTex;
+        }
+      `;
+
+      // Fragment shader with audio-reactive face warping
+      const fsSource = `
+        precision mediump float;
+        varying vec2 vTex;
+        uniform sampler2D uVideo;
+        uniform float uTime;
+        uniform float uBass;
+        uniform float uMid;
+        uniform float uHigh;
+        uniform vec2 uFaceCenter;
+        uniform float uFaceRadius;
+
+        void main() {
+          vec2 uv = vTex;
+
+          // Mirror the video horizontally
+          uv.x = 1.0 - uv.x;
+
+          // Distance from face center
+          vec2 toCenter = uv - uFaceCenter;
+          float dist = length(toCenter);
+          float faceMask = smoothstep(uFaceRadius * 1.5, uFaceRadius * 0.3, dist);
+
+          // Bass: radial expansion from face center
+          float expansion = uBass * 0.15 * faceMask;
+          vec2 expandDir = normalize(toCenter + 0.001);
+          uv += expandDir * expansion * (1.0 - dist / uFaceRadius);
+
+          // Mid: wave distortion
+          float wave = sin(atan(toCenter.y, toCenter.x) * 4.0 + uTime * 3.0) * uMid * 0.04 * faceMask;
+          uv += expandDir * wave;
+
+          // High: fine noise/jitter
+          float noise = (sin(uv.x * 50.0 + uTime * 10.0) * cos(uv.y * 50.0 + uTime * 8.0)) * uHigh * 0.015 * faceMask;
+          uv += vec2(noise, noise * 0.7);
+
+          // Rotation wobble from bass
+          float angle = uBass * 0.1 * sin(uTime * 2.0) * faceMask;
+          vec2 rotated = uFaceCenter + mat2(cos(angle), -sin(angle), sin(angle), cos(angle)) * (uv - uFaceCenter);
+          uv = mix(uv, rotated, faceMask * 0.5);
+
+          // Clamp UVs
+          uv = clamp(uv, 0.0, 1.0);
+
+          vec4 color = texture2D(uVideo, uv);
+
+          // Slight color shift on high bass
+          color.r = texture2D(uVideo, uv + vec2(uBass * 0.008 * faceMask, 0.0)).r;
+          color.b = texture2D(uVideo, uv - vec2(uBass * 0.008 * faceMask, 0.0)).b;
+
+          gl_FragColor = color;
+        }
+      `;
+
+      function compileShader(src, type) {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(s));
+          return null;
+        }
+        return s;
+      }
+
+      const vs = compileShader(vsSource, gl.VERTEX_SHADER);
+      const fs = compileShader(fsSource, gl.FRAGMENT_SHADER);
+
+      program = gl.createProgram();
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+      gl.useProgram(program);
+
+      // Fullscreen quad
+      posBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1, -1,  1, -1,  -1, 1,
+        -1, 1,   1, -1,   1, 1
+      ]), gl.STATIC_DRAW);
+
+      const aPos = gl.getAttribLocation(program, 'aPos');
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+      texBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        0, 1,  1, 1,  0, 0,
+        0, 0,  1, 1,  1, 0
+      ]), gl.STATIC_DRAW);
+
+      const aTex = gl.getAttribLocation(program, 'aTex');
+      gl.enableVertexAttribArray(aTex);
+      gl.vertexAttribPointer(aTex, 2, gl.FLOAT, false, 0, 0);
+
+      // Video texture
+      videoTexture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+      // Get uniform locations
+      uTime = gl.getUniformLocation(program, 'uTime');
+      uBass = gl.getUniformLocation(program, 'uBass');
+      uMid = gl.getUniformLocation(program, 'uMid');
+      uHigh = gl.getUniformLocation(program, 'uHigh');
+      uFaceCenter = gl.getUniformLocation(program, 'uFaceCenter');
+      uFaceRadius = gl.getUniformLocation(program, 'uFaceRadius');
+    }
+
+    function renderVideo() {
+      if (!gl || !video.videoWidth) return;
+
+      gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+
+      // Update video texture
+      gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+
+      // Update uniforms
+      gl.uniform1f(uTime, frameCount * 0.016);
+      gl.uniform1f(uBass, smoothBass);
+      gl.uniform1f(uMid, smoothMid);
+      gl.uniform1f(uHigh, smoothHigh);
+      gl.uniform2f(uFaceCenter, faceCenter.x, faceCenter.y);
+      gl.uniform1f(uFaceRadius, faceRadius);
+
+      // Draw
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
     function triggerKick() {
@@ -546,138 +706,123 @@
       process();
     }
 
-    // DRAWING - Brutalist style
+    // DRAWING - TouchDesigner thin lines style
     function draw() {
       if (!W || !H) return;
       ctx.clearRect(0, 0, W, H);
       frameCount++;
 
-      // FACE - Extreme audio-reactive warping
+      // Render video with WebGL warping
+      renderVideo();
+
+      // FACE - Update face center for WebGL shader + thin overlay
       if (faceLandmarks) {
         const pts = faceLandmarks;
 
-        // Face center
+        // Calculate face center (normalized 0-1) for shader
         let cx = 0, cy = 0;
         pts.forEach(p => { cx += p.x; cy += p.y; });
-        cx = (cx / pts.length) * W;
-        cy = (cy / pts.length) * H;
+        cx = cx / pts.length;
+        cy = cy / pts.length;
+        // Mirror X for shader (video is mirrored)
+        faceCenter = { x: 1 - cx, y: cy };
 
-        // Warp intensity based on audio
-        const warpScale = 1 + smoothBass * 0.6;
-        const wobbleAmt = smoothMid * 40;
-        const jitterAmt = smoothHigh * 20;
-        const rotationAmt = smoothBass * 0.15;
-
-        // Store warped points
-        const warped = pts.map((p, i) => {
-          let x = p.x * W;
-          let y = p.y * H;
-
-          const dx = x - cx;
-          const dy = y - cy;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const angle = Math.atan2(dy, dx);
-
-          // Bass expands outward
-          const newDist = dist * warpScale;
-
-          // Mids create wave distortion
-          const waveOffset = Math.sin(angle * 3 + frameCount * 0.12) * wobbleAmt;
-
-          // Highs add noise
-          const jitterX = (Math.random() - 0.5) * jitterAmt;
-          const jitterY = (Math.random() - 0.5) * jitterAmt;
-
-          // Apply rotation based on bass
-          const rotatedAngle = angle + rotationAmt * Math.sin(frameCount * 0.08);
-
-          x = cx + Math.cos(rotatedAngle) * (newDist + waveOffset) + jitterX;
-          y = cy + Math.sin(rotatedAngle) * (newDist + waveOffset) + jitterY;
-
-          return { x, y };
+        // Calculate face radius
+        let maxDist = 0;
+        pts.forEach(p => {
+          const d = Math.sqrt((p.x - cx) ** 2 + (p.y - cy) ** 2);
+          maxDist = Math.max(maxDist, d);
         });
+        faceRadius = maxDist * 1.2;
 
-        // Draw face mesh connections - BRUTALIST thick lines
+        // Convert to screen coords for overlay (mirrored)
+        const scx = (1 - cx) * W;
+        const scy = cy * H;
+
+        // Thin mesh connections - TouchDesigner style
         const faceConnections = [
-          // Jaw
           [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109,10],
-          // Left eye
           [33,246,161,160,159,158,157,173,133,155,154,153,145,144,163,7,33],
-          // Right eye
           [263,466,388,387,386,385,384,398,362,382,381,380,374,373,390,249,263],
-          // Nose
           [168,6,197,195,5,4,1,19,94,2,164,0,11,12,13,14,15,16,17,18,200,199,175,152],
-          // Lips outer
           [61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185,61],
-          // Lips inner
           [78,95,88,178,87,14,317,402,318,324,308,415,310,311,312,13,82,81,80,191,78],
         ];
 
-        ctx.lineCap = 'square';
-        ctx.lineJoin = 'miter';
+        // Convert points to screen coords (mirrored)
+        const screenPts = pts.map(p => ({
+          x: (1 - p.x) * W,
+          y: p.y * H
+        }));
 
-        // Draw thick brutalist lines
-        faceConnections.forEach((conn, ci) => {
-          const thickness = 3 + smoothBass * 6;
-          ctx.strokeStyle = `rgba(0, 71, 255, ${0.5 + smoothBass * 0.4})`;
-          ctx.lineWidth = thickness;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Draw thin lines - TouchDesigner aesthetic
+        faceConnections.forEach((conn) => {
+          ctx.strokeStyle = `rgba(0, 71, 255, ${0.4 + smoothBass * 0.3})`;
+          ctx.lineWidth = 1;
 
           ctx.beginPath();
           conn.forEach((idx, i) => {
-            if (idx >= warped.length) return;
-            const p = warped[idx];
+            if (idx >= screenPts.length) return;
+            const p = screenPts[idx];
             if (i === 0) ctx.moveTo(p.x, p.y);
             else ctx.lineTo(p.x, p.y);
           });
           ctx.stroke();
         });
 
-        // Draw points - size reactive to audio
-        const pointSize = 4 + smoothBass * 10;
-        ctx.fillStyle = `rgba(0, 71, 255, ${0.7 + smoothMid * 0.3})`;
-        warped.forEach((p, i) => {
-          if (i % 3 === 0) { // Draw every 3rd point
-            ctx.fillRect(p.x - pointSize/2, p.y - pointSize/2, pointSize, pointSize);
+        // Draw small points
+        ctx.fillStyle = `rgba(0, 71, 255, ${0.5 + smoothMid * 0.3})`;
+        screenPts.forEach((p, i) => {
+          if (i % 5 === 0) {
+            const size = 2 + smoothBass * 2;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+            ctx.fill();
           }
         });
 
-        // Bounding box - brutalist thick
+        // Thin bounding box
         let fx1 = Infinity, fy1 = Infinity, fx2 = -Infinity, fy2 = -Infinity;
-        warped.forEach(p => {
+        screenPts.forEach(p => {
           fx1 = Math.min(fx1, p.x); fy1 = Math.min(fy1, p.y);
           fx2 = Math.max(fx2, p.x); fy2 = Math.max(fy2, p.y);
         });
 
-        const boxExpand = smoothBass * 50;
-        ctx.strokeStyle = `rgba(0, 71, 255, ${0.6 + smoothBass * 0.4})`;
-        ctx.lineWidth = 4 + smoothBass * 4;
-        ctx.strokeRect(fx1 - 25 - boxExpand, fy1 - 25 - boxExpand,
-                      fx2 - fx1 + 50 + boxExpand * 2, fy2 - fy1 + 50 + boxExpand * 2);
+        ctx.strokeStyle = `rgba(0, 71, 255, ${0.5 + smoothBass * 0.3})`;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(fx1 - 15, fy1 - 15, fx2 - fx1 + 30, fy2 - fy1 + 30);
 
-        // Corner markers
-        const cornerSize = 20 + smoothBass * 15;
-        ctx.lineWidth = 5;
-        [[fx1-25-boxExpand, fy1-25-boxExpand, 1, 1],
-         [fx2+25+boxExpand, fy1-25-boxExpand, -1, 1],
-         [fx1-25-boxExpand, fy2+25+boxExpand, 1, -1],
-         [fx2+25+boxExpand, fy2+25+boxExpand, -1, -1]].forEach(([x, y, dx, dy]) => {
+        // Corner brackets
+        const cs = 12 + smoothBass * 8;
+        ctx.lineWidth = 1;
+        [[fx1-15, fy1-15, 1, 1], [fx2+15, fy1-15, -1, 1],
+         [fx1-15, fy2+15, 1, -1], [fx2+15, fy2+15, -1, -1]].forEach(([x, y, dx, dy]) => {
           ctx.beginPath();
-          ctx.moveTo(x, y + dy * cornerSize);
+          ctx.moveTo(x, y + dy * cs);
           ctx.lineTo(x, y);
-          ctx.lineTo(x + dx * cornerSize, y);
+          ctx.lineTo(x + dx * cs, y);
           ctx.stroke();
         });
 
-        // Label
-        ctx.fillStyle = 'rgba(0, 71, 255, 0.8)';
-        ctx.font = 'bold 11px IBM Plex Mono';
-        ctx.fillText('FACE_MESH', fx1 - 25 - boxExpand, fy1 - 35 - boxExpand);
+        // Data label
+        ctx.fillStyle = 'rgba(0, 71, 255, 0.7)';
+        ctx.font = '9px IBM Plex Mono';
+        ctx.fillText(`FACE [${pts.length}pts]`, fx1 - 15, fy1 - 22);
       }
 
-      // HANDS - Brutalist style
+      // HANDS - Thin lines style
       hands.forEach((hand, hi) => {
         const isRight = handedness[hi] === 'Right';
         const col = isRight ? '255, 77, 0' : '0, 71, 255';
+
+        // Convert to screen coords (mirrored)
+        const screenHand = hand.map(p => ({
+          x: (1 - p.x) * W,
+          y: p.y * H
+        }));
 
         const bones = [
           [0,1],[1,2],[2,3],[3,4],
@@ -688,49 +833,73 @@
           [0,17]
         ];
 
-        // Thick skeleton
-        ctx.strokeStyle = `rgba(${col}, 0.8)`;
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'square';
+        // Thin skeleton
+        ctx.strokeStyle = `rgba(${col}, 0.7)`;
+        ctx.lineWidth = 1;
+        ctx.lineCap = 'round';
         ctx.beginPath();
         bones.forEach(([a, b]) => {
-          ctx.moveTo(hand[a].x * W, hand[a].y * H);
-          ctx.lineTo(hand[b].x * W, hand[b].y * H);
+          ctx.moveTo(screenHand[a].x, screenHand[a].y);
+          ctx.lineTo(screenHand[b].x, screenHand[b].y);
         });
         ctx.stroke();
 
-        // Square points on tips
+        // Small circles on tips
         [4, 8, 12, 16, 20].forEach(i => {
-          const x = hand[i].x * W;
-          const y = hand[i].y * H;
-          const size = 14;
-          ctx.fillStyle = `rgba(${col}, 0.9)`;
-          ctx.fillRect(x - size/2, y - size/2, size, size);
+          ctx.fillStyle = `rgba(${col}, 0.8)`;
+          ctx.beginPath();
+          ctx.arc(screenHand[i].x, screenHand[i].y, 4, 0, Math.PI * 2);
+          ctx.fill();
         });
 
-        // Small squares on joints
-        hand.forEach((pt, i) => {
+        // Tiny dots on joints
+        screenHand.forEach((pt, i) => {
           if ([4, 8, 12, 16, 20].includes(i)) return;
-          const size = 6;
-          ctx.fillStyle = `rgba(${col}, 0.5)`;
-          ctx.fillRect(pt.x * W - size/2, pt.y * H - size/2, size, size);
+          ctx.fillStyle = `rgba(${col}, 0.4)`;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 2, 0, Math.PI * 2);
+          ctx.fill();
         });
 
-        // Bounding box
+        // Thin bounding box
         let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
-        hand.forEach(p => {
-          x1 = Math.min(x1, p.x * W); y1 = Math.min(y1, p.y * H);
-          x2 = Math.max(x2, p.x * W); y2 = Math.max(y2, p.y * H);
+        screenHand.forEach(p => {
+          x1 = Math.min(x1, p.x); y1 = Math.min(y1, p.y);
+          x2 = Math.max(x2, p.x); y2 = Math.max(y2, p.y);
         });
 
-        ctx.strokeStyle = `rgba(${col}, 0.8)`;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x1 - 20, y1 - 20, x2 - x1 + 40, y2 - y1 + 40);
+        ctx.strokeStyle = `rgba(${col}, 0.6)`;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x1 - 12, y1 - 12, x2 - x1 + 24, y2 - y1 + 24);
 
-        ctx.fillStyle = `rgba(${col}, 1)`;
-        ctx.font = 'bold 10px IBM Plex Mono';
-        ctx.fillText(isRight ? 'RIGHT' : 'LEFT', x1 - 20, y1 - 28);
+        // Corner brackets
+        const cs = 8;
+        [[x1-12, y1-12, 1, 1], [x2+12, y1-12, -1, 1],
+         [x1-12, y2+12, 1, -1], [x2+12, y2+12, -1, -1]].forEach(([x, y, dx, dy]) => {
+          ctx.beginPath();
+          ctx.moveTo(x, y + dy * cs);
+          ctx.lineTo(x, y);
+          ctx.lineTo(x + dx * cs, y);
+          ctx.stroke();
+        });
+
+        ctx.fillStyle = `rgba(${col}, 0.8)`;
+        ctx.font = '9px IBM Plex Mono';
+        ctx.fillText(isRight ? 'R_HAND' : 'L_HAND', x1 - 12, y1 - 18);
       });
+
+      // Audio reactive scanlines
+      if (smoothBass > 0.1) {
+        ctx.strokeStyle = `rgba(0, 71, 255, ${smoothBass * 0.15})`;
+        ctx.lineWidth = 1;
+        const spacing = 60;
+        for (let y = (frameCount * 2) % spacing; y < H; y += spacing) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(W, y);
+          ctx.stroke();
+        }
+      }
     }
 
     function loop() {
@@ -744,12 +913,18 @@
       H = window.innerHeight;
       canvas.width = W;
       canvas.height = H;
+      glCanvas.width = W;
+      glCanvas.height = H;
+      if (gl) {
+        gl.viewport(0, 0, W, H);
+      }
     }
 
     async function begin() {
       startEl.classList.add('hide');
       document.getElementById('back').style.display = 'block';
       resize();
+      initWebGL();
       await initTracking();
       initAudio();
       document.getElementById('info').style.display = 'block';
