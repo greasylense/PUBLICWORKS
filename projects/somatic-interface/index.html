@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#0A0A0A">
   <title>Somatic Interface — PUBLICWORKS</title>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
@@ -23,11 +22,7 @@
       --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: var(--font-mono);
@@ -35,7 +30,6 @@
       color: var(--text);
       min-height: 100vh;
       overflow: hidden;
-      line-height: 1.6;
     }
 
     #back-link {
@@ -48,17 +42,12 @@
       z-index: 100;
       transition: color 0.15s ease;
     }
-
-    #back-link:hover {
-      color: var(--accent);
-    }
+    #back-link:hover { color: var(--accent); }
 
     .start-prompt {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
       background: var(--bg);
       display: flex;
       flex-direction: column;
@@ -68,11 +57,7 @@
       cursor: pointer;
       transition: opacity 0.8s ease;
     }
-
-    .start-prompt.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    .start-prompt.hidden { opacity: 0; pointer-events: none; }
 
     .start-prompt h1 {
       font-family: var(--font-display);
@@ -82,7 +67,6 @@
       margin-bottom: 1rem;
       text-align: center;
     }
-
     .start-prompt h1 span {
       display: block;
       font-size: 0.4em;
@@ -91,7 +75,6 @@
       text-transform: uppercase;
       margin-bottom: 0.5em;
     }
-
     .start-prompt p {
       font-size: 0.75rem;
       color: var(--text-secondary);
@@ -99,12 +82,10 @@
       letter-spacing: 0.1em;
       animation: pulse 2s ease-in-out infinite;
     }
-
     @keyframes pulse {
       0%, 100% { opacity: 0.5; }
       50% { opacity: 1; }
     }
-
     .start-prompt .description {
       max-width: 500px;
       text-align: center;
@@ -116,7 +97,6 @@
       letter-spacing: 0;
       animation: none;
     }
-
     .start-prompt .hint {
       position: absolute;
       bottom: 2rem;
@@ -128,8 +108,7 @@
 
     .loading {
       position: fixed;
-      bottom: 2rem;
-      left: 2rem;
+      bottom: 2rem; left: 2rem;
       font-size: 0.625rem;
       color: var(--accent);
       text-transform: uppercase;
@@ -137,56 +116,32 @@
       z-index: 100;
     }
 
-    #canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-    }
-
     #video {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
       object-fit: cover;
       transform: scaleX(-1);
-      opacity: 0.15;
       z-index: 1;
     }
 
     #canvas {
-      z-index: 2;
-    }
-
-    .stats {
       position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      font-size: 0.625rem;
-      color: var(--text-secondary);
-      text-align: right;
-      z-index: 100;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .stats div {
-      margin-bottom: 0.25rem;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 2;
+      pointer-events: none;
     }
 
     .controls {
       position: fixed;
-      top: 2rem;
-      right: 2rem;
+      top: 2rem; right: 2rem;
       display: flex;
       gap: 1rem;
       z-index: 100;
     }
-
     .control-btn {
-      background: transparent;
+      background: rgba(10,10,10,0.7);
       border: 1px solid var(--text-secondary);
       color: var(--text-secondary);
       font-family: var(--font-mono);
@@ -197,31 +152,25 @@
       cursor: pointer;
       transition: all 0.15s ease;
     }
+    .control-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .control-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 
-    .control-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
+    .stats {
+      position: fixed;
+      bottom: 2rem; right: 2rem;
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      text-align: right;
+      z-index: 100;
+      font-variant-numeric: tabular-nums;
+      background: rgba(10,10,10,0.7);
+      padding: 0.75rem;
     }
+    .stats div { margin-bottom: 0.25rem; }
 
-    .control-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: var(--bg);
-    }
-
-    a:focus-visible,
-    button:focus-visible {
+    a:focus-visible, button:focus-visible {
       outline: 2px solid var(--accent);
       outline-offset: 2px;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-      }
     }
   </style>
 </head>
@@ -236,21 +185,21 @@
     <p class="description">
       An exploration of the dissolving boundary between body and machine.
       Your hands and face become instruments—conducting light and sound
-      through the digital membrane that increasingly defines our existence.
+      through the digital membrane.
     </p>
     <p>Click to begin</p>
-    <span class="hint">Requires camera access • Use headphones for best experience</span>
+    <span class="hint">Requires camera • Headphones recommended</span>
   </div>
 
-  <div class="loading" id="loading" style="display: none;">Initializing neural pathways...</div>
+  <div class="loading" id="loading" style="display: none;">Initializing...</div>
 
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas"></canvas>
 
   <div class="controls" id="controls" style="display: none;">
-    <button class="control-btn active" data-mode="ethereal">Ethereal</button>
-    <button class="control-btn" data-mode="neural">Neural</button>
-    <button class="control-btn" data-mode="void">Void</button>
+    <button class="control-btn active" data-mode="nodes">Nodes</button>
+    <button class="control-btn" data-mode="flow">Flow</button>
+    <button class="control-btn" data-mode="minimal">Minimal</button>
   </div>
 
   <div class="stats" id="stats" style="display: none;">
@@ -259,7 +208,6 @@
     <div id="stat-freq">Freq: -- Hz</div>
   </div>
 
-  <!-- MediaPipe -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
@@ -268,7 +216,6 @@
     (function() {
       'use strict';
 
-      // ---------- DOM ----------
       const startPrompt = document.getElementById('start-prompt');
       const loadingEl = document.getElementById('loading');
       const video = document.getElementById('video');
@@ -277,521 +224,135 @@
       const controlsEl = document.getElementById('controls');
       const statsEl = document.getElementById('stats');
 
-      // ---------- State ----------
       let width = window.innerWidth;
       let height = window.innerHeight;
       let isRunning = false;
       let audioStarted = false;
-      let currentMode = 'ethereal';
+      let currentMode = 'nodes';
 
-      // Tracking data
-      let handLandmarks = [];
-      let faceLandmarks = [];
-      let handHistory = [];
-      let faceHistory = [];
-      const HISTORY_LENGTH = 30;
+      // Tracking data - simplified
+      let hands = [];
+      let face = null;
 
-      // Particles
-      let particles = [];
-      const MAX_PARTICLES = 500;
+      // Performance: throttle tracking
+      let lastProcess = 0;
+      const PROCESS_INTERVAL = 33; // ~30fps for tracking
 
-      // ---------- Audio Engine ----------
+      // Audio
       let audioCtx = null;
-      let masterGain = null;
-      let reverbNode = null;
-      let delayNode = null;
       let oscillators = [];
-      let filters = [];
+      const SCALE = [130.81, 164.81, 196.00, 261.63, 329.63, 392.00, 523.25, 659.25];
 
       function initAudio() {
         if (audioStarted) return;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Master gain
-        masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.3;
+        const master = audioCtx.createGain();
+        master.gain.value = 0.15;
 
-        // Create reverb using convolver
-        reverbNode = audioCtx.createConvolver();
-        const reverbLength = audioCtx.sampleRate * 2;
-        const impulse = audioCtx.createBuffer(2, reverbLength, audioCtx.sampleRate);
-        for (let channel = 0; channel < 2; channel++) {
-          const channelData = impulse.getChannelData(channel);
-          for (let i = 0; i < reverbLength; i++) {
-            channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / reverbLength, 2);
+        const reverb = audioCtx.createConvolver();
+        const len = audioCtx.sampleRate * 1.5;
+        const impulse = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+        for (let ch = 0; ch < 2; ch++) {
+          const data = impulse.getChannelData(ch);
+          for (let i = 0; i < len; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
           }
         }
-        reverbNode.buffer = impulse;
+        reverb.buffer = impulse;
 
-        // Delay
-        delayNode = audioCtx.createDelay(1);
-        delayNode.delayTime.value = 0.3;
-        const delayFeedback = audioCtx.createGain();
-        delayFeedback.gain.value = 0.4;
-        delayNode.connect(delayFeedback);
-        delayFeedback.connect(delayNode);
+        const dry = audioCtx.createGain();
+        dry.gain.value = 0.7;
+        const wet = audioCtx.createGain();
+        wet.gain.value = 0.3;
 
-        // Wet/dry mix
-        const dryGain = audioCtx.createGain();
-        dryGain.gain.value = 0.6;
-        const wetGain = audioCtx.createGain();
-        wetGain.gain.value = 0.4;
-        const delayWet = audioCtx.createGain();
-        delayWet.gain.value = 0.3;
+        master.connect(dry);
+        master.connect(reverb);
+        reverb.connect(wet);
+        dry.connect(audioCtx.destination);
+        wet.connect(audioCtx.destination);
 
-        masterGain.connect(dryGain);
-        masterGain.connect(reverbNode);
-        masterGain.connect(delayNode);
-        reverbNode.connect(wetGain);
-        delayNode.connect(delayWet);
-        dryGain.connect(audioCtx.destination);
-        wetGain.connect(audioCtx.destination);
-        delayWet.connect(audioCtx.destination);
-
-        // Create oscillator voices for hands (4 per hand)
-        for (let i = 0; i < 8; i++) {
+        // 4 oscillators for fingertips
+        for (let i = 0; i < 4; i++) {
           const osc = audioCtx.createOscillator();
           const filter = audioCtx.createBiquadFilter();
           const gain = audioCtx.createGain();
 
-          osc.type = i < 4 ? 'sine' : 'triangle';
-          osc.frequency.value = 0;
-
+          osc.type = 'sine';
           filter.type = 'lowpass';
-          filter.frequency.value = 2000;
-          filter.Q.value = 5;
-
+          filter.frequency.value = 1000;
+          filter.Q.value = 2;
           gain.gain.value = 0;
 
           osc.connect(filter);
           filter.connect(gain);
-          gain.connect(masterGain);
-
+          gain.connect(master);
           osc.start();
-          oscillators.push({ osc, gain, filter });
+
+          oscillators.push({ osc, filter, gain });
         }
 
-        // Face drone oscillators
-        for (let i = 0; i < 3; i++) {
-          const osc = audioCtx.createOscillator();
-          const filter = audioCtx.createBiquadFilter();
-          const gain = audioCtx.createGain();
-
-          osc.type = 'sawtooth';
-          osc.frequency.value = 55 * (i + 1);
-
-          filter.type = 'lowpass';
-          filter.frequency.value = 200;
-          filter.Q.value = 8;
-
-          gain.gain.value = 0;
-
-          osc.connect(filter);
-          filter.connect(gain);
-          gain.connect(masterGain);
-
-          osc.start();
-          oscillators.push({ osc, gain, filter, isDrone: true });
-        }
+        // Drone for face
+        const drone = audioCtx.createOscillator();
+        const droneFilter = audioCtx.createBiquadFilter();
+        const droneGain = audioCtx.createGain();
+        drone.type = 'sawtooth';
+        drone.frequency.value = 55;
+        droneFilter.type = 'lowpass';
+        droneFilter.frequency.value = 150;
+        droneFilter.Q.value = 10;
+        droneGain.gain.value = 0;
+        drone.connect(droneFilter);
+        droneFilter.connect(droneGain);
+        droneGain.connect(master);
+        drone.start();
+        oscillators.push({ osc: drone, filter: droneFilter, gain: droneGain, isDrone: true });
 
         audioStarted = true;
       }
 
-      // Pentatonic scale frequencies
-      const SCALE = [
-        130.81, 146.83, 164.81, 196.00, 220.00, // C3 pentatonic
-        261.63, 293.66, 329.63, 392.00, 440.00, // C4 pentatonic
-        523.25, 587.33, 659.25, 783.99, 880.00  // C5 pentatonic
-      ];
-
-      function mapToScale(value, min, max) {
-        const normalized = (value - min) / (max - min);
-        const index = Math.floor(normalized * (SCALE.length - 1));
-        return SCALE[Math.max(0, Math.min(SCALE.length - 1, index))];
-      }
-
       function updateAudio() {
-        if (!audioStarted || !audioCtx) return;
-
+        if (!audioStarted) return;
         const now = audioCtx.currentTime;
 
-        // Hand-controlled oscillators
-        handLandmarks.forEach((hand, handIndex) => {
-          if (!hand || hand.length === 0) return;
-
-          // Use fingertips (indices 4, 8, 12, 16)
-          const fingertips = [4, 8, 12, 16];
-          fingertips.forEach((tipIndex, i) => {
-            const oscIndex = handIndex * 4 + i;
-            if (oscIndex >= 8) return;
-
-            const tip = hand[tipIndex];
+        // Hand audio
+        if (hands.length > 0 && hands[0]) {
+          const tips = [8, 12, 16, 20]; // index, middle, ring, pinky
+          tips.forEach((idx, i) => {
+            const tip = hands[0][idx];
             if (!tip) return;
-
-            const { osc, gain, filter } = oscillators[oscIndex];
-
-            // X position controls pitch (mapped to scale)
-            const freq = mapToScale(tip.x, 0, 1);
-            osc.frequency.setTargetAtTime(freq, now, 0.05);
-
-            // Y position controls filter cutoff
-            const filterFreq = 200 + (1 - tip.y) * 4000;
-            filter.frequency.setTargetAtTime(filterFreq, now, 0.05);
-
-            // Z position (depth) controls volume
-            const vol = Math.max(0, Math.min(0.15, (0.2 - Math.abs(tip.z)) * 2));
-            gain.gain.setTargetAtTime(vol, now, 0.02);
+            const { osc, filter, gain } = oscillators[i];
+            const freq = SCALE[Math.floor(tip.x * (SCALE.length - 1))];
+            osc.frequency.setTargetAtTime(freq, now, 0.08);
+            filter.frequency.setTargetAtTime(300 + (1 - tip.y) * 2000, now, 0.08);
+            gain.gain.setTargetAtTime(0.12, now, 0.05);
           });
-        });
-
-        // Silence unused hand oscillators
-        for (let i = handLandmarks.length * 4; i < 8; i++) {
-          oscillators[i].gain.gain.setTargetAtTime(0, now, 0.1);
-        }
-
-        // Face-controlled drone
-        if (faceLandmarks.length > 0) {
-          const face = faceLandmarks[0];
-
-          // Nose tip (index 1) controls drone
-          const nose = face[1];
-          if (nose) {
-            // Drone volume based on face presence
-            const droneVol = 0.08;
-
-            // Face Y position controls drone filter
-            const droneFilter = 100 + (1 - nose.y) * 800;
-
-            // Face X position detunes oscillators
-            const detune = (nose.x - 0.5) * 50;
-
-            for (let i = 8; i < oscillators.length; i++) {
-              const { osc, gain, filter } = oscillators[i];
-              gain.gain.setTargetAtTime(droneVol, now, 0.1);
-              filter.frequency.setTargetAtTime(droneFilter, now, 0.1);
-              osc.detune.setTargetAtTime(detune * (i - 7), now, 0.1);
-            }
-          }
         } else {
-          // Fade out drone when no face
-          for (let i = 8; i < oscillators.length; i++) {
-            oscillators[i].gain.gain.setTargetAtTime(0, now, 0.3);
+          for (let i = 0; i < 4; i++) {
+            oscillators[i].gain.gain.setTargetAtTime(0, now, 0.2);
           }
         }
 
-        // Update stats
-        const mainFreq = handLandmarks.length > 0 && handLandmarks[0][8]
-          ? mapToScale(handLandmarks[0][8].x, 0, 1).toFixed(0)
+        // Face drone
+        const droneOsc = oscillators[4];
+        if (face && face[1]) {
+          droneOsc.gain.gain.setTargetAtTime(0.06, now, 0.3);
+          droneOsc.filter.frequency.setTargetAtTime(80 + (1 - face[1].y) * 400, now, 0.1);
+        } else {
+          droneOsc.gain.gain.setTargetAtTime(0, now, 0.5);
+        }
+
+        // Update display
+        const freq = hands.length > 0 && hands[0] && hands[0][8]
+          ? SCALE[Math.floor(hands[0][8].x * (SCALE.length - 1))].toFixed(0)
           : '--';
-        document.getElementById('stat-freq').textContent = `Freq: ${mainFreq} Hz`;
+        document.getElementById('stat-freq').textContent = `Freq: ${freq} Hz`;
       }
 
-      // ---------- Particle System ----------
-      class Particle {
-        constructor(x, y, color, velocity = null) {
-          this.x = x;
-          this.y = y;
-          this.color = color;
-          this.vx = velocity ? velocity.x : (Math.random() - 0.5) * 2;
-          this.vy = velocity ? velocity.y : (Math.random() - 0.5) * 2;
-          this.life = 1;
-          this.decay = 0.01 + Math.random() * 0.02;
-          this.size = 2 + Math.random() * 4;
-        }
-
-        update() {
-          this.x += this.vx;
-          this.y += this.vy;
-          this.vx *= 0.98;
-          this.vy *= 0.98;
-          this.life -= this.decay;
-        }
-
-        draw(ctx) {
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
-          ctx.fillStyle = this.color.replace('1)', `${this.life * 0.8})`);
-          ctx.fill();
-        }
-      }
-
-      function spawnParticles(x, y, color, count = 3) {
-        for (let i = 0; i < count; i++) {
-          if (particles.length < MAX_PARTICLES) {
-            particles.push(new Particle(x * width, y * height, color));
-          }
-        }
-      }
-
-      // ---------- Visual Modes ----------
-      const visualModes = {
-        ethereal: {
-          bgAlpha: 0.05,
-          handColor: 'rgba(0, 255, 170, 1)',
-          faceColor: 'rgba(255, 0, 170, 1)',
-          connectionColor: 'rgba(0, 170, 255, 0.3)',
-          drawHands(hands) {
-            hands.forEach((hand, hi) => {
-              if (!hand) return;
-
-              // Draw connections between fingers
-              const connections = [
-                [0, 1], [1, 2], [2, 3], [3, 4],
-                [0, 5], [5, 6], [6, 7], [7, 8],
-                [5, 9], [9, 10], [10, 11], [11, 12],
-                [9, 13], [13, 14], [14, 15], [15, 16],
-                [13, 17], [17, 18], [18, 19], [19, 20],
-                [0, 17]
-              ];
-
-              ctx.strokeStyle = this.connectionColor;
-              ctx.lineWidth = 1;
-              connections.forEach(([a, b]) => {
-                if (hand[a] && hand[b]) {
-                  ctx.beginPath();
-                  ctx.moveTo(hand[a].x * width, hand[a].y * height);
-                  ctx.lineTo(hand[b].x * width, hand[b].y * height);
-                  ctx.stroke();
-                }
-              });
-
-              // Glow points at landmarks
-              hand.forEach((lm, i) => {
-                const size = [4, 8, 12, 16, 20].includes(i) ? 8 : 4;
-                const glow = ctx.createRadialGradient(
-                  lm.x * width, lm.y * height, 0,
-                  lm.x * width, lm.y * height, size * 3
-                );
-                glow.addColorStop(0, this.handColor);
-                glow.addColorStop(1, 'rgba(0, 255, 170, 0)');
-                ctx.fillStyle = glow;
-                ctx.beginPath();
-                ctx.arc(lm.x * width, lm.y * height, size * 3, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Spawn particles at fingertips
-                if ([4, 8, 12, 16, 20].includes(i) && Math.random() > 0.7) {
-                  spawnParticles(lm.x, lm.y, this.handColor, 1);
-                }
-              });
-            });
-          },
-          drawFace(faces) {
-            if (!faces[0]) return;
-            const face = faces[0];
-
-            // Draw mesh connections
-            ctx.strokeStyle = 'rgba(255, 0, 170, 0.1)';
-            ctx.lineWidth = 0.5;
-
-            // Key face contours
-            const contours = [
-              // Lips
-              [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291],
-              // Left eye
-              [33, 7, 163, 144, 145, 153, 154, 155, 133],
-              // Right eye
-              [362, 382, 381, 380, 374, 373, 390, 249, 263],
-              // Face outline
-              [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288,
-               397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136,
-               172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10]
-            ];
-
-            contours.forEach(contour => {
-              ctx.beginPath();
-              contour.forEach((idx, i) => {
-                if (face[idx]) {
-                  if (i === 0) ctx.moveTo(face[idx].x * width, face[idx].y * height);
-                  else ctx.lineTo(face[idx].x * width, face[idx].y * height);
-                }
-              });
-              ctx.stroke();
-            });
-
-            // Glow at key points
-            const keyPoints = [1, 33, 133, 362, 263, 61, 291]; // nose, eyes, mouth corners
-            keyPoints.forEach(idx => {
-              if (!face[idx]) return;
-              const glow = ctx.createRadialGradient(
-                face[idx].x * width, face[idx].y * height, 0,
-                face[idx].x * width, face[idx].y * height, 20
-              );
-              glow.addColorStop(0, this.faceColor);
-              glow.addColorStop(1, 'rgba(255, 0, 170, 0)');
-              ctx.fillStyle = glow;
-              ctx.beginPath();
-              ctx.arc(face[idx].x * width, face[idx].y * height, 20, 0, Math.PI * 2);
-              ctx.fill();
-            });
-          }
-        },
-
-        neural: {
-          bgAlpha: 0.08,
-          handColor: 'rgba(255, 255, 255, 1)',
-          faceColor: 'rgba(255, 200, 100, 1)',
-          connectionColor: 'rgba(255, 255, 255, 0.15)',
-          drawHands(hands) {
-            // Draw neural network style connections
-            const allPoints = [];
-            hands.forEach(hand => {
-              if (hand) hand.forEach(lm => allPoints.push({ x: lm.x * width, y: lm.y * height }));
-            });
-
-            // Connect nearby points
-            ctx.strokeStyle = this.connectionColor;
-            ctx.lineWidth = 0.5;
-            for (let i = 0; i < allPoints.length; i++) {
-              for (let j = i + 1; j < allPoints.length; j++) {
-                const dist = Math.hypot(allPoints[i].x - allPoints[j].x, allPoints[i].y - allPoints[j].y);
-                if (dist < 100) {
-                  const alpha = 1 - dist / 100;
-                  ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.3})`;
-                  ctx.beginPath();
-                  ctx.moveTo(allPoints[i].x, allPoints[i].y);
-                  ctx.lineTo(allPoints[j].x, allPoints[j].y);
-                  ctx.stroke();
-                }
-              }
-            }
-
-            // Draw nodes
-            allPoints.forEach(p => {
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-              ctx.beginPath();
-              ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-              ctx.fill();
-            });
-          },
-          drawFace(faces) {
-            if (!faces[0]) return;
-            const face = faces[0];
-
-            // Draw all face mesh points as network
-            const facePoints = [];
-            face.forEach(lm => {
-              if (lm) facePoints.push({ x: lm.x * width, y: lm.y * height });
-            });
-
-            // Triangular mesh effect
-            ctx.strokeStyle = 'rgba(255, 200, 100, 0.1)';
-            ctx.lineWidth = 0.3;
-            for (let i = 0; i < facePoints.length; i += 3) {
-              if (facePoints[i] && facePoints[i + 1] && facePoints[i + 2]) {
-                ctx.beginPath();
-                ctx.moveTo(facePoints[i].x, facePoints[i].y);
-                ctx.lineTo(facePoints[i + 1].x, facePoints[i + 1].y);
-                ctx.lineTo(facePoints[i + 2].x, facePoints[i + 2].y);
-                ctx.closePath();
-                ctx.stroke();
-              }
-            }
-          }
-        },
-
-        void: {
-          bgAlpha: 0.02,
-          handColor: 'rgba(100, 0, 255, 1)',
-          faceColor: 'rgba(0, 50, 150, 1)',
-          connectionColor: 'rgba(100, 0, 255, 0.2)',
-          drawHands(hands) {
-            hands.forEach(hand => {
-              if (!hand) return;
-
-              // Draw gravitational distortion
-              const palm = hand[0];
-              if (palm) {
-                const cx = palm.x * width;
-                const cy = palm.y * height;
-
-                // Concentric rings
-                for (let r = 20; r < 200; r += 20) {
-                  ctx.strokeStyle = `rgba(100, 0, 255, ${0.3 - r / 800})`;
-                  ctx.lineWidth = 2;
-                  ctx.beginPath();
-                  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                  ctx.stroke();
-                }
-
-                // Spawn void particles
-                if (Math.random() > 0.5) {
-                  const angle = Math.random() * Math.PI * 2;
-                  const dist = 50 + Math.random() * 100;
-                  const px = (cx + Math.cos(angle) * dist) / width;
-                  const py = (cy + Math.sin(angle) * dist) / height;
-                  const vel = {
-                    x: (cx / width - px) * 5,
-                    y: (cy / height - py) * 5
-                  };
-                  if (particles.length < MAX_PARTICLES) {
-                    const p = new Particle(px * width, py * height, this.handColor, vel);
-                    p.decay = 0.005;
-                    particles.push(p);
-                  }
-                }
-              }
-
-              // Fingertip void points
-              [4, 8, 12, 16, 20].forEach(idx => {
-                const tip = hand[idx];
-                if (!tip) return;
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-                ctx.beginPath();
-                ctx.arc(tip.x * width, tip.y * height, 15, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.strokeStyle = this.handColor;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-              });
-            });
-          },
-          drawFace(faces) {
-            if (!faces[0]) return;
-            const face = faces[0];
-
-            // Draw face as void constellation
-            const keyPoints = [1, 33, 133, 362, 263, 61, 291, 10, 152];
-            keyPoints.forEach(idx => {
-              if (!face[idx]) return;
-              const x = face[idx].x * width;
-              const y = face[idx].y * height;
-
-              // Void hole
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-              ctx.beginPath();
-              ctx.arc(x, y, 10, 0, Math.PI * 2);
-              ctx.fill();
-
-              // Ring
-              ctx.strokeStyle = this.faceColor;
-              ctx.lineWidth = 1;
-              ctx.beginPath();
-              ctx.arc(x, y, 15, 0, Math.PI * 2);
-              ctx.stroke();
-            });
-
-            // Connect with dim lines
-            ctx.strokeStyle = 'rgba(0, 50, 150, 0.2)';
-            ctx.lineWidth = 0.5;
-            for (let i = 0; i < keyPoints.length; i++) {
-              for (let j = i + 1; j < keyPoints.length; j++) {
-                if (face[keyPoints[i]] && face[keyPoints[j]]) {
-                  ctx.beginPath();
-                  ctx.moveTo(face[keyPoints[i]].x * width, face[keyPoints[i]].y * height);
-                  ctx.lineTo(face[keyPoints[j]].x * width, face[keyPoints[j]].y * height);
-                  ctx.stroke();
-                }
-              }
-            }
-          }
-        }
-      };
-
-      // ---------- MediaPipe Setup ----------
+      // MediaPipe setup
       let handsDetector = null;
       let faceDetector = null;
+      let camera = null;
 
       async function initTracking() {
         loadingEl.style.display = 'block';
@@ -804,43 +365,44 @@
           video.srcObject = stream;
           await video.play();
 
-          loadingEl.textContent = 'Loading hand tracking...';
+          loadingEl.textContent = 'Loading models...';
 
-          // Initialize Hands
           handsDetector = new Hands({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
           });
           handsDetector.setOptions({
             maxNumHands: 2,
-            modelComplexity: 1,
-            minDetectionConfidence: 0.7,
+            modelComplexity: 0, // Faster model
+            minDetectionConfidence: 0.6,
             minTrackingConfidence: 0.5
           });
-          handsDetector.onResults(onHandsResults);
+          handsDetector.onResults((r) => {
+            hands = r.multiHandLandmarks || [];
+            document.getElementById('stat-hands').textContent = `Hands: ${hands.length}`;
+          });
 
-          loadingEl.textContent = 'Loading face tracking...';
-
-          // Initialize Face Mesh
           faceDetector = new FaceMesh({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
           });
           faceDetector.setOptions({
             maxNumFaces: 1,
-            refineLandmarks: true,
-            minDetectionConfidence: 0.7,
+            refineLandmarks: false, // Faster
+            minDetectionConfidence: 0.6,
             minTrackingConfidence: 0.5
           });
-          faceDetector.onResults(onFaceResults);
+          faceDetector.onResults((r) => {
+            face = r.multiFaceLandmarks && r.multiFaceLandmarks[0] ? r.multiFaceLandmarks[0] : null;
+            document.getElementById('stat-face').textContent = `Face: ${face ? 'Yes' : 'No'}`;
+          });
 
-          loadingEl.textContent = 'Calibrating sensors...';
-
-          // Start camera processing
-          const camera = new Camera(video, {
+          camera = new Camera(video, {
             onFrame: async () => {
-              if (isRunning) {
-                await handsDetector.send({ image: video });
-                await faceDetector.send({ image: video });
-              }
+              if (!isRunning) return;
+              const now = performance.now();
+              if (now - lastProcess < PROCESS_INTERVAL) return;
+              lastProcess = now;
+              await handsDetector.send({ image: video });
+              await faceDetector.send({ image: video });
             },
             width: 1280,
             height: 720
@@ -850,112 +412,250 @@
           loadingEl.style.display = 'none';
           return true;
         } catch (err) {
-          console.error('Tracking init error:', err);
           loadingEl.textContent = 'Error: ' + err.message;
           return false;
         }
       }
 
-      function onHandsResults(results) {
-        handLandmarks = results.multiHandLandmarks || [];
+      // Drawing functions - optimized
+      function drawNodes() {
+        ctx.clearRect(0, 0, width, height);
 
-        // Store history for trails
-        handHistory.push([...handLandmarks]);
-        if (handHistory.length > HISTORY_LENGTH) handHistory.shift();
+        // Draw hands
+        hands.forEach((hand) => {
+          if (!hand) return;
 
-        document.getElementById('stat-hands').textContent = `Hands: ${handLandmarks.length}`;
+          // Connection lines
+          const connections = [
+            [0,1],[1,2],[2,3],[3,4],
+            [0,5],[5,6],[6,7],[7,8],
+            [5,9],[9,10],[10,11],[11,12],
+            [9,13],[13,14],[14,15],[15,16],
+            [13,17],[17,18],[18,19],[19,20],
+            [0,17]
+          ];
+
+          ctx.strokeStyle = 'rgba(0, 255, 170, 0.4)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          connections.forEach(([a, b]) => {
+            if (hand[a] && hand[b]) {
+              ctx.moveTo(hand[a].x * width, hand[a].y * height);
+              ctx.lineTo(hand[b].x * width, hand[b].y * height);
+            }
+          });
+          ctx.stroke();
+
+          // Node points
+          hand.forEach((lm, i) => {
+            const x = lm.x * width;
+            const y = lm.y * height;
+            const isTip = [4,8,12,16,20].includes(i);
+            const size = isTip ? 6 : 3;
+
+            // Glow for tips
+            if (isTip) {
+              ctx.fillStyle = 'rgba(0, 255, 170, 0.3)';
+              ctx.beginPath();
+              ctx.arc(x, y, 15, 0, Math.PI * 2);
+              ctx.fill();
+            }
+
+            ctx.fillStyle = isTip ? '#00FFAA' : 'rgba(0, 255, 170, 0.8)';
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // ID labels on tips
+            if (isTip) {
+              ctx.fillStyle = 'rgba(255,255,255,0.6)';
+              ctx.font = '9px IBM Plex Mono';
+              ctx.fillText(i, x + 10, y - 5);
+            }
+          });
+        });
+
+        // Draw face mesh
+        if (face) {
+          const keyPoints = [1, 33, 133, 362, 263, 61, 291, 10, 152, 234, 454];
+
+          // Connect key points with lines
+          ctx.strokeStyle = 'rgba(255, 0, 170, 0.25)';
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          for (let i = 0; i < keyPoints.length; i++) {
+            for (let j = i + 1; j < keyPoints.length; j++) {
+              const a = face[keyPoints[i]];
+              const b = face[keyPoints[j]];
+              if (a && b) {
+                const dist = Math.hypot((a.x - b.x) * width, (a.y - b.y) * height);
+                if (dist < 200) {
+                  ctx.moveTo(a.x * width, a.y * height);
+                  ctx.lineTo(b.x * width, b.y * height);
+                }
+              }
+            }
+          }
+          ctx.stroke();
+
+          // Key point nodes
+          keyPoints.forEach((idx) => {
+            const p = face[idx];
+            if (!p) return;
+            const x = p.x * width;
+            const y = p.y * height;
+
+            ctx.fillStyle = 'rgba(255, 0, 170, 0.4)';
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#FF00AA';
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = '8px IBM Plex Mono';
+            ctx.fillText(idx, x + 8, y - 4);
+          });
+        }
+
+        // Cross-connections between hands and face
+        if (hands.length > 0 && face) {
+          ctx.strokeStyle = 'rgba(0, 170, 255, 0.15)';
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          hands.forEach(hand => {
+            if (!hand) return;
+            [8, 4].forEach(tipIdx => {
+              const tip = hand[tipIdx];
+              if (!tip) return;
+              [1, 33, 263].forEach(faceIdx => {
+                const fp = face[faceIdx];
+                if (!fp) return;
+                const dist = Math.hypot((tip.x - fp.x) * width, (tip.y - fp.y) * height);
+                if (dist < 300) {
+                  ctx.moveTo(tip.x * width, tip.y * height);
+                  ctx.lineTo(fp.x * width, fp.y * height);
+                }
+              });
+            });
+          });
+          ctx.stroke();
+        }
       }
 
-      function onFaceResults(results) {
-        faceLandmarks = results.multiFaceLandmarks || [];
+      function drawFlow() {
+        ctx.clearRect(0, 0, width, height);
 
-        // Store history
-        faceHistory.push([...faceLandmarks]);
-        if (faceHistory.length > HISTORY_LENGTH) faceHistory.shift();
+        // Simpler flowing lines
+        hands.forEach(hand => {
+          if (!hand) return;
 
-        document.getElementById('stat-face').textContent = `Face: ${faceLandmarks.length > 0 ? 'Yes' : 'No'}`;
+          // Draw flowing curves through hand
+          ctx.strokeStyle = 'rgba(0, 255, 170, 0.6)';
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+
+          // Thumb to pinky flow
+          const flowPoints = [4, 8, 12, 16, 20];
+          ctx.beginPath();
+          flowPoints.forEach((idx, i) => {
+            const p = hand[idx];
+            if (i === 0) ctx.moveTo(p.x * width, p.y * height);
+            else ctx.lineTo(p.x * width, p.y * height);
+          });
+          ctx.stroke();
+
+          // Wrist connections
+          ctx.strokeStyle = 'rgba(0, 255, 170, 0.3)';
+          ctx.lineWidth = 1;
+          flowPoints.forEach(idx => {
+            ctx.beginPath();
+            ctx.moveTo(hand[0].x * width, hand[0].y * height);
+            ctx.lineTo(hand[idx].x * width, hand[idx].y * height);
+            ctx.stroke();
+          });
+        });
+
+        if (face) {
+          // Face outline only
+          const outline = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288,
+            397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136,
+            172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10];
+
+          ctx.strokeStyle = 'rgba(255, 0, 170, 0.4)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          outline.forEach((idx, i) => {
+            const p = face[idx];
+            if (!p) return;
+            if (i === 0) ctx.moveTo(p.x * width, p.y * height);
+            else ctx.lineTo(p.x * width, p.y * height);
+          });
+          ctx.stroke();
+        }
       }
 
-      // ---------- Render ----------
+      function drawMinimal() {
+        ctx.clearRect(0, 0, width, height);
+
+        // Just fingertips and nose
+        hands.forEach(hand => {
+          if (!hand) return;
+          [4, 8, 12, 16, 20].forEach(idx => {
+            const p = hand[idx];
+            ctx.fillStyle = '#00FFAA';
+            ctx.beginPath();
+            ctx.arc(p.x * width, p.y * height, 8, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        });
+
+        if (face && face[1]) {
+          ctx.fillStyle = '#FF00AA';
+          ctx.beginPath();
+          ctx.arc(face[1].x * width, face[1].y * height, 10, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      const drawModes = { nodes: drawNodes, flow: drawFlow, minimal: drawMinimal };
+
+      function animate() {
+        if (!isRunning) return;
+        drawModes[currentMode]();
+        updateAudio();
+        requestAnimationFrame(animate);
+      }
+
       function setup() {
         canvas.width = width;
         canvas.height = height;
       }
 
-      function animate() {
-        if (!isRunning) return;
-
-        const mode = visualModes[currentMode];
-
-        // Semi-transparent clear for trails
-        ctx.fillStyle = `rgba(10, 10, 10, ${mode.bgAlpha})`;
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw historical trails
-        handHistory.forEach((histHands, histIdx) => {
-          const alpha = histIdx / handHistory.length * 0.3;
-          ctx.globalAlpha = alpha;
-          histHands.forEach(hand => {
-            if (!hand) return;
-            [4, 8, 12, 16, 20].forEach(idx => {
-              if (hand[idx]) {
-                ctx.fillStyle = mode.handColor.replace('1)', `${alpha})`);
-                ctx.beginPath();
-                ctx.arc(hand[idx].x * width, hand[idx].y * height, 2, 0, Math.PI * 2);
-                ctx.fill();
-              }
-            });
-          });
-        });
-        ctx.globalAlpha = 1;
-
-        // Draw current tracking
-        mode.drawHands(handLandmarks);
-        mode.drawFace(faceLandmarks);
-
-        // Update and draw particles
-        particles = particles.filter(p => p.life > 0);
-        particles.forEach(p => {
-          p.update();
-          p.draw(ctx);
-        });
-
-        // Update audio
-        updateAudio();
-
-        requestAnimationFrame(animate);
-      }
-
-      // ---------- Start ----------
       async function start() {
         startPrompt.classList.add('hidden');
         setup();
-
-        const trackingReady = await initTracking();
-        if (!trackingReady) return;
-
+        const ok = await initTracking();
+        if (!ok) return;
         initAudio();
-
         controlsEl.style.display = 'flex';
         statsEl.style.display = 'block';
-
         isRunning = true;
         animate();
       }
 
-      // ---------- Mode Switching ----------
+      // Events
       controlsEl.addEventListener('click', (e) => {
         if (e.target.classList.contains('control-btn')) {
-          document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
+          document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
           e.target.classList.add('active');
           currentMode = e.target.dataset.mode;
-
-          // Clear particles on mode switch
-          particles = [];
         }
       });
 
-      // ---------- Resize ----------
       function handleResize() {
         width = window.innerWidth;
         height = window.innerHeight;
@@ -963,24 +663,21 @@
         canvas.height = height;
       }
 
-      // ---------- Events ----------
       startPrompt.addEventListener('click', start);
       window.addEventListener('resize', handleResize);
 
       document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-          isRunning = false;
-        } else if (startPrompt.classList.contains('hidden')) {
+        if (document.hidden) isRunning = false;
+        else if (startPrompt.classList.contains('hidden')) {
           isRunning = true;
           animate();
         }
       });
 
-      // Keyboard shortcuts
       document.addEventListener('keydown', (e) => {
-        if (e.key === '1') document.querySelector('[data-mode="ethereal"]').click();
-        if (e.key === '2') document.querySelector('[data-mode="neural"]').click();
-        if (e.key === '3') document.querySelector('[data-mode="void"]').click();
+        if (e.key === '1') document.querySelector('[data-mode="nodes"]').click();
+        if (e.key === '2') document.querySelector('[data-mode="flow"]').click();
+        if (e.key === '3') document.querySelector('[data-mode="minimal"]').click();
       });
 
     })();
