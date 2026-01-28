@@ -3,148 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0A0A0A">
   <title>Somatic Interface — PUBLICWORKS</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      --bg: #D1D1D1;
+      --text: #0F0F0F;
+      --text-secondary: #6E6E6E;
+      --accent: #0047FF;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: 'IBM Plex Mono', monospace;
-      background: #0A0A0A;
-      color: #E8E8E8;
-      min-height: 100vh;
+      font-family: var(--font-mono);
+      background: var(--bg);
+      color: var(--text);
       overflow: hidden;
     }
 
     #back-link {
       position: fixed;
       top: 1.5rem; left: 1.5rem;
-      font-size: 0.7rem;
-      color: rgba(255,255,255,0.4);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
       text-decoration: none;
       z-index: 100;
       transition: color 0.15s;
     }
-    #back-link:hover { color: #fff; }
+    #back-link:hover { color: var(--accent); }
 
     .start-prompt {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: #0A0A0A;
+      inset: 0;
+      background: var(--bg);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 200;
       cursor: pointer;
-      transition: opacity 0.8s;
+      transition: opacity 0.5s;
     }
     .start-prompt.hidden { opacity: 0; pointer-events: none; }
+
     .start-prompt h1 {
-      font-size: clamp(2rem, 6vw, 4rem);
-      font-weight: 400;
-      letter-spacing: -0.03em;
-      margin-bottom: 1rem;
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
-    .start-prompt h1 span {
-      display: block;
-      font-size: 0.35em;
-      color: #6E6E6E;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      margin-bottom: 0.5em;
-    }
-    .start-prompt p {
+    .start-prompt .num {
+      font-family: var(--font-mono);
       font-size: 0.75rem;
-      color: #6E6E6E;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
     }
     .start-prompt .desc {
-      max-width: 450px;
+      max-width: 400px;
       text-align: center;
       margin: 1.5rem 1rem;
-      font-size: 0.8rem;
-      color: #6E6E6E;
-      line-height: 1.7;
-      text-transform: none;
-      letter-spacing: 0;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .start-prompt .cta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
     .start-prompt .hint {
       position: absolute;
       bottom: 2rem;
-      font-size: 0.6rem;
-      color: #444;
+      font-size: 0.625rem;
+      color: var(--text-secondary);
     }
 
     .loading {
       position: fixed;
       bottom: 1.5rem; left: 1.5rem;
-      font-size: 0.6rem;
-      color: #0f0;
+      font-size: 0.625rem;
+      color: var(--accent);
       z-index: 100;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     #video {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
+      inset: 0;
+      width: 100%; height: 100%;
       object-fit: cover;
       transform: scaleX(-1);
       z-index: 1;
-      filter: saturate(0.8) brightness(0.9);
     }
 
     #canvas {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
+      inset: 0;
+      width: 100%; height: 100%;
       z-index: 2;
       pointer-events: none;
       transform: scaleX(-1);
     }
 
-    .stats {
+    .hud {
       position: fixed;
       bottom: 1.5rem; right: 1.5rem;
-      font-size: 0.55rem;
-      color: rgba(255,255,255,0.5);
-      text-align: right;
+      font-size: 0.6rem;
+      color: var(--text);
+      background: rgba(209,209,209,0.85);
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--text);
       z-index: 100;
       font-variant-numeric: tabular-nums;
-      background: rgba(0,0,0,0.5);
-      padding: 0.5rem 0.7rem;
-      border: 1px solid rgba(255,255,255,0.1);
     }
-    .stats div { margin-bottom: 0.15rem; }
+    .hud div { margin-bottom: 0.15rem; }
+    .hud div:last-child { margin-bottom: 0; }
   </style>
 </head>
 <body>
   <a href="../../" id="back-link">← PUBLICWORKS</a>
 
-  <div class="start-prompt" id="start-prompt">
-    <h1><span>005</span>Somatic Interface</h1>
-    <p class="desc">
-      Your body becomes the instrument. Move your hands through space
-      to play melodies. Let your face conduct the harmony.
-    </p>
-    <p>Click to begin</p>
+  <div class="start-prompt" id="start">
+    <div class="num">005</div>
+    <h1>Somatic Interface</h1>
+    <p class="desc">Your body becomes the instrument. Move your hands to play melodies. Your face conducts the harmony.</p>
+    <p class="cta">Click to begin</p>
     <span class="hint">Camera required • Headphones recommended</span>
   </div>
 
-  <div class="loading" id="loading" style="display: none;">INIT</div>
+  <div class="loading" id="loading" style="display:none;">Loading...</div>
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas"></canvas>
 
-  <div class="stats" id="stats" style="display: none;">
-    <div id="stat-key">KEY: C MAJ</div>
-    <div id="stat-chord">CHORD: --</div>
-    <div id="stat-hands">HANDS: 0</div>
+  <div class="hud" id="hud" style="display:none;">
+    <div id="hud-chord">CHORD: I</div>
+    <div id="hud-hands">HANDS: 0</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -155,506 +157,260 @@
     (function() {
       'use strict';
 
-      const $ = id => document.getElementById(id);
-      const startPrompt = $('start-prompt');
-      const loadingEl = $('loading');
-      const video = $('video');
-      const canvas = $('canvas');
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
       const ctx = canvas.getContext('2d');
-      const statsEl = $('stats');
+      const startEl = document.getElementById('start');
+      const loadingEl = document.getElementById('loading');
+      const hudEl = document.getElementById('hud');
 
-      let W = window.innerWidth;
-      let H = window.innerHeight;
-      let isRunning = false;
+      let W, H;
+      let running = false;
       let hands = [];
       let face = null;
+      let lastTrack = 0;
+      const TRACK_INTERVAL = 50; // ~20fps tracking
 
-      // Particle system
-      const particles = [];
-      const trails = { left: [], right: [] };
-      const TRAIL_LENGTH = 25;
-
-      // ============== MUSICAL AUDIO ENGINE ==============
-      let audioCtx = null;
-      let masterGain, reverbGain, delayNode, compressor;
-      let padOscs = [];
-      let leadOscs = [];
-      let bassOsc = null;
-      let arpInterval = null;
-      let currentChord = [0, 4, 7]; // Major triad
-      let arpIndex = 0;
-      let lastArpTime = 0;
-
-      // Musical scales and chords
-      const SCALES = {
-        major: [0, 2, 4, 5, 7, 9, 11],
-        minor: [0, 2, 3, 5, 7, 8, 10],
-        pentatonic: [0, 2, 4, 7, 9],
-        dorian: [0, 2, 3, 5, 7, 9, 10]
-      };
+      // Audio state
+      let audio = null;
+      let padGains = [];
+      let leadGain = null;
+      let bassGain = null;
+      let lastArp = 0;
+      let arpIdx = 0;
 
       const CHORDS = {
         I: [0, 4, 7],
         ii: [2, 5, 9],
-        iii: [4, 7, 11],
         IV: [5, 9, 12],
         V: [7, 11, 14],
-        vi: [9, 12, 16],
-        iim7: [2, 5, 9, 12],
-        Imaj7: [0, 4, 7, 11],
-        IVmaj7: [5, 9, 12, 16]
+        vi: [9, 12, 16]
       };
+      const CHORD_ORDER = ['I', 'ii', 'IV', 'V', 'vi'];
+      const ROOT = 48;
 
-      const CHORD_NAMES = ['I', 'ii', 'iii', 'IV', 'V', 'vi'];
-      const ROOT = 48; // C3 MIDI note
-
-      function midiToFreq(midi) {
-        return 440 * Math.pow(2, (midi - 69) / 12);
-      }
+      function mtof(m) { return 440 * Math.pow(2, (m - 69) / 12); }
 
       function initAudio() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audio = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Compressor for glue
-        compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.value = -24;
-        compressor.knee.value = 30;
-        compressor.ratio.value = 4;
-        compressor.attack.value = 0.003;
-        compressor.release.value = 0.25;
-        compressor.connect(audioCtx.destination);
+        const master = audio.createGain();
+        master.gain.value = 0.5;
+        master.connect(audio.destination);
 
-        // Master gain
-        masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.7;
-        masterGain.connect(compressor);
-
-        // Reverb
-        const convolver = audioCtx.createConvolver();
-        const reverbLen = audioCtx.sampleRate * 2.5;
-        const impulse = audioCtx.createBuffer(2, reverbLen, audioCtx.sampleRate);
-        for (let ch = 0; ch < 2; ch++) {
-          const data = impulse.getChannelData(ch);
-          for (let i = 0; i < reverbLen; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / reverbLen, 2);
-          }
+        // Simple reverb
+        const convolver = audio.createConvolver();
+        const len = audio.sampleRate * 1.5;
+        const impulse = audio.createBuffer(2, len, audio.sampleRate);
+        for (let c = 0; c < 2; c++) {
+          const d = impulse.getChannelData(c);
+          for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i/len, 2);
         }
         convolver.buffer = impulse;
-
-        reverbGain = audioCtx.createGain();
-        reverbGain.gain.value = 0.3;
+        const reverbGain = audio.createGain();
+        reverbGain.gain.value = 0.2;
         convolver.connect(reverbGain);
-        reverbGain.connect(compressor);
+        reverbGain.connect(audio.destination);
 
-        // Delay
-        delayNode = audioCtx.createDelay(1);
-        delayNode.delayTime.value = 0.375; // Dotted eighth
-        const delayFeedback = audioCtx.createGain();
-        delayFeedback.gain.value = 0.35;
-        const delayFilter = audioCtx.createBiquadFilter();
-        delayFilter.type = 'lowpass';
-        delayFilter.frequency.value = 2000;
-        delayNode.connect(delayFilter);
-        delayFilter.connect(delayFeedback);
-        delayFeedback.connect(delayNode);
-        const delayWet = audioCtx.createGain();
-        delayWet.gain.value = 0.25;
-        delayNode.connect(delayWet);
-        delayWet.connect(compressor);
-
-        // === PAD SYNTH (face controlled) ===
-        for (let i = 0; i < 4; i++) {
-          const osc1 = audioCtx.createOscillator();
-          const osc2 = audioCtx.createOscillator();
-          const filter = audioCtx.createBiquadFilter();
-          const gain = audioCtx.createGain();
-
-          osc1.type = 'sawtooth';
-          osc2.type = 'triangle';
-          osc2.detune.value = 7; // Slight detune for width
-
-          filter.type = 'lowpass';
-          filter.frequency.value = 400;
-          filter.Q.value = 1;
-
-          gain.gain.value = 0;
-
-          osc1.connect(filter);
-          osc2.connect(filter);
-          filter.connect(gain);
-          gain.connect(masterGain);
-          gain.connect(convolver);
-
-          osc1.start();
-          osc2.start();
-
-          padOscs.push({ osc1, osc2, filter, gain });
-        }
-
-        // === LEAD SYNTH (hand controlled - arpeggiator) ===
+        // Pad (3 voices)
         for (let i = 0; i < 3; i++) {
-          const osc = audioCtx.createOscillator();
-          const filter = audioCtx.createBiquadFilter();
-          const gain = audioCtx.createGain();
-          const panner = audioCtx.createStereoPanner();
-
-          osc.type = i === 0 ? 'sawtooth' : 'square';
-          filter.type = 'lowpass';
-          filter.frequency.value = 1500;
-          filter.Q.value = 3;
+          const osc = audio.createOscillator();
+          const flt = audio.createBiquadFilter();
+          const gain = audio.createGain();
+          osc.type = 'triangle';
+          flt.type = 'lowpass';
+          flt.frequency.value = 800;
           gain.gain.value = 0;
-          panner.pan.value = (i - 1) * 0.3;
-
-          osc.connect(filter);
-          filter.connect(gain);
-          gain.connect(panner);
-          panner.connect(masterGain);
-          panner.connect(delayNode);
-          panner.connect(convolver);
-
+          osc.connect(flt);
+          flt.connect(gain);
+          gain.connect(master);
+          gain.connect(convolver);
           osc.start();
-          leadOscs.push({ osc, filter, gain, panner });
+          padGains.push({ osc, flt, gain });
         }
 
-        // === BASS (root note) ===
-        const bassOsc1 = audioCtx.createOscillator();
-        const bassOsc2 = audioCtx.createOscillator();
-        const bassFilter = audioCtx.createBiquadFilter();
-        const bassGain = audioCtx.createGain();
+        // Lead
+        const leadOsc = audio.createOscillator();
+        const leadFlt = audio.createBiquadFilter();
+        leadGain = audio.createGain();
+        leadOsc.type = 'sawtooth';
+        leadFlt.type = 'lowpass';
+        leadFlt.frequency.value = 1200;
+        leadFlt.Q.value = 2;
+        leadGain.gain.value = 0;
+        leadOsc.connect(leadFlt);
+        leadFlt.connect(leadGain);
+        leadGain.connect(master);
+        leadGain.connect(convolver);
+        leadOsc.start();
+        leadGain.osc = leadOsc;
+        leadGain.flt = leadFlt;
 
-        bassOsc1.type = 'sine';
-        bassOsc2.type = 'triangle';
-        bassOsc2.detune.value = -1200; // One octave down
-
-        bassFilter.type = 'lowpass';
-        bassFilter.frequency.value = 200;
-
+        // Bass
+        const bassOsc = audio.createOscillator();
+        const bassFlt = audio.createBiquadFilter();
+        bassGain = audio.createGain();
+        bassOsc.type = 'sine';
+        bassFlt.type = 'lowpass';
+        bassFlt.frequency.value = 150;
         bassGain.gain.value = 0;
-
-        bassOsc1.connect(bassFilter);
-        bassOsc2.connect(bassFilter);
-        bassFilter.connect(bassGain);
-        bassGain.connect(masterGain);
-
-        bassOsc1.start();
-        bassOsc2.start();
-
-        bassOsc = { osc1: bassOsc1, osc2: bassOsc2, filter: bassFilter, gain: bassGain };
+        bassOsc.connect(bassFlt);
+        bassFlt.connect(bassGain);
+        bassGain.connect(master);
+        bassOsc.start();
+        bassGain.osc = bassOsc;
       }
 
       function updateAudio() {
-        if (!audioCtx) return;
-        const now = audioCtx.currentTime;
+        if (!audio) return;
+        const t = audio.currentTime;
 
-        // Determine chord based on face Y position
+        // Chord from face Y
         let chordIdx = 0;
-        if (face && face[1]) {
-          chordIdx = Math.floor(face[1].y * CHORD_NAMES.length);
-          chordIdx = Math.max(0, Math.min(CHORD_NAMES.length - 1, chordIdx));
+        if (face?.[1]) {
+          chordIdx = Math.floor(face[1].y * CHORD_ORDER.length);
+          chordIdx = Math.max(0, Math.min(CHORD_ORDER.length - 1, chordIdx));
         }
-        const chordName = CHORD_NAMES[chordIdx];
-        currentChord = CHORDS[chordName] || CHORDS.I;
-        $('stat-chord').textContent = `CHORD: ${chordName}`;
+        const chordName = CHORD_ORDER[chordIdx];
+        const chord = CHORDS[chordName];
+        document.getElementById('hud-chord').textContent = `CHORD: ${chordName}`;
 
-        // === PAD (face controlled) ===
+        // Pad + Bass
         if (face) {
-          const faceX = face[1] ? face[1].x : 0.5;
-          const faceY = face[1] ? face[1].y : 0.5;
-
-          // Filter opens as face moves up
-          const padFilter = 200 + (1 - faceY) * 1200;
-
-          currentChord.slice(0, 4).forEach((interval, i) => {
-            if (!padOscs[i]) return;
-            const { osc1, osc2, filter, gain } = padOscs[i];
-            const freq = midiToFreq(ROOT + interval);
-
-            osc1.frequency.setTargetAtTime(freq, now, 0.3);
-            osc2.frequency.setTargetAtTime(freq, now, 0.3);
-            filter.frequency.setTargetAtTime(padFilter, now, 0.1);
-
-            // Volume based on face presence
-            gain.gain.setTargetAtTime(0.08, now, 0.5);
+          const filterFreq = 300 + (1 - (face[1]?.y || 0.5)) * 1000;
+          chord.forEach((interval, i) => {
+            if (!padGains[i]) return;
+            const freq = mtof(ROOT + interval);
+            padGains[i].osc.frequency.setTargetAtTime(freq, t, 0.2);
+            padGains[i].flt.frequency.setTargetAtTime(filterFreq, t, 0.1);
+            padGains[i].gain.gain.setTargetAtTime(0.07, t, 0.3);
           });
-
-          // Bass follows root
-          const bassFreq = midiToFreq(ROOT + currentChord[0] - 12);
-          bassOsc.osc1.frequency.setTargetAtTime(bassFreq, now, 0.2);
-          bassOsc.osc2.frequency.setTargetAtTime(bassFreq, now, 0.2);
-          bassOsc.filter.frequency.setTargetAtTime(150 + (1 - faceY) * 200, now, 0.1);
-          bassOsc.gain.gain.setTargetAtTime(0.15, now, 0.3);
+          bassGain.osc.frequency.setTargetAtTime(mtof(ROOT + chord[0] - 12), t, 0.2);
+          bassGain.gain.gain.setTargetAtTime(0.12, t, 0.3);
         } else {
-          // Fade out pads and bass
-          padOscs.forEach(p => p.gain.gain.setTargetAtTime(0, now, 0.8));
-          bassOsc.gain.gain.setTargetAtTime(0, now, 0.5);
+          padGains.forEach(p => p.gain.gain.setTargetAtTime(0, t, 0.5));
+          bassGain.gain.gain.setTargetAtTime(0, t, 0.5);
         }
 
-        // === LEAD / ARPEGGIATOR (hand controlled) ===
-        if (hands.length > 0 && hands[0]) {
-          const hand = hands[0];
-          const indexTip = hand[8];
+        // Arpeggiator from hand
+        if (hands[0]?.[8]) {
+          const tip = hands[0][8];
+          const bpm = 100 + tip.x * 100;
+          const interval = 60 / bpm / 2;
+          const filterFreq = 500 + (1 - tip.y) * 3000;
 
-          if (indexTip) {
-            // X controls arp speed (BPM 80-200)
-            const bpm = 80 + indexTip.x * 120;
-            const arpSpeed = 60 / bpm / 2; // Eighth notes
+          if (t - lastArp > interval) {
+            lastArp = t;
+            const pattern = [...chord, chord[0] + 12];
+            const note = pattern[arpIdx % pattern.length];
+            const freq = mtof(ROOT + 12 + note);
 
-            // Y controls filter
-            const leadFilter = 400 + (1 - indexTip.y) * 4000;
-
-            // Trigger arp notes
-            if (now - lastArpTime > arpSpeed) {
-              lastArpTime = now;
-
-              // Arp pattern through chord + octave
-              const arpPattern = [...currentChord, currentChord[0] + 12, ...currentChord.slice().reverse()];
-              const noteInterval = arpPattern[arpIndex % arpPattern.length];
-              const noteFreq = midiToFreq(ROOT + 12 + noteInterval); // One octave up from pad
-
-              leadOscs.forEach((lead, i) => {
-                const detune = (i - 1) * 5;
-                lead.osc.frequency.setTargetAtTime(noteFreq, now, 0.01);
-                lead.osc.detune.setTargetAtTime(detune, now, 0.01);
-                lead.filter.frequency.setTargetAtTime(leadFilter, now, 0.05);
-
-                // Envelope
-                lead.gain.gain.cancelScheduledValues(now);
-                lead.gain.gain.setValueAtTime(0.001, now);
-                lead.gain.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
-                lead.gain.gain.exponentialRampToValueAtTime(0.06, now + 0.1);
-                lead.gain.gain.exponentialRampToValueAtTime(0.001, now + arpSpeed * 0.9);
-              });
-
-              arpIndex++;
-
-              // Spawn particles on note
-              spawnNoteParticle(indexTip.x * W, indexTip.y * H);
-            }
+            leadGain.osc.frequency.setTargetAtTime(freq, t, 0.01);
+            leadGain.flt.frequency.setTargetAtTime(filterFreq, t, 0.02);
+            leadGain.gain.gain.cancelScheduledValues(t);
+            leadGain.gain.gain.setValueAtTime(0.15, t);
+            leadGain.gain.gain.exponentialRampToValueAtTime(0.01, t + interval * 0.8);
+            arpIdx++;
           }
         } else {
-          // Fade lead
-          leadOscs.forEach(l => l.gain.gain.setTargetAtTime(0, now, 0.3));
-        }
-
-        // Second hand modulates
-        if (hands.length > 1 && hands[1]) {
-          const hand2 = hands[1];
-          const tip = hand2[8];
-          if (tip) {
-            // Modulate reverb and delay
-            reverbGain.gain.setTargetAtTime(0.2 + tip.y * 0.4, now, 0.1);
-            delayNode.delayTime.setTargetAtTime(0.2 + tip.x * 0.4, now, 0.1);
-          }
+          leadGain.gain.gain.setTargetAtTime(0, t, 0.2);
         }
       }
 
-      // ============== PARTICLE SYSTEM ==============
-      class Particle {
-        constructor(x, y, color, size, life, vx, vy) {
-          this.x = x; this.y = y;
-          this.color = color;
-          this.size = size;
-          this.life = this.maxLife = life;
-          this.vx = vx; this.vy = vy;
-        }
-        update() {
-          this.x += this.vx;
-          this.y += this.vy;
-          this.vx *= 0.98;
-          this.vy *= 0.98;
-          this.life--;
-        }
-        draw() {
-          const alpha = this.life / this.maxLife;
-          ctx.fillStyle = this.color.replace('A)', `${alpha})`);
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size * alpha, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      function spawnNoteParticle(x, y) {
-        for (let i = 0; i < 8; i++) {
-          const angle = (Math.PI * 2 / 8) * i;
-          const speed = 2 + Math.random() * 3;
-          particles.push(new Particle(
-            x, y,
-            'rgba(100,255,200,A)',
-            3 + Math.random() * 4,
-            30 + Math.random() * 20,
-            Math.cos(angle) * speed,
-            Math.sin(angle) * speed
-          ));
-        }
-      }
-
-      // ============== MEDIAPIPE ==============
+      // Tracking
       async function initTracking() {
         loadingEl.style.display = 'block';
-        loadingEl.textContent = 'CAMERA';
+        loadingEl.textContent = 'Camera...';
 
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 1280, height: 720, facingMode: 'user' }
-          });
-          video.srcObject = stream;
-          await video.play();
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 1280, height: 720, facingMode: 'user' }
+        });
+        video.srcObject = stream;
+        await video.play();
 
-          loadingEl.textContent = 'MODELS';
+        loadingEl.textContent = 'Models...';
 
-          const handsDetector = new Hands({
-            locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
-          });
-          handsDetector.setOptions({
-            maxNumHands: 2,
-            modelComplexity: 0,
-            minDetectionConfidence: 0.6,
-            minTrackingConfidence: 0.5
-          });
-          handsDetector.onResults(r => {
-            hands = r.multiHandLandmarks || [];
-            $('stat-hands').textContent = `HANDS: ${hands.length}`;
-          });
+        const handsDet = new Hands({
+          locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+        });
+        handsDet.setOptions({
+          maxNumHands: 2,
+          modelComplexity: 0,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5
+        });
+        handsDet.onResults(r => {
+          hands = r.multiHandLandmarks || [];
+          document.getElementById('hud-hands').textContent = `HANDS: ${hands.length}`;
+        });
 
-          const faceDetector = new FaceMesh({
-            locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
-          });
-          faceDetector.setOptions({
-            maxNumFaces: 1,
-            refineLandmarks: false,
-            minDetectionConfidence: 0.6,
-            minTrackingConfidence: 0.5
-          });
-          faceDetector.onResults(r => {
-            face = r.multiFaceLandmarks?.[0] || null;
-          });
+        const faceDet = new FaceMesh({
+          locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+        });
+        faceDet.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: false,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5
+        });
+        faceDet.onResults(r => {
+          face = r.multiFaceLandmarks?.[0] || null;
+        });
 
-          const camera = new Camera(video, {
-            onFrame: async () => {
-              if (!isRunning) return;
-              await handsDetector.send({ image: video });
-              await faceDetector.send({ image: video });
-            },
-            width: 1280, height: 720
-          });
-          camera.start();
+        const cam = new Camera(video, {
+          onFrame: async () => {
+            if (!running) return;
+            const now = performance.now();
+            if (now - lastTrack < TRACK_INTERVAL) return;
+            lastTrack = now;
+            await handsDet.send({ image: video });
+            await faceDet.send({ image: video });
+          },
+          width: 1280, height: 720
+        });
+        cam.start();
 
-          loadingEl.style.display = 'none';
-          return true;
-        } catch (err) {
-          loadingEl.textContent = 'ERR: ' + err.message;
-          return false;
-        }
+        loadingEl.style.display = 'none';
       }
 
-      // ============== DRAWING ==============
-      function drawTrack() {
-        // Semi-transparent clear for trails
-        ctx.fillStyle = 'rgba(10,10,10,0.15)';
-        ctx.fillRect(0, 0, W, H);
+      // Drawing - optimized, simple
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
 
-        // Update and draw particles
-        for (let i = particles.length - 1; i >= 0; i--) {
-          particles[i].update();
-          particles[i].draw();
-          if (particles[i].life <= 0) particles.splice(i, 1);
-        }
-
-        // Draw hands
+        // Hands
         hands.forEach((hand, hi) => {
-          if (!hand) return;
+          const color = hi === 0 ? '#0047FF' : '#FF4D00';
 
-          const trailKey = hi === 0 ? 'left' : 'right';
-          const color = hi === 0 ? [100, 255, 180] : [180, 100, 255];
-
-          // Store trail point
-          if (hand[8]) {
-            trails[trailKey].push({ x: hand[8].x * W, y: hand[8].y * H, t: Date.now() });
-            if (trails[trailKey].length > TRAIL_LENGTH) trails[trailKey].shift();
-          }
-
-          // Draw trail with glow
-          if (trails[trailKey].length > 1) {
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            for (let i = 1; i < trails[trailKey].length; i++) {
-              const p0 = trails[trailKey][i - 1];
-              const p1 = trails[trailKey][i];
-              const alpha = i / trails[trailKey].length;
-
-              // Glow layer
-              ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},${alpha * 0.3})`;
-              ctx.lineWidth = 20 * alpha;
-              ctx.beginPath();
-              ctx.moveTo(p0.x, p0.y);
-              ctx.lineTo(p1.x, p1.y);
-              ctx.stroke();
-
-              // Core line
-              ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},${alpha * 0.9})`;
-              ctx.lineWidth = 3 * alpha;
-              ctx.beginPath();
-              ctx.moveTo(p0.x, p0.y);
-              ctx.lineTo(p1.x, p1.y);
-              ctx.stroke();
-            }
-          }
-
-          // Skeleton connections
-          const conns = [
-            [0,1],[1,2],[2,3],[3,4],
-            [0,5],[5,6],[6,7],[7,8],
-            [5,9],[9,10],[10,11],[11,12],
-            [9,13],[13,14],[14,15],[15,16],
-            [13,17],[17,18],[18,19],[19,20],
-            [0,17]
-          ];
-
-          ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},0.4)`;
-          ctx.lineWidth = 1;
+          // Connections
+          const conns = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = 0.6;
           ctx.beginPath();
           conns.forEach(([a, b]) => {
             ctx.moveTo(hand[a].x * W, hand[a].y * H);
             ctx.lineTo(hand[b].x * W, hand[b].y * H);
           });
           ctx.stroke();
+          ctx.globalAlpha = 1;
 
-          // Landmarks
+          // Points
           hand.forEach((lm, i) => {
-            const x = lm.x * W;
-            const y = lm.y * H;
+            const x = lm.x * W, y = lm.y * H;
             const isTip = [4,8,12,16,20].includes(i);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, isTip ? 6 : 3, 0, Math.PI * 2);
+            ctx.fill();
 
             if (isTip) {
-              // Glow
-              const grad = ctx.createRadialGradient(x, y, 0, x, y, 25);
-              grad.addColorStop(0, `rgba(${color[0]},${color[1]},${color[2]},0.6)`);
-              grad.addColorStop(1, `rgba(${color[0]},${color[1]},${color[2]},0)`);
-              ctx.fillStyle = grad;
-              ctx.beginPath();
-              ctx.arc(x, y, 25, 0, Math.PI * 2);
-              ctx.fill();
-
-              // Point
-              ctx.fillStyle = `rgb(${color[0]},${color[1]},${color[2]})`;
-              ctx.beginPath();
-              ctx.arc(x, y, 6, 0, Math.PI * 2);
-              ctx.fill();
-
-              // Label
-              ctx.fillStyle = 'rgba(255,255,255,0.7)';
+              ctx.fillStyle = '#0F0F0F';
               ctx.font = '9px IBM Plex Mono';
-              ctx.fillText(i, x + 10, y - 5);
-            } else {
-              ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},0.6)`;
-              ctx.beginPath();
-              ctx.arc(x, y, 3, 0, Math.PI * 2);
-              ctx.fill();
+              ctx.fillText(i, x + 8, y - 4);
             }
           });
 
-          // Bounding box
+          // Box
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           hand.forEach(lm => {
             minX = Math.min(minX, lm.x * W);
@@ -662,57 +418,42 @@
             maxX = Math.max(maxX, lm.x * W);
             maxY = Math.max(maxY, lm.y * H);
           });
-          const pad = 25;
-          ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},0.5)`;
+          ctx.strokeStyle = color;
           ctx.lineWidth = 1;
-          ctx.strokeRect(minX - pad, minY - pad, maxX - minX + pad*2, maxY - minY + pad*2);
-          ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},0.8)`;
+          ctx.strokeRect(minX - 15, minY - 15, maxX - minX + 30, maxY - minY + 30);
+          ctx.fillStyle = color;
           ctx.font = '10px IBM Plex Mono';
-          ctx.fillText(`HAND_${hi}`, minX - pad + 4, minY - pad - 6);
+          ctx.fillText(`HAND_${hi}`, minX - 15, minY - 20);
         });
 
-        // Draw face
+        // Face
         if (face) {
           const keyPts = [1, 33, 263, 61, 291, 10, 152];
+          const faceConns = [[10,1],[1,152],[33,1],[263,1],[61,291]];
 
-          // Face connections
-          const faceConns = [[10,1],[1,152],[33,1],[263,1],[61,291],[33,61],[263,291]];
-          ctx.strokeStyle = 'rgba(255,120,180,0.3)';
+          ctx.strokeStyle = '#FF4D00';
           ctx.lineWidth = 1;
+          ctx.globalAlpha = 0.5;
           ctx.beginPath();
-          faceConns.forEach(([a,b]) => {
+          faceConns.forEach(([a, b]) => {
             if (face[a] && face[b]) {
               ctx.moveTo(face[a].x * W, face[a].y * H);
               ctx.lineTo(face[b].x * W, face[b].y * H);
             }
           });
           ctx.stroke();
+          ctx.globalAlpha = 1;
 
-          // Key points with glow
           keyPts.forEach(idx => {
             const p = face[idx];
             if (!p) return;
-            const x = p.x * W, y = p.y * H;
-
-            const grad = ctx.createRadialGradient(x, y, 0, x, y, 18);
-            grad.addColorStop(0, 'rgba(255,120,180,0.5)');
-            grad.addColorStop(1, 'rgba(255,120,180,0)');
-            ctx.fillStyle = grad;
+            ctx.fillStyle = '#FF4D00';
             ctx.beginPath();
-            ctx.arc(x, y, 18, 0, Math.PI * 2);
+            ctx.arc(p.x * W, p.y * H, 4, 0, Math.PI * 2);
             ctx.fill();
-
-            ctx.fillStyle = 'rgba(255,120,180,0.9)';
-            ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.font = '8px IBM Plex Mono';
-            ctx.fillText(idx, x + 8, y - 4);
           });
 
-          // Face bounding box
+          // Face box
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           face.forEach(lm => {
             minX = Math.min(minX, lm.x * W);
@@ -720,51 +461,19 @@
             maxX = Math.max(maxX, lm.x * W);
             maxY = Math.max(maxY, lm.y * H);
           });
-          const pad = 35;
-          ctx.strokeStyle = 'rgba(255,120,180,0.4)';
-          ctx.strokeRect(minX - pad, minY - pad, maxX - minX + pad*2, maxY - minY + pad*2);
-          ctx.fillStyle = 'rgba(255,120,180,0.7)';
+          ctx.strokeStyle = '#FF4D00';
+          ctx.strokeRect(minX - 20, minY - 20, maxX - minX + 40, maxY - minY + 40);
+          ctx.fillStyle = '#FF4D00';
           ctx.font = '10px IBM Plex Mono';
-          ctx.fillText('FACE_0', minX - pad + 4, minY - pad - 6);
-        }
-
-        // Cross-connections (hand to face)
-        if (hands.length > 0 && face) {
-          ctx.strokeStyle = 'rgba(100,200,255,0.2)';
-          ctx.lineWidth = 1;
-          hands.forEach(hand => {
-            if (!hand?.[8] || !face?.[1]) return;
-            const t = hand[8], f = face[1];
-            const dist = Math.hypot((t.x - f.x) * W, (t.y - f.y) * H);
-            if (dist < 300) {
-              ctx.globalAlpha = 1 - dist / 300;
-              ctx.beginPath();
-              ctx.moveTo(t.x * W, t.y * H);
-              ctx.lineTo(f.x * W, f.y * H);
-              ctx.stroke();
-              ctx.globalAlpha = 1;
-            }
-          });
+          ctx.fillText('FACE_0', minX - 20, minY - 25);
         }
       }
 
-      function animate() {
-        if (!isRunning) return;
-        drawTrack();
+      function loop() {
+        if (!running) return;
+        draw();
         updateAudio();
-        requestAnimationFrame(animate);
-      }
-
-      async function start() {
-        startPrompt.classList.add('hidden');
-        canvas.width = W;
-        canvas.height = H;
-        const ok = await initTracking();
-        if (!ok) return;
-        initAudio();
-        statsEl.style.display = 'block';
-        isRunning = true;
-        animate();
+        requestAnimationFrame(loop);
       }
 
       function resize() {
@@ -774,16 +483,29 @@
         canvas.height = H;
       }
 
-      startPrompt.addEventListener('click', start);
+      async function start() {
+        startEl.classList.add('hidden');
+        resize();
+        try {
+          await initTracking();
+          initAudio();
+          hudEl.style.display = 'block';
+          running = true;
+          loop();
+        } catch (e) {
+          loadingEl.textContent = 'Error: ' + e.message;
+        }
+      }
+
+      startEl.addEventListener('click', start);
       window.addEventListener('resize', resize);
       document.addEventListener('visibilitychange', () => {
-        if (document.hidden) isRunning = false;
-        else if (startPrompt.classList.contains('hidden')) {
-          isRunning = true;
-          animate();
+        if (document.hidden) running = false;
+        else if (startEl.classList.contains('hidden')) {
+          running = true;
+          loop();
         }
       });
-
     })();
   </script>
 </body>
