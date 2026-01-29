@@ -376,10 +376,7 @@
         void main() {
           vec2 uv = vTex;
 
-          // Mirror the video horizontally
-          uv.x = 1.0 - uv.x;
-
-          // Check if inside face bounding box with soft edge
+          // Check if inside face bounding box with soft edge (in original coords)
           float edgeSoftness = 0.02;
           float inBoxX = smoothstep(uFaceBoundsMin.x - edgeSoftness, uFaceBoundsMin.x + edgeSoftness, uv.x)
                        * smoothstep(uFaceBoundsMax.x + edgeSoftness, uFaceBoundsMax.x - edgeSoftness, uv.x);
@@ -387,7 +384,7 @@
                        * smoothstep(uFaceBoundsMax.y + edgeSoftness, uFaceBoundsMax.y - edgeSoftness, uv.y);
           float faceMask = inBoxX * inBoxY;
 
-          // Store original UV for clean video outside box
+          // Store original UV
           vec2 originalUV = uv;
 
           // Distance from face center (for directional effects)
@@ -418,11 +415,14 @@
           // Blend between warped and original based on mask
           vec2 finalUV = mix(originalUV, uv, faceMask);
 
-          vec4 color = texture2D(uVideo, finalUV);
+          // Mirror for final texture lookup
+          vec2 mirroredUV = vec2(1.0 - finalUV.x, finalUV.y);
+
+          vec4 color = texture2D(uVideo, mirroredUV);
 
           // Chromatic aberration only in face box
-          color.r = texture2D(uVideo, finalUV + vec2(uBass * 0.012 * faceMask, 0.0)).r;
-          color.b = texture2D(uVideo, finalUV - vec2(uBass * 0.012 * faceMask, 0.0)).b;
+          color.r = texture2D(uVideo, mirroredUV + vec2(uBass * 0.012 * faceMask, 0.0)).r;
+          color.b = texture2D(uVideo, mirroredUV - vec2(uBass * 0.012 * faceMask, 0.0)).b;
 
           gl_FragColor = color;
         }
@@ -794,8 +794,6 @@
         pts.forEach(p => { cx += p.x; cy += p.y; });
         cx = cx / pts.length;
         cy = cy / pts.length;
-        // Mirror X for shader (video is mirrored)
-        faceCenter = { x: 1 - cx, y: cy };
 
         // Calculate face radius
         let maxDist = 0;
@@ -805,7 +803,7 @@
         });
         faceRadius = maxDist * 1.2;
 
-        // Calculate face bounding box (normalized, mirrored for shader)
+        // Calculate face bounding box (normalized, NO mirroring - shader handles it)
         let fMinX = Infinity, fMinY = Infinity, fMaxX = -Infinity, fMaxY = -Infinity;
         pts.forEach(p => {
           fMinX = Math.min(fMinX, p.x);
@@ -813,14 +811,15 @@
           fMaxX = Math.max(fMaxX, p.x);
           fMaxY = Math.max(fMaxY, p.y);
         });
-        // Add padding and mirror X for shader
         const pad = 0.03;
         faceBounds = {
-          minX: 1 - fMaxX - pad,
+          minX: fMinX - pad,
           minY: fMinY - pad,
-          maxX: 1 - fMinX + pad,
+          maxX: fMaxX + pad,
           maxY: fMaxY + pad
         };
+        // Face center also not mirrored
+        faceCenter = { x: cx, y: cy };
 
         // Convert to screen coords for overlay (mirrored)
         const scx = (1 - cx) * W;
