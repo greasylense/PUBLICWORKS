@@ -1143,6 +1143,597 @@
         .realtime-comparison strong {
             color: var(--color-accent);
         }
+
+        /* Image Comparison Section */
+        .image-compare-section {
+            background: var(--color-text);
+            color: var(--color-bg);
+            padding: 6rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-compare-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        .image-compare-header {
+            max-width: var(--content-width);
+            margin: 0 auto 4rem;
+            text-align: center;
+        }
+
+        .image-compare-header h2 {
+            color: var(--color-bg);
+            margin-bottom: 1rem;
+        }
+
+        .image-compare-header p {
+            color: rgba(209,209,209,0.6);
+        }
+
+        .sample-image-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            margin-bottom: 4rem;
+        }
+
+        @media (max-width: 800px) {
+            .sample-image-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+
+        .sample-image-wrapper {
+            position: relative;
+            aspect-ratio: 16/10;
+            overflow: hidden;
+            border: 1px solid rgba(209,209,209,0.2);
+        }
+
+        .sample-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .sample-image-wrapper:hover img {
+            transform: scale(1.05);
+        }
+
+        .sample-image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+        }
+
+        .sample-image-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--color-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 0.5rem;
+        }
+
+        .sample-image-size {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-bg);
+        }
+
+        .image-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .breakdown-item {
+            padding: 1.5rem;
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid var(--color-accent);
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .breakdown-item:hover {
+            background: rgba(255,255,255,0.06);
+            transform: translateX(8px);
+        }
+
+        .breakdown-item.alert {
+            border-left-color: var(--color-alert);
+        }
+
+        .breakdown-number {
+            font-family: var(--font-display);
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            color: var(--color-accent);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .breakdown-item.alert .breakdown-number {
+            color: var(--color-alert);
+        }
+
+        .breakdown-desc {
+            font-size: 0.875rem;
+            color: rgba(209,209,209,0.7);
+            line-height: 1.5;
+        }
+
+        /* Image Grid Visualization */
+        .image-grid-section {
+            background: #0a0a0a;
+            padding: 4rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-grid-header {
+            max-width: var(--content-width);
+            margin: 0 auto 2rem;
+            text-align: center;
+            color: var(--color-bg);
+        }
+
+        .image-grid-header h2 {
+            color: var(--color-bg);
+            margin-bottom: 0.5rem;
+        }
+
+        .image-grid-header p {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: rgba(209,209,209,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .image-grid-wrapper {
+            position: relative;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            height: 400px;
+            overflow: hidden;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 2px;
+            opacity: 0.6;
+        }
+
+        .image-grid-cell {
+            aspect-ratio: 1;
+            background-size: cover;
+            background-position: center;
+            filter: grayscale(0.5);
+            transition: filter 0.3s, transform 0.3s;
+        }
+
+        .image-grid-cell:hover {
+            filter: grayscale(0);
+            transform: scale(2);
+            z-index: 10;
+            position: relative;
+        }
+
+        .grid-fade-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(to top, #0a0a0a 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .grid-counter {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 10;
+        }
+
+        .grid-counter-value {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 10vw, 6rem);
+            font-weight: 700;
+            color: var(--color-bg);
+            line-height: 1;
+        }
+
+        .grid-counter-label {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: rgba(209,209,209,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-top: 0.5rem;
+        }
+
+        .grid-counter-sub {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--color-alert);
+            margin-top: 1rem;
+        }
+
+        /* Byte Explorer */
+        .byte-explorer-section {
+            padding: 6rem 2rem;
+            background: white;
+        }
+
+        .byte-explorer-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        .byte-explorer-header {
+            max-width: var(--content-width);
+            margin: 0 auto 3rem;
+        }
+
+        .byte-slider-container {
+            margin: 3rem 0;
+        }
+
+        .byte-slider {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--color-bg);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .byte-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--color-accent);
+            cursor: pointer;
+            border-radius: 0;
+        }
+
+        .byte-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: var(--color-accent);
+            cursor: pointer;
+            border: none;
+            border-radius: 0;
+        }
+
+        .byte-scale-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+        }
+
+        .byte-display {
+            background: var(--color-bg);
+            padding: 3rem;
+            margin-top: 2rem;
+        }
+
+        .byte-display-value {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+
+        .byte-display-equiv {
+            font-size: 1.125rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .byte-comparisons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .byte-comparison-card {
+            padding: 1.5rem;
+            border: 1px solid var(--color-divider);
+            text-align: center;
+        }
+
+        .byte-comparison-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .byte-comparison-value {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-accent);
+        }
+
+        .byte-comparison-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+
+        /* Loading state for images */
+        .loading-shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Per-second breakdown ticker */
+        .per-second-section {
+            background: var(--color-accent);
+            padding: 4rem 2rem;
+            overflow: hidden;
+        }
+
+        .per-second-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .per-second-header {
+            margin-bottom: 3rem;
+        }
+
+        .per-second-header h2 {
+            color: white;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            margin-bottom: 0.5rem;
+        }
+
+        .per-second-header p {
+            color: rgba(255,255,255,0.7);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .per-second-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+        }
+
+        .per-second-item {
+            background: rgba(0,0,0,0.2);
+            padding: 2rem 1rem;
+            transition: transform 0.3s, background 0.3s;
+        }
+
+        .per-second-item:hover {
+            transform: translateY(-4px);
+            background: rgba(0,0,0,0.3);
+        }
+
+        .per-second-value {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .per-second-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: rgba(255,255,255,0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .per-second-live {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #00ff00;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse-live 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse-live {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        /* You Are Here Section */
+        .you-are-here-section {
+            background: #0a0a0a;
+            padding: 8rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .you-are-here-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+
+        .you-are-here-header {
+            max-width: var(--content-width);
+            margin: 0 auto 4rem;
+            text-align: center;
+            color: var(--color-bg);
+        }
+
+        .you-are-here-header h2 {
+            color: var(--color-bg);
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin-bottom: 1rem;
+        }
+
+        .you-are-here-header p {
+            color: rgba(209,209,209,0.6);
+        }
+
+        .scale-bar-container {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            margin: 4rem 0;
+        }
+
+        .scale-bar {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-50%);
+        }
+
+        .scale-bar-filled {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-accent), var(--color-alert));
+            width: 100%;
+        }
+
+        .scale-marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .scale-marker-dot {
+            width: 16px;
+            height: 16px;
+            background: var(--color-bg);
+            border-radius: 50%;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .scale-marker-dot::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: var(--color-accent);
+            border-radius: 50%;
+        }
+
+        .scale-marker.you .scale-marker-dot::after {
+            background: var(--color-alert);
+            animation: pulse-marker 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-marker {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(2); opacity: 0.5; }
+        }
+
+        .scale-marker-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: rgba(209,209,209,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 1rem;
+            white-space: nowrap;
+        }
+
+        .scale-marker-value {
+            font-family: var(--font-display);
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--color-bg);
+            margin-top: 0.25rem;
+        }
+
+        .scale-marker.you .scale-marker-value {
+            color: var(--color-alert);
+        }
+
+        .you-message {
+            text-align: center;
+            margin-top: 4rem;
+            padding: 2rem;
+            background: rgba(255,77,0,0.1);
+            border: 1px solid rgba(255,77,0,0.3);
+        }
+
+        .you-message p {
+            font-size: 1.125rem;
+            color: rgba(209,209,209,0.9);
+            margin: 0;
+        }
+
+        .you-message strong {
+            color: var(--color-alert);
+        }
+
+        /* Refresh image button */
+        .refresh-image-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            z-index: 10;
+        }
+
+        .refresh-image-btn:hover {
+            background: rgba(0,71,255,0.6);
+            border-color: var(--color-accent);
+        }
     </style>
 </head>
 <body>
@@ -1192,6 +1783,148 @@
             <div class="big-number-container">
                 <div class="big-number" id="zb-number">402</div>
                 <div class="big-number-label">Zettabytes — total data in existence, 2026</div>
+            </div>
+        </section>
+
+        <!-- Image Comparison - The Eye Opener -->
+        <section class="image-compare-section">
+            <div class="image-compare-container">
+                <div class="image-compare-header fade-up">
+                    <h2>Let's make this real</h2>
+                    <p>Abstract numbers mean nothing. Here's a single photograph from the internet right now.</p>
+                </div>
+
+                <div class="sample-image-container">
+                    <div class="sample-image-wrapper fade-up">
+                        <button class="refresh-image-btn" id="refresh-image-btn">New Image</button>
+                        <div class="loading-shimmer" id="sample-image-loading" style="width:100%;height:100%;position:absolute;"></div>
+                        <img id="sample-image" src="" alt="A random photograph from the internet" style="opacity:0;">
+                        <div class="sample-image-overlay">
+                            <div class="sample-image-label">This single image</div>
+                            <div class="sample-image-size" id="image-size-display">Loading...</div>
+                        </div>
+                    </div>
+
+                    <div class="image-breakdown fade-up">
+                        <div class="breakdown-item">
+                            <div class="breakdown-number" id="images-per-second">~6.2 million</div>
+                            <div class="breakdown-desc">images like this are uploaded every second across all platforms</div>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="breakdown-number" id="images-in-archive">~800 trillion</div>
+                            <div class="breakdown-desc">images of this size would equal the total data archive</div>
+                        </div>
+                        <div class="breakdown-item alert">
+                            <div class="breakdown-number" id="images-since-load">0</div>
+                            <div class="breakdown-desc">images uploaded since you loaded this page</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="realtime-comparison fade-up" style="background: rgba(255,255,255,0.05); border-left-color: var(--color-accent); color: rgba(209,209,209,0.8);">
+                    <span class="per-second-live"></span>
+                    In the time it took to look at that image, approximately <strong id="image-view-bytes">0</strong> of new data was created worldwide.
+                </div>
+            </div>
+        </section>
+
+        <!-- Visual Image Grid -->
+        <section class="image-grid-section">
+            <div class="image-grid-header fade-up">
+                <h2>What 500 images looks like</h2>
+                <p>The internet creates 6 million of these every second</p>
+            </div>
+            <div class="image-grid-wrapper">
+                <div class="image-grid" id="image-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="grid-fade-overlay"></div>
+                <div class="grid-counter">
+                    <div class="grid-counter-value">500</div>
+                    <div class="grid-counter-label">images displayed here</div>
+                    <div class="grid-counter-sub">The internet creates this many in 0.00008 seconds</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Per Second Breakdown -->
+        <section class="per-second-section">
+            <div class="per-second-container">
+                <div class="per-second-header fade-up">
+                    <h2>Every single second</h2>
+                    <p><span class="per-second-live"></span> Live data from the global internet</p>
+                </div>
+                <div class="per-second-grid">
+                    <div class="per-second-item fade-up">
+                        <div class="per-second-value">3.2 PB</div>
+                        <div class="per-second-label">Data created</div>
+                    </div>
+                    <div class="per-second-item fade-up">
+                        <div class="per-second-value">500 hrs</div>
+                        <div class="per-second-label">Video uploaded to YouTube</div>
+                    </div>
+                    <div class="per-second-item fade-up">
+                        <div class="per-second-value">6,200</div>
+                        <div class="per-second-label">Tweets posted</div>
+                    </div>
+                    <div class="per-second-item fade-up">
+                        <div class="per-second-value">102K</div>
+                        <div class="per-second-label">Photos shared</div>
+                    </div>
+                    <div class="per-second-item fade-up">
+                        <div class="per-second-value">4.1M</div>
+                        <div class="per-second-label">Emails sent</div>
+                    </div>
+                    <div class="per-second-item fade-up">
+                        <div class="per-second-value">104K</div>
+                        <div class="per-second-label">Google searches</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Byte Explorer -->
+        <section class="byte-explorer-section">
+            <div class="byte-explorer-container">
+                <div class="byte-explorer-header fade-up">
+                    <h2>Explore the scale</h2>
+                    <p>Drag the slider to feel how quickly data grows from human-scale to cosmic.</p>
+                </div>
+
+                <div class="byte-slider-container fade-up">
+                    <input type="range" class="byte-slider" id="byte-slider" min="0" max="100" value="0">
+                    <div class="byte-scale-labels">
+                        <span>1 Byte</span>
+                        <span>1 KB</span>
+                        <span>1 MB</span>
+                        <span>1 GB</span>
+                        <span>1 TB</span>
+                        <span>1 PB</span>
+                        <span>1 ZB</span>
+                    </div>
+                </div>
+
+                <div class="byte-display fade-up" id="byte-display">
+                    <div class="byte-display-value" id="byte-display-value">1 Byte</div>
+                    <div class="byte-display-equiv" id="byte-display-equiv">A single character. The letter 'A'. The smallest unit of digital information.</div>
+                    <div class="byte-comparisons" id="byte-comparisons">
+                        <div class="byte-comparison-card">
+                            <div class="byte-comparison-icon">📄</div>
+                            <div class="byte-comparison-value">1</div>
+                            <div class="byte-comparison-label">character</div>
+                        </div>
+                        <div class="byte-comparison-card">
+                            <div class="byte-comparison-icon">📷</div>
+                            <div class="byte-comparison-value">0.0000002%</div>
+                            <div class="byte-comparison-label">of a photo</div>
+                        </div>
+                        <div class="byte-comparison-card">
+                            <div class="byte-comparison-icon">🌐</div>
+                            <div class="byte-comparison-value">10⁻²⁴</div>
+                            <div class="byte-comparison-label">of the internet</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -1400,6 +2133,50 @@
             </div>
         </section>
 
+        <!-- You Are Here -->
+        <section class="you-are-here-section">
+            <div class="you-are-here-container">
+                <div class="you-are-here-header fade-up">
+                    <h2>You are here</h2>
+                    <p>Your entire digital existence, compared to the archive.</p>
+                </div>
+
+                <div class="scale-bar-container fade-up">
+                    <div class="scale-bar">
+                        <div class="scale-bar-filled"></div>
+                    </div>
+
+                    <div class="scale-marker" style="left: 0.00000000001%;">
+                        <div class="scale-marker-dot"></div>
+                        <div class="scale-marker-label">Single email</div>
+                        <div class="scale-marker-value">25 KB</div>
+                    </div>
+
+                    <div class="scale-marker you" style="left: 0.0000002%;">
+                        <div class="scale-marker-dot"></div>
+                        <div class="scale-marker-label">Your lifetime data</div>
+                        <div class="scale-marker-value">~50 TB</div>
+                    </div>
+
+                    <div class="scale-marker" style="left: 0.001%;">
+                        <div class="scale-marker-dot"></div>
+                        <div class="scale-marker-label">Netflix library</div>
+                        <div class="scale-marker-value">~15 PB</div>
+                    </div>
+
+                    <div class="scale-marker" style="left: 100%;">
+                        <div class="scale-marker-dot"></div>
+                        <div class="scale-marker-label">Total archive</div>
+                        <div class="scale-marker-value">402 ZB</div>
+                    </div>
+                </div>
+
+                <div class="you-message fade-up">
+                    <p>If the archive were a ruler stretching from New York to London, your entire lifetime of data—every photo, email, message, and file you'll ever create—would be smaller than <strong>the width of a single atom</strong>.</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Paradox -->
         <section class="paradox-section">
             <div class="paradox-content">
@@ -1438,12 +2215,14 @@
     <script>
         // Configuration
         const CONFIG = {
+            pexelsApiKey: 'btO65X761pJo6C66T3ekHHTuXucIvixeYrg00NqFi8WNVO2NCKplJ7FY',
             perSecondBytes: 3.2e15,
             emailsPerSec: 4100000,
             searchesPerSec: 104000,
             videoHrsPerSec: 500,
             photosPerSec: 102000,
             tweetsPerSec: 6000,
+            imagesPerSec: 6200000,
             totalZB: 402,
             historical: {
                 1995: 0.02,
@@ -1456,6 +2235,10 @@
                 2026: 402
             }
         };
+
+        // Sample image state
+        let sampleImageSize = 500000; // Default 500KB estimate
+        let imageViewStartTime = null;
 
         const scaleData = {
             zb: {
@@ -1744,6 +2527,196 @@
             `).join('');
         }
 
+        // Fetch sample image from Pexels
+        async function fetchSampleImage() {
+            const queries = ['landscape', 'nature', 'cityscape', 'ocean', 'mountains', 'forest'];
+            const query = queries[Math.floor(Math.random() * queries.length)];
+
+            try {
+                const response = await fetch(
+                    `https://api.pexels.com/v1/search?query=${query}&per_page=15&orientation=landscape`,
+                    { headers: { 'Authorization': CONFIG.pexelsApiKey } }
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.photos && data.photos.length > 0) {
+                        const photo = data.photos[Math.floor(Math.random() * data.photos.length)];
+                        displaySampleImage(photo);
+                        populateImageGrid(data.photos);
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to fetch sample image:', e);
+                document.getElementById('image-size-display').textContent = '~500 KB';
+            }
+        }
+
+        function displaySampleImage(photo) {
+            const img = document.getElementById('sample-image');
+            const loading = document.getElementById('sample-image-loading');
+            const sizeDisplay = document.getElementById('image-size-display');
+
+            // Estimate file size based on dimensions (rough approximation)
+            const estimatedBytes = Math.round((photo.width * photo.height * 3) / 15); // Compressed JPEG estimate
+            sampleImageSize = estimatedBytes;
+
+            img.onload = function() {
+                loading.style.display = 'none';
+                img.style.opacity = '1';
+
+                const sizeKB = Math.round(estimatedBytes / 1024);
+                const sizeMB = (estimatedBytes / (1024 * 1024)).toFixed(2);
+
+                if (sizeKB > 1000) {
+                    sizeDisplay.textContent = `~${sizeMB} MB`;
+                } else {
+                    sizeDisplay.textContent = `~${sizeKB} KB`;
+                }
+
+                // Update calculations based on actual image size
+                updateImageComparisons(estimatedBytes);
+
+                // Start tracking view time
+                imageViewStartTime = Date.now();
+            };
+
+            img.src = photo.src.large;
+        }
+
+        function updateImageComparisons(imageBytes) {
+            // How many of this image would equal the archive
+            const totalBytes = CONFIG.totalZB * 1e21;
+            const imagesInArchive = totalBytes / imageBytes;
+
+            document.getElementById('images-in-archive').textContent = formatNum(Math.round(imagesInArchive));
+            document.getElementById('images-per-second').textContent = formatNum(CONFIG.imagesPerSec);
+        }
+
+        function populateImageGrid(photos) {
+            const grid = document.getElementById('image-grid');
+            if (!grid) return;
+
+            // Create 500 cells using the photos we have
+            let html = '';
+            for (let i = 0; i < 500; i++) {
+                const photo = photos[i % photos.length];
+                html += `<div class="image-grid-cell" style="background-image: url('${photo.src.tiny}')" data-index="${i}"></div>`;
+            }
+            grid.innerHTML = html;
+
+            // Animate cells appearing one by one on first view
+            const cells = grid.querySelectorAll('.image-grid-cell');
+            const gridObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    cells.forEach((cell, i) => {
+                        setTimeout(() => {
+                            cell.style.opacity = '1';
+                            cell.style.transform = 'scale(1)';
+                        }, i * 5);
+                    });
+                    gridObserver.disconnect();
+                }
+            }, { threshold: 0.1 });
+
+            // Set initial state
+            cells.forEach(cell => {
+                cell.style.opacity = '0';
+                cell.style.transform = 'scale(0.8)';
+                cell.style.transition = 'opacity 0.3s, transform 0.3s, filter 0.3s';
+            });
+
+            gridObserver.observe(grid);
+
+            // Update grid counter in real-time
+            updateGridCounter();
+        }
+
+        function updateGridCounter() {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const totalImages = 500 + Math.round(elapsed * CONFIG.imagesPerSec);
+
+            // How long it takes to create 500 images
+            const timeFor500 = 500 / CONFIG.imagesPerSec;
+            const subText = `The internet creates this many in ${(timeFor500 * 1000).toFixed(2)} milliseconds`;
+
+            const subEl = document.querySelector('.grid-counter-sub');
+            if (subEl) {
+                subEl.textContent = subText;
+            }
+
+            setTimeout(updateGridCounter, 1000);
+        }
+
+        // Byte slider data
+        const byteScaleData = [
+            { bytes: 1, label: '1 Byte', desc: 'A single character. The letter "A". The smallest unit of digital information.', chars: '1', photoPercent: '0.0000002%', internetPercent: '10⁻²⁴' },
+            { bytes: 1e3, label: '1 Kilobyte', desc: 'A short email. A few paragraphs of text. What computers dealt with in the 1970s.', chars: '1,000', photoPercent: '0.0002%', internetPercent: '10⁻²¹' },
+            { bytes: 1e6, label: '1 Megabyte', desc: 'A high-quality photo. A minute of MP3 audio. What fit on a floppy disk.', chars: '1 million', photoPercent: '~1 photo', internetPercent: '10⁻¹⁸' },
+            { bytes: 1e9, label: '1 Gigabyte', desc: 'An hour of HD video. 300 songs. What your phone might hold.', chars: '1 billion', photoPercent: '~2,000 photos', internetPercent: '10⁻¹⁵' },
+            { bytes: 1e12, label: '1 Terabyte', desc: '500 hours of movies. 250,000 songs. A decent hard drive.', chars: '1 trillion', photoPercent: '~2 million photos', internetPercent: '10⁻¹²' },
+            { bytes: 1e15, label: '1 Petabyte', desc: '13 years of HD video. The data Netflix streams daily. Created every 0.3 seconds globally.', chars: '1 quadrillion', photoPercent: '~2 billion photos', internetPercent: '10⁻⁹' },
+            { bytes: 1e18, label: '1 Exabyte', desc: 'All words ever spoken by humans. Created every 5 minutes globally.', chars: '1 quintillion', photoPercent: '~2 trillion photos', internetPercent: '10⁻⁶' },
+            { bytes: 1e21, label: '1 Zettabyte', desc: 'The entire archive reached this in 2010. Now we create this every 3 days.', chars: '1 sextillion', photoPercent: '~2 quadrillion photos', internetPercent: '0.25%' },
+            { bytes: 4.02e23, label: '402 Zettabytes', desc: 'The current total. Everything humanity has ever digitized. Growing every millisecond.', chars: '402 sextillion', photoPercent: '~800 trillion photos', internetPercent: '100%' },
+        ];
+
+        function initByteSlider() {
+            const slider = document.getElementById('byte-slider');
+            if (!slider) return;
+
+            slider.addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                const index = Math.min(Math.floor(value / 12.5), byteScaleData.length - 1);
+                const data = byteScaleData[index];
+
+                document.getElementById('byte-display-value').textContent = data.label;
+                document.getElementById('byte-display-equiv').textContent = data.desc;
+
+                document.getElementById('byte-comparisons').innerHTML = `
+                    <div class="byte-comparison-card">
+                        <div class="byte-comparison-icon">📄</div>
+                        <div class="byte-comparison-value">${data.chars}</div>
+                        <div class="byte-comparison-label">characters</div>
+                    </div>
+                    <div class="byte-comparison-card">
+                        <div class="byte-comparison-icon">📷</div>
+                        <div class="byte-comparison-value">${data.photoPercent}</div>
+                        <div class="byte-comparison-label">photos equivalent</div>
+                    </div>
+                    <div class="byte-comparison-card">
+                        <div class="byte-comparison-icon">🌐</div>
+                        <div class="byte-comparison-value">${data.internetPercent}</div>
+                        <div class="byte-comparison-label">of the internet</div>
+                    </div>
+                `;
+            });
+        }
+
+        // Update image section counters
+        function updateImageCounters() {
+            const elapsed = (Date.now() - startTime) / 1000;
+
+            // Images uploaded since page load
+            const imagesUploaded = Math.round(elapsed * CONFIG.imagesPerSec);
+            const imagesSinceEl = document.getElementById('images-since-load');
+            if (imagesSinceEl) {
+                imagesSinceEl.textContent = formatNum(imagesUploaded);
+            }
+
+            // Bytes created while viewing image
+            if (imageViewStartTime) {
+                const viewElapsed = (Date.now() - imageViewStartTime) / 1000;
+                const viewBytes = viewElapsed * CONFIG.perSecondBytes;
+                const viewBytesEl = document.getElementById('image-view-bytes');
+                if (viewBytesEl) {
+                    viewBytesEl.textContent = formatBytes(viewBytes);
+                }
+            }
+
+            requestAnimationFrame(updateImageCounters);
+        }
+
         // Age calculator
         const ageInput = document.getElementById('age-input');
         const resultEl = document.getElementById('result');
@@ -1809,6 +2782,24 @@
 
             // Build timeline
             initTimeline();
+
+            // New interactive features
+            fetchSampleImage();
+            initByteSlider();
+            updateImageCounters();
+
+            // Refresh image button
+            const refreshBtn = document.getElementById('refresh-image-btn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    const img = document.getElementById('sample-image');
+                    const loading = document.getElementById('sample-image-loading');
+                    img.style.opacity = '0';
+                    loading.style.display = 'block';
+                    document.getElementById('image-size-display').textContent = 'Loading...';
+                    fetchSampleImage();
+                });
+            }
 
             // Observe elements
             document.querySelectorAll('.fade-up, .big-number, .timeline-item, .data-type-card').forEach(el => {
