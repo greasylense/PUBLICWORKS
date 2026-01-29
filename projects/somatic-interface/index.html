@@ -897,6 +897,32 @@
         ctx.fillStyle = 'rgba(0, 71, 255, 0.7)';
         ctx.font = '9px IBM Plex Mono';
         ctx.fillText(`FACE [${pts.length}pts]`, fx1 - 15, fy1 - 22);
+
+        // Concentric circles around face center
+        ctx.strokeStyle = `rgba(0, 71, 255, 0.25)`;
+        ctx.lineWidth = 1;
+        for (let r = 30; r < 150; r += 25) {
+          const radius = r + smoothBass * 20;
+          ctx.beginPath();
+          ctx.arc(scx, scy, radius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Radial lines from face center
+        ctx.strokeStyle = `rgba(0, 71, 255, 0.2)`;
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+          ctx.beginPath();
+          ctx.moveTo(scx + Math.cos(a) * 40, scy + Math.sin(a) * 40);
+          ctx.lineTo(scx + Math.cos(a) * 140, scy + Math.sin(a) * 140);
+          ctx.stroke();
+        }
+
+        // Data readouts near face
+        ctx.fillStyle = 'rgba(0, 71, 255, 0.5)';
+        ctx.font = '8px IBM Plex Mono';
+        ctx.fillText(`X:${cx.toFixed(3)}`, fx2 + 20, fy1);
+        ctx.fillText(`Y:${cy.toFixed(3)}`, fx2 + 20, fy1 + 12);
+        ctx.fillText(`0x${Math.floor(cx * 65535).toString(16).toUpperCase()}`, fx2 + 20, fy1 + 24);
       }
 
       // HANDS - Thin lines style
@@ -972,20 +998,37 @@
         ctx.fillStyle = `rgba(${col}, 0.8)`;
         ctx.font = '9px IBM Plex Mono';
         ctx.fillText(isRight ? 'R_HAND' : 'L_HAND', x1 - 12, y1 - 18);
-      });
 
-      // Audio reactive scanlines
-      if (smoothBass > 0.1) {
-        ctx.strokeStyle = `rgba(0, 71, 255, ${smoothBass * 0.15})`;
+        // Connection lines from fingertips outward
+        ctx.strokeStyle = `rgba(${col}, 0.3)`;
         ctx.lineWidth = 1;
-        const spacing = 60;
-        for (let y = (frameCount * 2) % spacing; y < H; y += spacing) {
+        [4, 8, 12, 16, 20].forEach((i, idx) => {
+          const tip = screenHand[i];
+          const angle = -Math.PI/2 + (idx - 2) * 0.3;
           ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(W, y);
+          ctx.moveTo(tip.x, tip.y);
+          ctx.lineTo(tip.x + Math.cos(angle) * 40, tip.y + Math.sin(angle) * 40);
           ctx.stroke();
-        }
-      }
+          // Small data label
+          ctx.fillStyle = `rgba(${col}, 0.4)`;
+          ctx.font = '7px IBM Plex Mono';
+          ctx.fillText(`${i}`, tip.x + Math.cos(angle) * 45, tip.y + Math.sin(angle) * 45);
+        });
+
+        // Circle around palm
+        const palmX = screenHand[9].x;
+        const palmY = screenHand[9].y;
+        ctx.strokeStyle = `rgba(${col}, 0.25)`;
+        ctx.beginPath();
+        ctx.arc(palmX, palmY, 35 + smoothBass * 15, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Hex address label
+        ctx.fillStyle = `rgba(${col}, 0.5)`;
+        ctx.font = '8px IBM Plex Mono';
+        const hexAddr = `0x${Math.floor(hand[9].x * 65535).toString(16).toUpperCase()}`;
+        ctx.fillText(hexAddr, x2 + 15, (y1 + y2) / 2);
+      });
     }
 
     function loop() {
