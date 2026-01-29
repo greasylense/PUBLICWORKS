@@ -111,7 +111,7 @@
     // WebGL setup
     let gl, program, posBuffer, texBuffer;
     let videoTexture, faceMaskTexture;
-    let uTime, uBass, uMid, uHigh, uFaceCenter, uFaceRadius;
+    let uTime, uBass, uMid, uHigh, uFaceCenter, uFaceRadius, uFaceBoundsMin, uFaceBoundsMax;
 
     let W, H;
     let hands = [], handedness = [];
@@ -119,6 +119,7 @@
     let frameCount = 0;
     let faceCenter = { x: 0.5, y: 0.5 };
     let faceRadius = 0.2;
+    let faceBounds = { minX: 0.3, minY: 0.2, maxX: 0.7, maxY: 0.8 };
 
     // Audio analysis
     let analyser, freqData;
@@ -160,11 +161,11 @@
       freqData = new Uint8Array(analyser.frequencyBinCount);
 
       comp = ac.createDynamicsCompressor();
-      comp.threshold.value = -10;
-      comp.knee.value = 8;
-      comp.ratio.value = 8;
-      comp.attack.value = 0.002;
-      comp.release.value = 0.15;
+      comp.threshold.value = -15;
+      comp.knee.value = 20; // Softer knee
+      comp.ratio.value = 4; // Gentler compression
+      comp.attack.value = 0.01;
+      comp.release.value = 0.4; // Slower release for sustained feel
       comp.connect(analyser);
       analyser.connect(ac.destination);
 
@@ -178,76 +179,115 @@
       globalFilter.Q.value = 0.5;
       globalFilter.connect(master);
 
-      delay = ac.createDelay(1);
-      delay.delayTime.value = 0.33;
+      // Long spacey delay
+      delay = ac.createDelay(2);
+      delay.delayTime.value = 0.5; // Longer delay
       const fb = ac.createGain();
-      fb.gain.value = 0.45;
+      fb.gain.value = 0.55; // More feedback for trailing echoes
       const dlp = ac.createBiquadFilter();
       dlp.type = 'lowpass';
-      dlp.frequency.value = 2800;
+      dlp.frequency.value = 2000; // Darker repeats
       delay.connect(dlp);
       dlp.connect(fb);
       fb.connect(delay);
       delayGain = ac.createGain();
-      delayGain.gain.value = 0.35;
+      delayGain.gain.value = 0.4;
       delay.connect(delayGain);
       delayGain.connect(comp);
 
+      // Long ethereal reverb - Interstellar style
       reverb = ac.createConvolver();
-      const revLen = ac.sampleRate * 2.2;
+      const revLen = ac.sampleRate * 5; // 5 second tail
       const imp = ac.createBuffer(2, revLen, ac.sampleRate);
       for (let c = 0; c < 2; c++) {
         const d = imp.getChannelData(c);
         for (let i = 0; i < revLen; i++) {
-          d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / revLen, 1.4);
+          // Smooth decay with slight modulation for shimmer
+          const decay = Math.pow(1 - i / revLen, 0.8);
+          const shimmer = Math.sin(i * 0.0003) * 0.1 + 1;
+          d[i] = (Math.random() * 2 - 1) * decay * shimmer;
         }
       }
       reverb.buffer = imp;
       revGain = ac.createGain();
-      revGain.gain.value = 0.5;
+      revGain.gain.value = 0.7; // More reverb for space
       reverb.connect(revGain);
       revGain.connect(comp);
 
-      // PAD
+      // PAD - Lush interstellar synth with 3 oscillators per voice
       for (let i = 0; i < 4; i++) {
         const o1 = ac.createOscillator();
         const o2 = ac.createOscillator();
+        const o3 = ac.createOscillator();
         const f = ac.createBiquadFilter();
         const g = ac.createGain();
-        o1.type = 'sawtooth';
-        o2.type = 'triangle';
-        o2.detune.value = 7 + i * 3;
+
+        // Rich detuned oscillators for that Interstellar organ feel
+        o1.type = 'sine'; // Foundation
+        o2.type = 'triangle'; // Warmth
+        o3.type = 'sine'; // Shimmer octave up
+
+        // Wide detuning for lush chorusing
+        o1.detune.value = -8 + i * 2;
+        o2.detune.value = 8 + i * 3;
+        o3.detune.value = 1200 + 5 + i * 2; // Octave up with slight detune
+
+        // Warm low-pass filter
         f.type = 'lowpass';
-        f.frequency.value = 700;
-        f.Q.value = 0.7;
+        f.frequency.value = 400; // Lower cutoff for warmth
+        f.Q.value = 0.5;
+
         g.gain.value = 0;
-        o1.connect(f); o2.connect(f);
+
+        // Mix oscillators
+        const o1g = ac.createGain(); o1g.gain.value = 0.5;
+        const o2g = ac.createGain(); o2g.gain.value = 0.3;
+        const o3g = ac.createGain(); o3g.gain.value = 0.15;
+
+        o1.connect(o1g); o1g.connect(f);
+        o2.connect(o2g); o2g.connect(f);
+        o3.connect(o3g); o3g.connect(f);
+
         f.connect(g);
         g.connect(globalFilter);
         g.connect(reverb);
-        o1.start(); o2.start();
-        padVoices.push({ o1, o2, f, g });
+        o1.start(); o2.start(); o3.start();
+        padVoices.push({ o1, o2, o3, f, g, o1g, o2g, o3g });
       }
 
-      // LEAD
+      // LEAD - Ethereal plucky synth
       const lo1 = ac.createOscillator();
       const lo2 = ac.createOscillator();
+      const lo3 = ac.createOscillator();
       const lf = ac.createBiquadFilter();
       const lg = ac.createGain();
-      lo1.type = 'sawtooth';
-      lo2.type = 'square';
-      lo2.detune.value = 5;
+
+      lo1.type = 'sine';
+      lo2.type = 'triangle';
+      lo3.type = 'sine';
+      lo2.detune.value = 7;
+      lo3.detune.value = 1200 + 3; // Subtle octave shimmer
+
       lf.type = 'lowpass';
-      lf.frequency.value = 2500;
-      lf.Q.value = 7;
+      lf.frequency.value = 1800;
+      lf.Q.value = 2;
+
       lg.gain.value = 0;
-      lo1.connect(lf); lo2.connect(lf);
+
+      const lo1g = ac.createGain(); lo1g.gain.value = 0.4;
+      const lo2g = ac.createGain(); lo2g.gain.value = 0.35;
+      const lo3g = ac.createGain(); lo3g.gain.value = 0.2;
+
+      lo1.connect(lo1g); lo1g.connect(lf);
+      lo2.connect(lo2g); lo2g.connect(lf);
+      lo3.connect(lo3g); lo3g.connect(lf);
+
       lf.connect(lg);
       lg.connect(globalFilter);
       lg.connect(delay);
       lg.connect(reverb);
-      lo1.start(); lo2.start();
-      lead = { o1: lo1, o2: lo2, f: lf, g: lg };
+      lo1.start(); lo2.start(); lo3.start();
+      lead = { o1: lo1, o2: lo2, o3: lo3, f: lf, g: lg };
 
       // BASS
       const bo1 = ac.createOscillator();
@@ -319,7 +359,7 @@
         }
       `;
 
-      // Fragment shader with audio-reactive face warping
+      // Fragment shader with audio-reactive face warping (bounding box only)
       const fsSource = `
         precision mediump float;
         varying vec2 vTex;
@@ -330,6 +370,8 @@
         uniform float uHigh;
         uniform vec2 uFaceCenter;
         uniform float uFaceRadius;
+        uniform vec2 uFaceBoundsMin;
+        uniform vec2 uFaceBoundsMax;
 
         void main() {
           vec2 uv = vTex;
@@ -337,37 +379,50 @@
           // Mirror the video horizontally
           uv.x = 1.0 - uv.x;
 
-          // Distance from face center
+          // Check if inside face bounding box with soft edge
+          float edgeSoftness = 0.02;
+          float inBoxX = smoothstep(uFaceBoundsMin.x - edgeSoftness, uFaceBoundsMin.x + edgeSoftness, uv.x)
+                       * smoothstep(uFaceBoundsMax.x + edgeSoftness, uFaceBoundsMax.x - edgeSoftness, uv.x);
+          float inBoxY = smoothstep(uFaceBoundsMin.y - edgeSoftness, uFaceBoundsMin.y + edgeSoftness, uv.y)
+                       * smoothstep(uFaceBoundsMax.y + edgeSoftness, uFaceBoundsMax.y - edgeSoftness, uv.y);
+          float faceMask = inBoxX * inBoxY;
+
+          // Store original UV for clean video outside box
+          vec2 originalUV = uv;
+
+          // Distance from face center (for directional effects)
           vec2 toCenter = uv - uFaceCenter;
           float dist = length(toCenter);
-          float faceMask = smoothstep(uFaceRadius * 1.5, uFaceRadius * 0.3, dist);
+          vec2 expandDir = normalize(toCenter + 0.001);
 
           // Bass: radial expansion from face center
-          float expansion = uBass * 0.15 * faceMask;
-          vec2 expandDir = normalize(toCenter + 0.001);
+          float expansion = uBass * 0.2 * faceMask;
           uv += expandDir * expansion * (1.0 - dist / uFaceRadius);
 
           // Mid: wave distortion
-          float wave = sin(atan(toCenter.y, toCenter.x) * 4.0 + uTime * 3.0) * uMid * 0.04 * faceMask;
+          float wave = sin(atan(toCenter.y, toCenter.x) * 4.0 + uTime * 3.0) * uMid * 0.06 * faceMask;
           uv += expandDir * wave;
 
           // High: fine noise/jitter
-          float noise = (sin(uv.x * 50.0 + uTime * 10.0) * cos(uv.y * 50.0 + uTime * 8.0)) * uHigh * 0.015 * faceMask;
+          float noise = (sin(uv.x * 50.0 + uTime * 10.0) * cos(uv.y * 50.0 + uTime * 8.0)) * uHigh * 0.02 * faceMask;
           uv += vec2(noise, noise * 0.7);
 
           // Rotation wobble from bass
-          float angle = uBass * 0.1 * sin(uTime * 2.0) * faceMask;
+          float angle = uBass * 0.15 * sin(uTime * 2.0) * faceMask;
           vec2 rotated = uFaceCenter + mat2(cos(angle), -sin(angle), sin(angle), cos(angle)) * (uv - uFaceCenter);
-          uv = mix(uv, rotated, faceMask * 0.5);
+          uv = mix(uv, rotated, faceMask * 0.6);
 
           // Clamp UVs
           uv = clamp(uv, 0.0, 1.0);
 
-          vec4 color = texture2D(uVideo, uv);
+          // Blend between warped and original based on mask
+          vec2 finalUV = mix(originalUV, uv, faceMask);
 
-          // Slight color shift on high bass
-          color.r = texture2D(uVideo, uv + vec2(uBass * 0.008 * faceMask, 0.0)).r;
-          color.b = texture2D(uVideo, uv - vec2(uBass * 0.008 * faceMask, 0.0)).b;
+          vec4 color = texture2D(uVideo, finalUV);
+
+          // Chromatic aberration only in face box
+          color.r = texture2D(uVideo, finalUV + vec2(uBass * 0.012 * faceMask, 0.0)).r;
+          color.b = texture2D(uVideo, finalUV - vec2(uBass * 0.012 * faceMask, 0.0)).b;
 
           gl_FragColor = color;
         }
@@ -431,6 +486,8 @@
       uHigh = gl.getUniformLocation(program, 'uHigh');
       uFaceCenter = gl.getUniformLocation(program, 'uFaceCenter');
       uFaceRadius = gl.getUniformLocation(program, 'uFaceRadius');
+      uFaceBoundsMin = gl.getUniformLocation(program, 'uFaceBoundsMin');
+      uFaceBoundsMax = gl.getUniformLocation(program, 'uFaceBoundsMax');
     }
 
     function renderVideo() {
@@ -449,6 +506,8 @@
       gl.uniform1f(uHigh, smoothHigh);
       gl.uniform2f(uFaceCenter, faceCenter.x, faceCenter.y);
       gl.uniform1f(uFaceRadius, faceRadius);
+      gl.uniform2f(uFaceBoundsMin, faceBounds.minX, faceBounds.minY);
+      gl.uniform2f(uFaceBoundsMax, faceBounds.maxX, faceBounds.maxY);
 
       // Draw
       gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -477,18 +536,19 @@
     function triggerStab(chord) {
       if (!ac || isMuted) return;
       const t = ac.currentTime;
+      // Ethereal chord stab with soft attack
       chord.forEach((n, i) => {
         const freq = mtof(ROOT + 12 + n);
         setTimeout(() => {
-          stab.o1.frequency.setTargetAtTime(freq, ac.currentTime, 0.001);
-          stab.o2.frequency.setTargetAtTime(freq, ac.currentTime, 0.001);
+          stab.o1.frequency.setTargetAtTime(freq, ac.currentTime, 0.02);
+          stab.o2.frequency.setTargetAtTime(freq, ac.currentTime, 0.025);
           stab.g.gain.cancelScheduledValues(ac.currentTime);
-          stab.g.gain.setValueAtTime(0.25, ac.currentTime);
-          stab.g.gain.setTargetAtTime(0.001, ac.currentTime + 0.02, 0.1);
-        }, i * 20);
+          stab.g.gain.setTargetAtTime(0.18, ac.currentTime, 0.05); // Soft attack
+          stab.g.gain.setTargetAtTime(0.001, ac.currentTime + 0.15, 0.4); // Long tail
+        }, i * 40); // Slightly arpeggiated
       });
-      delayGain.gain.setTargetAtTime(0.55, t, 0.02);
-      setTimeout(() => delayGain.gain.setTargetAtTime(0.35, ac.currentTime, 0.15), 350);
+      delayGain.gain.setTargetAtTime(0.6, t, 0.05);
+      setTimeout(() => delayGain.gain.setTargetAtTime(0.4, ac.currentTime, 0.3), 600);
     }
 
     function triggerBassDrop(chord) {
@@ -497,17 +557,18 @@
       const t = ac.currentTime;
       const note = chord[0] - 12;
 
-      bass.o1.frequency.setTargetAtTime(mtof(ROOT + note), t, 0.003);
-      bass.o2.frequency.setTargetAtTime(mtof(ROOT + note), t, 0.003);
-      bass.f.frequency.setValueAtTime(1500, t);
-      bass.f.frequency.exponentialRampToValueAtTime(60, t + 0.2);
-      bass.g.gain.setValueAtTime(0.5, t);
-      bass.g.gain.setTargetAtTime(0.15, t + 0.05, 0.12);
+      // Deep space bass with slower sweep
+      bass.o1.frequency.setTargetAtTime(mtof(ROOT + note), t, 0.01);
+      bass.o2.frequency.setTargetAtTime(mtof(ROOT + note), t, 0.01);
+      bass.f.frequency.setValueAtTime(800, t);
+      bass.f.frequency.exponentialRampToValueAtTime(40, t + 0.5); // Slower sweep
+      bass.g.gain.setValueAtTime(0.4, t);
+      bass.g.gain.setTargetAtTime(0.12, t + 0.1, 0.4); // Prolonged sustain
 
-      globalFilter.frequency.setValueAtTime(250, t);
-      globalFilter.frequency.exponentialRampToValueAtTime(10000, t + 0.35);
+      globalFilter.frequency.setValueAtTime(200, t);
+      globalFilter.frequency.exponentialRampToValueAtTime(10000, t + 0.6);
 
-      setTimeout(() => { bassDropActive = false; }, 500);
+      setTimeout(() => { bassDropActive = false; }, 800);
     }
 
     function detectGesture(hand) {
@@ -607,27 +668,32 @@
         document.getElementById('hPattern').textContent = ARP_PATTERNS[patternIndex].name;
 
         if (!isMuted) {
-          const padFilter = 500 + (1 - ry) * 1800;
+          // Interstellar-style slow filter movement
+          const padFilter = 300 + (1 - ry) * 800; // Lower, warmer
           chord.forEach((note, i) => {
             if (!padVoices[i]) return;
             const freq = mtof(ROOT + note);
-            padVoices[i].o1.frequency.setTargetAtTime(freq, t, 0.2);
-            padVoices[i].o2.frequency.setTargetAtTime(freq, t, 0.2);
-            padVoices[i].f.frequency.setTargetAtTime(padFilter, t, 0.08);
-            padVoices[i].g.gain.setTargetAtTime(0.07, t, 0.2);
+            // Very slow glide for that organ-like sustained feel
+            padVoices[i].o1.frequency.setTargetAtTime(freq, t, 0.8);
+            padVoices[i].o2.frequency.setTargetAtTime(freq, t, 0.9);
+            if (padVoices[i].o3) padVoices[i].o3.frequency.setTargetAtTime(freq * 2, t, 0.85);
+            padVoices[i].f.frequency.setTargetAtTime(padFilter, t, 0.3);
+            // Slow swell - prolonged attack
+            padVoices[i].g.gain.setTargetAtTime(0.12, t, 1.2);
           });
 
           const bassNote = chord[0] - 12;
-          bass.o1.frequency.setTargetAtTime(mtof(ROOT + bassNote), t, 0.12);
-          bass.o2.frequency.setTargetAtTime(mtof(ROOT + bassNote), t, 0.12);
-          if (!bassDropActive) bass.g.gain.setTargetAtTime(0.13, t, 0.15);
+          bass.o1.frequency.setTargetAtTime(mtof(ROOT + bassNote), t, 0.5);
+          bass.o2.frequency.setTargetAtTime(mtof(ROOT + bassNote), t, 0.5);
+          if (!bassDropActive) bass.g.gain.setTargetAtTime(0.1, t, 0.6);
         }
 
-        const bpm = 75 + rx * 175;
+        // Slower BPM range for more meditative feel
+        const bpm = 50 + rx * 100; // 50-150 BPM range
         const stepTime = 60 / bpm / 2;
         document.getElementById('hBpm').textContent = Math.round(bpm);
 
-        const brightness = 1500 + (1 - ry) * 4000;
+        const brightness = 800 + (1 - ry) * 2000; // Softer brightness range
 
         if (!isMuted && t - arpTime > stepTime) {
           arpTime = t;
@@ -635,13 +701,16 @@
           const note = pattern[arpIndex % pattern.length];
           const freq = mtof(ROOT + 12 + note);
 
-          lead.o1.frequency.setTargetAtTime(freq, t, 0.002);
-          lead.o2.frequency.setTargetAtTime(freq, t, 0.002);
-          lead.f.frequency.setTargetAtTime(brightness, t, 0.005);
+          // Soft glide between notes
+          lead.o1.frequency.setTargetAtTime(freq, t, 0.05);
+          lead.o2.frequency.setTargetAtTime(freq, t, 0.06);
+          if (lead.o3) lead.o3.frequency.setTargetAtTime(freq * 2, t, 0.055);
+          lead.f.frequency.setTargetAtTime(brightness, t, 0.1);
 
+          // Soft attack, long release - ethereal plucks
           lead.g.gain.cancelScheduledValues(t);
-          lead.g.gain.setValueAtTime(0.18, t);
-          lead.g.gain.setTargetAtTime(0.001, t + 0.01, stepTime * 0.3);
+          lead.g.gain.setTargetAtTime(0.14, t, 0.08); // Soft attack
+          lead.g.gain.setTargetAtTime(0.001, t + stepTime * 0.3, stepTime * 0.8); // Long tail
 
           arpIndex++;
         }
@@ -649,9 +718,10 @@
         document.getElementById('hChord').textContent = '—';
         document.getElementById('hPattern').textContent = '—';
         document.getElementById('hBpm').textContent = '—';
-        padVoices.forEach(v => v.g.gain.setTargetAtTime(0, t, 0.35));
-        bass.g.gain.setTargetAtTime(0, t, 0.3);
-        lead.g.gain.setTargetAtTime(0, t, 0.12);
+        // Very slow fade out for sustained feel
+        padVoices.forEach(v => v.g.gain.setTargetAtTime(0, t, 1.5));
+        bass.g.gain.setTargetAtTime(0, t, 1.2);
+        lead.g.gain.setTargetAtTime(0, t, 0.8);
       }
     }
 
@@ -734,6 +804,23 @@
           maxDist = Math.max(maxDist, d);
         });
         faceRadius = maxDist * 1.2;
+
+        // Calculate face bounding box (normalized, mirrored for shader)
+        let fMinX = Infinity, fMinY = Infinity, fMaxX = -Infinity, fMaxY = -Infinity;
+        pts.forEach(p => {
+          fMinX = Math.min(fMinX, p.x);
+          fMinY = Math.min(fMinY, p.y);
+          fMaxX = Math.max(fMaxX, p.x);
+          fMaxY = Math.max(fMaxY, p.y);
+        });
+        // Add padding and mirror X for shader
+        const pad = 0.03;
+        faceBounds = {
+          minX: 1 - fMaxX - pad,
+          minY: fMinY - pad,
+          maxX: 1 - fMinX + pad,
+          maxY: fMaxY + pad
+        };
 
         // Convert to screen coords for overlay (mirrored)
         const scx = (1 - cx) * W;
