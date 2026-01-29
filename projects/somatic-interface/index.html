@@ -359,7 +359,7 @@
         }
       `;
 
-      // Fragment shader with audio-reactive face warping (bounding box only)
+      // Fragment shader with audio-reactive blur effect on face
       const fsSource = `
         precision mediump float;
         varying vec2 vTex;
@@ -374,57 +374,50 @@
         uniform vec2 uFaceBoundsMax;
 
         void main() {
-          vec2 uv = vTex;
+          // Mirror UV for display
+          vec2 uv = vec2(1.0 - vTex.x, vTex.y);
 
-          // Check if inside face bounding box with soft edge (in original coords)
-          float edgeSoftness = 0.02;
-          float inBoxX = smoothstep(uFaceBoundsMin.x - edgeSoftness, uFaceBoundsMin.x + edgeSoftness, uv.x)
-                       * smoothstep(uFaceBoundsMax.x + edgeSoftness, uFaceBoundsMax.x - edgeSoftness, uv.x);
+          // Check bounds in mirrored/screen space
+          float edgeSoftness = 0.03;
+          float mirroredMinX = 1.0 - uFaceBoundsMax.x;
+          float mirroredMaxX = 1.0 - uFaceBoundsMin.x;
+
+          float inBoxX = smoothstep(mirroredMinX - edgeSoftness, mirroredMinX + edgeSoftness, uv.x)
+                       * smoothstep(mirroredMaxX + edgeSoftness, mirroredMaxX - edgeSoftness, uv.x);
           float inBoxY = smoothstep(uFaceBoundsMin.y - edgeSoftness, uFaceBoundsMin.y + edgeSoftness, uv.y)
                        * smoothstep(uFaceBoundsMax.y + edgeSoftness, uFaceBoundsMax.y - edgeSoftness, uv.y);
           float faceMask = inBoxX * inBoxY;
 
-          // Store original UV
-          vec2 originalUV = uv;
+          // Base blur amount reactive to audio
+          float blurAmount = (0.008 + uBass * 0.015 + uMid * 0.008) * faceMask;
 
-          // Distance from face center (for directional effects)
-          vec2 toCenter = uv - uFaceCenter;
-          float dist = length(toCenter);
-          vec2 expandDir = normalize(toCenter + 0.001);
+          // Sample multiple points for blur effect
+          vec4 color = vec4(0.0);
+          float total = 0.0;
 
-          // Bass: radial expansion from face center
-          float expansion = uBass * 0.2 * faceMask;
-          uv += expandDir * expansion * (1.0 - dist / uFaceRadius);
+          // 9-tap blur kernel
+          for (float x = -1.0; x <= 1.0; x += 1.0) {
+            for (float y = -1.0; y <= 1.0; y += 1.0) {
+              float weight = 1.0 - length(vec2(x, y)) * 0.3;
+              vec2 offset = vec2(x, y) * blurAmount;
+              color += texture2D(uVideo, vTex + offset) * weight;
+              total += weight;
+            }
+          }
+          color /= total;
 
-          // Mid: wave distortion
-          float wave = sin(atan(toCenter.y, toCenter.x) * 4.0 + uTime * 3.0) * uMid * 0.06 * faceMask;
-          uv += expandDir * wave;
+          // Get sharp original
+          vec4 sharp = texture2D(uVideo, vTex);
 
-          // High: fine noise/jitter
-          float noise = (sin(uv.x * 50.0 + uTime * 10.0) * cos(uv.y * 50.0 + uTime * 8.0)) * uHigh * 0.02 * faceMask;
-          uv += vec2(noise, noise * 0.7);
+          // Mix blur and sharp based on face mask
+          vec4 final = mix(sharp, color, faceMask * 0.85);
 
-          // Rotation wobble from bass
-          float angle = uBass * 0.15 * sin(uTime * 2.0) * faceMask;
-          vec2 rotated = uFaceCenter + mat2(cos(angle), -sin(angle), sin(angle), cos(angle)) * (uv - uFaceCenter);
-          uv = mix(uv, rotated, faceMask * 0.6);
+          // Subtle chromatic aberration on high audio
+          float chromaAmt = uBass * 0.006 * faceMask;
+          final.r = mix(sharp.r, texture2D(uVideo, vTex + vec2(chromaAmt, 0.0)).r, faceMask * 0.5);
+          final.b = mix(sharp.b, texture2D(uVideo, vTex - vec2(chromaAmt, 0.0)).b, faceMask * 0.5);
 
-          // Clamp UVs
-          uv = clamp(uv, 0.0, 1.0);
-
-          // Blend between warped and original based on mask
-          vec2 finalUV = mix(originalUV, uv, faceMask);
-
-          // Mirror for final texture lookup
-          vec2 mirroredUV = vec2(1.0 - finalUV.x, finalUV.y);
-
-          vec4 color = texture2D(uVideo, mirroredUV);
-
-          // Chromatic aberration only in face box
-          color.r = texture2D(uVideo, mirroredUV + vec2(uBass * 0.012 * faceMask, 0.0)).r;
-          color.b = texture2D(uVideo, mirroredUV - vec2(uBass * 0.012 * faceMask, 0.0)).b;
-
-          gl_FragColor = color;
+          gl_FragColor = final;
         }
       `;
 
