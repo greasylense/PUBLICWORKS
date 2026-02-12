@@ -43,5 +43,14 @@
     "status": "live",
     "url": "projects/somatic-interface/",
     "date": "2026-01"
+  },
+  {
+    "id": "ascii-effect",
+    "number": "006",
+    "name": "ASCII Effect",
+    "description": "Depth-aware ASCII filter with code syntax colors",
+    "status": "live",
+    "url": "projects/ascii-effect/",
+    "date": "2026-02"
   }
 ]

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1E1E1E">
+  <title>ASCII Effect — PUBLICWORKS</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1E1E1E;
+      overflow: hidden;
+      font-family: 'IBM Plex Mono', 'SF Mono', monospace;
+    }
+
+    #video { display: none; }
+
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Start prompt — brand consistent */
+    #start-prompt {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #D1D1D1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      cursor: pointer;
+      transition: opacity 0.5s ease;
+    }
+
+    #start-prompt.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #start-prompt h1 {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 400;
+      color: #0F0F0F;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    #start-prompt p {
+      font-size: 0.75rem;
+      color: #6E6E6E;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    #start-prompt .hint {
+      position: absolute;
+      bottom: 2rem;
+      font-size: 0.625rem;
+      color: #6E6E6E;
+    }
+
+    /* Back link */
+    #back-link {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      font-size: 0.75rem;
+      color: #6E6E6E;
+      text-decoration: none;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.3s ease, color 0.15s ease;
+    }
+
+    #back-link:hover { color: #0047FF; }
+    #back-link.visible { opacity: 1; }
+
+    /* Loading */
+    #loading {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      font-size: 0.625rem;
+      color: #6E6E6E;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #loading.visible { opacity: 1; }
+
+    /* Preview */
+    #preview-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      width: 200px;
+      height: 150px;
+      border-radius: 6px;
+      overflow: hidden;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      background: #1E1E1E;
+    }
+
+    #preview-container.visible { opacity: 1; }
+
+    #preview-canvas {
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1);
+    }
+
+    #preview-label {
+      position: absolute;
+      bottom: 0.5rem;
+      left: 0.5rem;
+      font-size: 0.5rem;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      pointer-events: none;
+    }
+
+    /* Focus styles */
+    a:focus-visible {
+      outline: 2px solid #0047FF;
+      outline-offset: 2px;
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="start-prompt">
+    <h1>ASCII Effect</h1>
+    <p>Click to begin</p>
+    <span class="hint">Requires camera · Open hand to zoom in · Fist to shrink</span>
+  </div>
+
+  <a href="../../" id="back-link">← PUBLICWORKS</a>
+  <div id="loading">Initializing tracking...</div>
+
+  <video id="video" playsinline></video>
+  <canvas id="canvas"></canvas>
+
+  <div id="preview-container">
+    <canvas id="preview-canvas"></canvas>
+    <span id="preview-label">Input</span>
+  </div>
+
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ==================== Configuration ====================
+    var CONFIG = {
+      baseCellSize: 10,
+      maxScale: 8,
+      minScale: 0.3,
+      smoothing: 0.14,
+      gestureSmoothing: 0.12,
+
+      // Expanded character set — code symbols + letters ordered by visual density
+      chars: ' .,:;-~i!lt+=r?/\\|xvcfnjuo(){}[]<>^*akdpqbgwm#$&%@0OXW',
+
+      colors: {
+        bg: '#1E1E1E',
+        // 3 colors — VS Code syntax theme
+        ranges: [
+          { max: 85,  color: '#CE9178' },
+          { max: 170, color: '#569CD6' },
+          { max: 256, color: '#4EC9B0' },
+        ],
+      },
+
+      tracking: {
+        hand: {
+          normalSize: 70,
+          scaleRange: 150,
+          influenceBase: 180,
+          influenceGrowth: 200,
+        },
+        face: {
+          normalWidth: 140,
+          scaleRange: 200,
+          influenceBase: 200,
+          influenceGrowth: 120,
+        },
+      },
+
+      video: { width: 640, height: 480 },
+    };
+
+    // Hand bone connections for preview drawing
+    var HAND_CONNECTIONS = [
+      [0,1],[1,2],[2,3],[3,4],
+      [0,5],[5,6],[6,7],[7,8],
+      [0,9],[9,10],[10,11],[11,12],
+      [0,13],[13,14],[14,15],[15,16],
+      [0,17],[17,18],[18,19],[19,20],
+      [5,9],[9,13],[13,17]
+    ];
+
+    // ==================== DOM Elements ====================
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+    var video = document.getElementById('video');
+    var startPrompt = document.getElementById('start-prompt');
+    var loadingEl = document.getElementById('loading');
+    var backLink = document.getElementById('back-link');
+    var previewContainer = document.getElementById('preview-container');
+    var previewCanvas = document.getElementById('preview-canvas');
+    var previewCtx = previewCanvas.getContext('2d');
+
+    // Offscreen canvas for video sampling
+    var offscreen = document.createElement('canvas');
+    var offCtx = offscreen.getContext('2d', { willReadFrequently: true });
+
+    // ==================== State ====================
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    var cols = 0;
+    var rows = 0;
+    var scaleMap = null;
+    var targetScaleMap = null;
+    var isRunning = false;
+    var animationId = null;
+    var lastHandResults = null;
+    var lastFaceResults = null;
+
+    // Smoothed gesture values per hand (0 = fist, 1 = open)
+    var smoothedOpenness = [0.5, 0.5];
+
+    // Font cache
+    var fontCache = {};
+    function getFont(size) {
+      if (!fontCache[size]) {
+        fontCache[size] = size + 'px "IBM Plex Mono",monospace';
+      }
+      return fontCache[size];
+    }
+
+    // ==================== Character & Color Lookup ====================
+    function getColor(brightness) {
+      var ranges = CONFIG.colors.ranges;
+      for (var i = 0; i < ranges.length; i++) {
+        if (brightness < ranges[i].max) return ranges[i].color;
+      }
+      return '#4EC9B0';
+    }
+
+    // ==================== Hand Gesture Detection ====================
+    function getHandOpenness(landmarks) {
+      // Measure average distance from fingertips to palm center (landmark 9)
+      var palm = landmarks[9];
+      var tipIndices = [4, 8, 12, 16, 20];
+      var totalDist = 0;
+      for (var i = 0; i < 5; i++) {
+        var tip = landmarks[tipIndices[i]];
+        var dx = tip.x - palm.x;
+        var dy = tip.y - palm.y;
+        totalDist += Math.sqrt(dx * dx + dy * dy);
+      }
+      var avgDist = totalDist / 5;
+      // Normalize: closed fist ~0.04-0.06, open hand ~0.16-0.22
+      return Math.max(0, Math.min(1, (avgDist - 0.05) / 0.13));
+    }
+
+    // ==================== Grid Initialization ====================
+    function initGrid() {
+      cols = Math.ceil(width / CONFIG.baseCellSize);
+      rows = Math.ceil(height / CONFIG.baseCellSize);
+
+      var size = cols * rows;
+      scaleMap = new Float32Array(size).fill(1);
+      targetScaleMap = new Float32Array(size).fill(1);
+
+      offscreen.width = cols;
+      offscreen.height = rows;
+    }
+
+    // ==================== Scale Map ====================
+    function applyScaleInfluence(screenX, screenY, targetScale, radius) {
+      var cellSize = CONFIG.baseCellSize;
+      var cellRadius = Math.ceil(radius / cellSize);
+      var centerCol = Math.floor(screenX / cellSize);
+      var centerRow = Math.floor(screenY / cellSize);
+
+      var c0 = Math.max(0, centerCol - cellRadius);
+      var c1 = Math.min(cols - 1, centerCol + cellRadius);
+      var r0 = Math.max(0, centerRow - cellRadius);
+      var r1 = Math.min(rows - 1, centerRow + cellRadius);
+
+      var halfCell = cellSize * 0.5;
+      var radiusSq = radius * radius;
+      var expanding = targetScale >= 1;
+
+      for (var r = r0; r <= r1; r++) {
+        var cellY = r * cellSize + halfCell;
+        var dy = cellY - screenY;
+        var dySq = dy * dy;
+        for (var c = c0; c <= c1; c++) {
+          var cellX = c * cellSize + halfCell;
+          var dx = cellX - screenX;
+          var distSq = dx * dx + dySq;
+          if (distSq < radiusSq) {
+            var dist = Math.sqrt(distSq);
+            var proximity = 1 - dist / radius;
+            var p2 = proximity * proximity;
+            // Interpolate from 1 toward targetScale based on proximity
+            var cellScale = 1 + (targetScale - 1) * p2;
+            var idx = r * cols + c;
+            if (expanding) {
+              if (cellScale > targetScaleMap[idx]) targetScaleMap[idx] = cellScale;
+            } else {
+              if (cellScale < targetScaleMap[idx]) targetScaleMap[idx] = cellScale;
+            }
+          }
+        }
+      }
+    }
+
+    function updateScaleMap() {
+      targetScaleMap.fill(1);
+
+      // ---- Hands: gesture + proximity ----
+      if (lastHandResults && lastHandResults.multiHandLandmarks) {
+        for (var h = 0; h < lastHandResults.multiHandLandmarks.length; h++) {
+          var landmarks = lastHandResults.multiHandLandmarks[h];
+
+          // Proximity from apparent hand size on screen
+          var wrist = landmarks[0];
+          var middleTip = landmarks[12];
+          var handSize = Math.sqrt(
+            Math.pow((middleTip.x - wrist.x) * width, 2) +
+            Math.pow((middleTip.y - wrist.y) * height, 2)
+          );
+
+          var t = CONFIG.tracking.hand;
+          var proximity = Math.max(0, (handSize - t.normalSize) / t.scaleRange);
+
+          // Gesture: open hand vs fist
+          var rawOpenness = getHandOpenness(landmarks);
+          smoothedOpenness[h] += (rawOpenness - smoothedOpenness[h]) * CONFIG.gestureSmoothing;
+          var openness = smoothedOpenness[h];
+
+          // Combined scale: openness maps the target from minScale to maxScale
+          // Then proximity controls how strongly the effect applies
+          var fullScale = CONFIG.minScale + openness * (CONFIG.maxScale - CONFIG.minScale);
+          var targetScale = 1 + (fullScale - 1) * proximity;
+
+          if (Math.abs(targetScale - 1) > 0.01) {
+            var radius = t.influenceBase + proximity * t.influenceGrowth;
+            // Apply from key hand landmarks
+            var keyIndices = [0, 4, 8, 9, 12, 16, 20];
+            for (var k = 0; k < keyIndices.length; k++) {
+              var lm = landmarks[keyIndices[k]];
+              applyScaleInfluence(
+                (1 - lm.x) * width,
+                lm.y * height,
+                targetScale,
+                radius
+              );
+            }
+          }
+        }
+      }
+
+      // Face: no scaling — hands only control size
+
+      // Smooth interpolation
+      var s = CONFIG.smoothing;
+      for (var i = 0, len = scaleMap.length; i < len; i++) {
+        scaleMap[i] += (targetScaleMap[i] - scaleMap[i]) * s;
+      }
+    }
+
+    // ==================== ASCII Rendering ====================
+    function render() {
+      // Sample video to offscreen canvas (1 pixel per grid cell, mirrored)
+      offCtx.save();
+      offCtx.translate(offscreen.width, 0);
+      offCtx.scale(-1, 1);
+      offCtx.drawImage(video, 0, 0, offscreen.width, offscreen.height);
+      offCtx.restore();
+
+      var imageData = offCtx.getImageData(0, 0, cols, rows);
+      var pixels = imageData.data;
+
+      // Clear
+      ctx.fillStyle = CONFIG.colors.bg;
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw ASCII across entire frame
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      var cellSize = CONFIG.baseCellSize;
+      var halfCell = cellSize * 0.5;
+      var chars = CONFIG.chars;
+      var charLen = chars.length - 1;
+      var currentFont = '';
+
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          var idx = r * cols + c;
+
+          // Scale from gesture + proximity map
+          var scale = scaleMap[idx];
+
+          // Spread apart: skip cells proportional to scale
+          // At 1x every cell renders, at 2x every other, at 4x every 4th, etc.
+          var step = Math.max(1, Math.round(scale));
+          if ((r % step !== 0) || (c % step !== 0)) continue;
+
+          var pIdx = idx * 4;
+          var brightness = 0.299 * pixels[pIdx] + 0.587 * pixels[pIdx + 1] + 0.114 * pixels[pIdx + 2];
+
+          // Skip dark areas — creates negative space
+          if (brightness < 18) continue;
+
+          // Character from brightness
+          var charIdx = Math.floor((brightness / 255) * charLen);
+          var char = chars[charIdx];
+          if (char === ' ') continue;
+
+          // Color
+          var color = getColor(brightness);
+
+          // Font size matches scale
+          var fontSize = Math.max(3, Math.round(cellSize * scale));
+          var font = getFont(fontSize);
+
+          if (font !== currentFont) {
+            ctx.font = font;
+            currentFont = font;
+          }
+
+          ctx.fillStyle = color;
+          ctx.fillText(char, c * cellSize + halfCell, r * cellSize + halfCell);
+        }
+      }
+    }
+
+    // ==================== Preview ====================
+    function drawPreview() {
+      var pw = previewCanvas.width;
+      var ph = previewCanvas.height;
+      if (pw === 0 || ph === 0) return;
+
+      previewCtx.clearRect(0, 0, pw, ph);
+      previewCtx.drawImage(video, 0, 0, pw, ph);
+
+      // Hand overlay
+      if (lastHandResults && lastHandResults.multiHandLandmarks) {
+        for (var h = 0; h < lastHandResults.multiHandLandmarks.length; h++) {
+          var landmarks = lastHandResults.multiHandLandmarks[h];
+
+          previewCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+          previewCtx.lineWidth = 1;
+          for (var k = 0; k < HAND_CONNECTIONS.length; k++) {
+            var a = landmarks[HAND_CONNECTIONS[k][0]];
+            var b = landmarks[HAND_CONNECTIONS[k][1]];
+            previewCtx.beginPath();
+            previewCtx.moveTo(a.x * pw, a.y * ph);
+            previewCtx.lineTo(b.x * pw, b.y * ph);
+            previewCtx.stroke();
+          }
+
+          // Show gesture state on fingertips
+          var open = smoothedOpenness[h];
+          var tipColor = open > 0.5 ? '#4EC9B0' : '#CE9178';
+          previewCtx.fillStyle = tipColor;
+          var tips = [4, 8, 12, 16, 20];
+          for (var ti = 0; ti < tips.length; ti++) {
+            var lm = landmarks[tips[ti]];
+            previewCtx.beginPath();
+            previewCtx.arc(lm.x * pw, lm.y * ph, 3, 0, Math.PI * 2);
+            previewCtx.fill();
+          }
+        }
+      }
+
+      // Face overlay
+      if (lastFaceResults && lastFaceResults.multiFaceLandmarks) {
+        for (var f = 0; f < lastFaceResults.multiFaceLandmarks.length; f++) {
+          var flm = lastFaceResults.multiFaceLandmarks[f];
+          previewCtx.fillStyle = 'rgba(86, 156, 214, 0.5)';
+          for (var i = 0; i < flm.length; i += 3) {
+            previewCtx.beginPath();
+            previewCtx.arc(flm[i].x * pw, flm[i].y * ph, 1, 0, Math.PI * 2);
+            previewCtx.fill();
+          }
+        }
+      }
+    }
+
+    // ==================== MediaPipe Setup ====================
+    var handsModel = null;
+    var faceMeshModel = null;
+
+    function initTracking() {
+      handsModel = new Hands({
+        locateFile: function(file) {
+          return 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/' + file;
+        }
+      });
+
+      handsModel.setOptions({
+        maxNumHands: 2,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+
+      handsModel.onResults(function(results) {
+        lastHandResults = results;
+      });
+
+      faceMeshModel = new FaceMesh({
+        locateFile: function(file) {
+          return 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/' + file;
+        }
+      });
+
+      faceMeshModel.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+
+      faceMeshModel.onResults(function(results) {
+        lastFaceResults = results;
+      });
+
+      var camera = new Camera(video, {
+        onFrame: async function() {
+          await handsModel.send({ image: video });
+          await faceMeshModel.send({ image: video });
+        },
+        width: CONFIG.video.width,
+        height: CONFIG.video.height,
+      });
+
+      camera.start().then(function() {
+        loadingEl.classList.remove('visible');
+        backLink.classList.add('visible');
+        previewContainer.classList.add('visible');
+        previewCanvas.width = 200;
+        previewCanvas.height = 150;
+      });
+    }
+
+    // ==================== Animation Loop ====================
+    function animate() {
+      if (!isRunning) return;
+
+      updateScaleMap();
+      render();
+      drawPreview();
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    // ==================== Resize ====================
+    function handleResize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      initGrid();
+    }
+
+    // ==================== Start ====================
+    function start() {
+      startPrompt.classList.add('hidden');
+      loadingEl.classList.add('visible');
+
+      previewCanvas.width = 200;
+      previewCanvas.height = 150;
+
+      handleResize();
+      initTracking();
+
+      isRunning = true;
+      animate();
+    }
+
+    // ==================== Event Listeners ====================
+    startPrompt.addEventListener('click', start);
+    window.addEventListener('resize', handleResize);
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        isRunning = false;
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+      } else if (startPrompt.classList.contains('hidden')) {
+        isRunning = true;
+        animate();
+      }
+    });
+
+    // Initial canvas size
+    canvas.width = width;
+    canvas.height = height;
+
+  })();
+  </script>
+</body>
+</html>
