@@ -36,7 +36,7 @@
     .back {
       position: fixed;
       top: 1.5rem; left: 1.5rem;
-      font-size: 0.625rem;
+      font-size: 0.6875rem;
       color: var(--mid);
       z-index: 100;
       letter-spacing: 0.08em;
@@ -64,7 +64,7 @@
       line-height: 1;
     }
     .title-meta {
-      font-size: 0.6875rem;
+      font-size: 0.8125rem;
       color: var(--mid);
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -81,7 +81,7 @@
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      font-size: 0.6rem;
+      font-size: 0.6875rem;
       color: var(--live);
       letter-spacing: 0.16em;
       text-transform: uppercase;
@@ -117,7 +117,7 @@
       max-width: 1200px;
       margin: 0 auto;
       padding: 0.9rem 2rem;
-      font-size: 0.5625rem;
+      font-size: 0.6875rem;
       color: var(--mid);
       letter-spacing: 0.07em;
       line-height: 1.7;
@@ -132,7 +132,7 @@
       color: var(--text);
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      font-size: 0.5rem;
+      font-size: 0.5625rem;
       flex-shrink: 0;
     }
     .method em {
@@ -169,33 +169,37 @@
       max-width: 1200px;
       margin: 0 auto;
       padding: 0.15rem 2rem 1.25rem;
-      font-size: 0.625rem;
+      font-size: 0.75rem;
       color: var(--mid);
       letter-spacing: 0.04em;
       line-height: 1.55;
       opacity: 0.7;
     }
 
-    /* ─── pull-quote callout ─────────────────────────────────────── */
-    .callout {
+    /* ─── fact strip (key/value comparison rows) ────────────────── */
+    .fact-strip {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 2.75rem 2rem;
+      padding: 2rem 2rem;
       border-top: 1px solid var(--rule);
     }
-    .callout-text {
-      font-family: var(--sans);
-      font-size: clamp(1.125rem, 2.8vw, 1.75rem);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.3;
-      color: var(--text);
-      max-width: 44ch;
+    .fact-strip-head {
+      font-size: 0.5625rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 1rem;
     }
-    .callout-text em {
-      font-style: normal;
-      color: var(--hi);
+    .fact-rows {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.55rem 3rem;
+      font-size: 0.8125rem;
     }
+    .fact-label { color: var(--mid); white-space: nowrap; letter-spacing: 0.04em; }
+    .fact-val   { color: var(--text); font-weight: 500; }
+    .fact-val.hi   { color: var(--hi); }
+    .fact-val.blue { color: var(--blue); }
 
     /* ─── stats grid ────────────────────────────────────────────── */
     .stats {
@@ -242,7 +246,7 @@
     .stat-value.dim { color: #ADADAB; }
 
     .stat-label {
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       color: var(--mid);
       text-transform: uppercase;
       letter-spacing: 0.09em;
@@ -263,7 +267,7 @@
       border: 1px solid #2C2C2C;
       border-top: 2px solid #444;
       padding: 0.8rem 1rem;
-      font-size: 0.5625rem;
+      font-size: 0.6875rem;
       color: #AAAAAA;
       letter-spacing: 0.06em;
       line-height: 1.8;
@@ -292,7 +296,7 @@
     }
     .share-btn {
       font-family: var(--mono);
-      font-size: 0.625rem;
+      font-size: 0.6875rem;
       font-weight: 500;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -307,7 +311,7 @@
     .share-btn:hover { background: var(--blue); color: #fff; }
     .share-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
     .sources {
-      font-size: 0.4375rem;
+      font-size: 0.5625rem;
       color: var(--faint);
       letter-spacing: 0.06em;
       max-width: 620px;
@@ -317,7 +321,7 @@
 
     /* ─── disclaimer ────────────────────────────────────────────── */
     .disclaimer {
-      font-size: 0.5625rem;
+      font-size: 0.6875rem;
       color: var(--mid);
       letter-spacing: 0.06em;
       line-height: 1.75;
@@ -337,14 +341,14 @@
       /* anchor all tooltips left on 2-col layout to prevent right overflow */
       .stat-item.tip-left .stat-note,
       .stat-item .stat-note { left: 0; right: auto; }
-      .method { font-size: 0.625rem; }
+      .method { font-size: 0.6875rem; }
       .section-hd { padding-top: 2.5rem; }
     }
     @media (max-width: 420px) {
       .stats { grid-template-columns: 1fr; gap: 2.25rem; }
-      .header, .stats, .section-hd, .section-sub, .callout, .footer, .method { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .header, .stats, .section-hd, .section-sub, .fact-strip, .footer, .method { padding-left: 1.25rem; padding-right: 1.25rem; }
       .stat-note { max-width: 85vw; left: 0 !important; right: auto !important; }
-      .sources { text-align: left; font-size: 0.5625rem; }
+      .sources { text-align: left; }
       .section-hd { padding-top: 2.25rem; }
     }
 
@@ -359,7 +363,7 @@
         border-top: 1px solid var(--rule);
         padding: 0.5rem 0 0;
         margin-top: 0.5rem;
-        font-size: 0.5625rem;
+        font-size: 0.6875rem;
         color: var(--mid);
         max-width: none;
         min-width: unset;
@@ -473,8 +477,16 @@
 
   </div><!-- /MONEY stats -->
 
-  <div class="callout">
-    <p class="callout-text">Denver has <em>more licensed dispensaries than Starbucks locations.</em> This was considered controversial in 2012. Now it's just a Tuesday.</p>
+  <div class="fact-strip">
+    <div class="fact-strip-head">Denver retail landscape</div>
+    <div class="fact-rows">
+      <span class="fact-label">Licensed dispensaries</span>
+      <span class="fact-val hi">180+</span>
+      <span class="fact-label">Starbucks locations</span>
+      <span class="fact-val">~75</span>
+      <span class="fact-label">CO cannabis tax collected since 2014</span>
+      <span class="fact-val">$2.3B+</span>
+    </div>
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
@@ -586,8 +598,16 @@
 
   </div><!-- /PEOPLE stats -->
 
-  <div class="callout">
-    <p class="callout-text">Most people moved here <em>"just for a few years."</em> That was in 2017. They own a cactus now and call themselves a local.</p>
+  <div class="fact-strip">
+    <div class="fact-strip-head">Who's actually from here</div>
+    <div class="fact-rows">
+      <span class="fact-label">Born in Colorado</span>
+      <span class="fact-val">43%</span>
+      <span class="fact-label">Top origin states</span>
+      <span class="fact-val">CA · TX · IL · NY</span>
+      <span class="fact-label">Net domestic out-migration / yr</span>
+      <span class="fact-val">~8,000 people</span>
+    </div>
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
@@ -662,8 +682,16 @@
 
   </div><!-- /MOUNTAINS stats -->
 
-  <div class="callout">
-    <p class="callout-text">Denver gets <em>more annual sunshine than Miami, Los Angeles, or San Diego.</em> It also snows in May. These things coexist. Welcome to elevation.</p>
+  <div class="fact-strip">
+    <div class="fact-strip-head">Annual sunshine hours</div>
+    <div class="fact-rows">
+      <span class="fact-label">Denver</span>
+      <span class="fact-val hi">3,132 hrs</span>
+      <span class="fact-label">Miami</span>
+      <span class="fact-val">2,888 hrs</span>
+      <span class="fact-label">Los Angeles</span>
+      <span class="fact-val">2,956 hrs</span>
+    </div>
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
