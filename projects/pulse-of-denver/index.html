@@ -145,11 +145,56 @@
     .section-hd {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 3.5rem 2rem 0.85rem;
+      padding: 3.5rem 2rem 0.5rem;
       font-size: 0.6875rem;
       letter-spacing: 0.18em;
       color: var(--mid);
       text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .section-hd::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--blue);
+      flex-shrink: 0;
+    }
+    .section-hd.s-green::before { background: var(--hi); }
+    .section-hd.s-red::before   { background: var(--live); }
+    .section-hd.s-dark::before  { background: var(--text); }
+
+    .section-sub {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.15rem 2rem 1.25rem;
+      font-size: 0.625rem;
+      color: var(--mid);
+      letter-spacing: 0.04em;
+      line-height: 1.55;
+      opacity: 0.7;
+    }
+
+    /* ─── pull-quote callout ─────────────────────────────────────── */
+    .callout {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.75rem 2rem;
+      border-top: 1px solid var(--rule);
+    }
+    .callout-text {
+      font-family: var(--sans);
+      font-size: clamp(1.125rem, 2.8vw, 1.75rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.3;
+      color: var(--text);
+      max-width: 44ch;
+    }
+    .callout-text em {
+      font-style: normal;
+      color: var(--hi);
     }
 
     /* ─── stats grid ────────────────────────────────────────────── */
@@ -163,7 +208,14 @@
     }
 
     /* ─── individual stat ───────────────────────────────────────── */
-    .stat-item { position: relative; cursor: default; }
+    .stat-item {
+      position: relative;
+      cursor: default;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .stat-item.visible { opacity: 1; transform: none; }
 
     .stat-icon {
       font-size: 1.25rem;
@@ -290,7 +342,7 @@
     }
     @media (max-width: 420px) {
       .stats { grid-template-columns: 1fr; gap: 2.25rem; }
-      .header, .stats, .section-hd, .footer, .method { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .header, .stats, .section-hd, .section-sub, .callout, .footer, .method { padding-left: 1.25rem; padding-right: 1.25rem; }
       .stat-note { max-width: 85vw; left: 0 !important; right: auto !important; }
       .sources { text-align: left; font-size: 0.5625rem; }
       .section-hd { padding-top: 2.25rem; }
@@ -321,6 +373,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
+      .stat-item { opacity: 1 !important; transform: none !important; }
     }
   </style>
 </head>
@@ -351,7 +404,8 @@
   <!-- ════════════════════════════════════════════════════════════ -->
   <!--  MONEY                                                       -->
   <!-- ════════════════════════════════════════════════════════════ -->
-  <div class="section-hd">Money</div>
+  <div class="section-hd s-green">Money</div>
+  <p class="section-sub">How Denver makes, spends, and occasionally loses dollars to powder days</p>
   <div class="stats" role="list" aria-label="Denver money metrics">
 
     <div class="stat-item" role="listitem">
@@ -419,10 +473,15 @@
 
   </div><!-- /MONEY stats -->
 
+  <div class="callout">
+    <p class="callout-text">Denver has <em>more licensed dispensaries than Starbucks locations.</em> This was considered controversial in 2012. Now it's just a Tuesday.</p>
+  </div>
+
   <!-- ════════════════════════════════════════════════════════════ -->
   <!--  ROADS & TRANSIT                                             -->
   <!-- ════════════════════════════════════════════════════════════ -->
   <div class="section-hd">Roads &amp; Transit</div>
+  <p class="section-sub">Getting around — or more accurately, sitting on I-70 thinking about getting around</p>
   <div class="stats" role="list" aria-label="Denver roads and transit metrics">
 
     <div class="stat-item" role="listitem">
@@ -472,7 +531,8 @@
   <!-- ════════════════════════════════════════════════════════════ -->
   <!--  PEOPLE                                                      -->
   <!-- ════════════════════════════════════════════════════════════ -->
-  <div class="section-hd">People</div>
+  <div class="section-hd s-dark">People</div>
+  <p class="section-sub">Who's here, who's leaving, who has three dogs and a Subaru</p>
   <div class="stats" role="list" aria-label="Denver people metrics">
 
     <div class="stat-item" role="listitem">
@@ -526,24 +586,29 @@
 
   </div><!-- /PEOPLE stats -->
 
+  <div class="callout">
+    <p class="callout-text">Most people moved here <em>"just for a few years."</em> That was in 2017. They own a cactus now and call themselves a local.</p>
+  </div>
+
   <!-- ════════════════════════════════════════════════════════════ -->
   <!--  MOUNTAINS & OUTDOORS                                        -->
   <!-- ════════════════════════════════════════════════════════════ -->
   <div class="section-hd">Mountains &amp; Outdoors</div>
+  <p class="section-sub">What you actually moved here for — 45 minutes away, as Denverites will tell you within 45 minutes</p>
   <div class="stats" role="list" aria-label="Denver mountains and outdoors metrics">
 
     <div class="stat-item" role="listitem">
       <span class="stat-icon">⛷️</span>
       <span class="stat-value" data-counter="ski-vert">—</span>
       <span class="stat-label">Ski Vertical Feet Descended Today</span>
-      <div class="stat-note">Colorado's 25+ ski resorts · est. ~150K skiers on peak days × avg 10 runs × avg 1,000 ft = 1.5B ft/day · resets at midnight · shown Nov–Apr ski season only.</div>
+      <div class="stat-note">Denver metro generates ~35% of CO's 14.4M annual ski visits (CO Ski Country USA 2023) · ~27,600 skier-days/day in season · avg ~20K vert ft/skier · shown Nov–Apr ski season only.</div>
     </div>
 
     <div class="stat-item" role="listitem">
       <span class="stat-icon">🎿</span>
       <span class="stat-value" data-counter="ski-runs">—</span>
       <span class="stat-label">Ski Runs Completed Today</span>
-      <div class="stat-note">~150K skiers × avg 10 runs/day = 1.5M runs · resets at midnight · includes all Colorado resorts (Vail, Breckenridge, Steamboat, Copper, A-Basin, etc.) · shown Nov–Apr.</div>
+      <div class="stat-note">~27,600 Denver metro skier-days/day in season × avg 15 runs = ~414K runs/day · includes Vail, Breckenridge, Steamboat, Copper, A-Basin, Keystone, etc. · resets midnight · shown Nov–Apr.</div>
     </div>
 
     <div class="stat-item" role="listitem">
@@ -597,10 +662,15 @@
 
   </div><!-- /MOUNTAINS stats -->
 
+  <div class="callout">
+    <p class="callout-text">Denver gets <em>more annual sunshine than Miami, Los Angeles, or San Diego.</em> It also snows in May. These things coexist. Welcome to elevation.</p>
+  </div>
+
   <!-- ════════════════════════════════════════════════════════════ -->
   <!--  CULTURE & FOOD                                              -->
   <!-- ════════════════════════════════════════════════════════════ -->
-  <div class="section-hd">Culture &amp; Food</div>
+  <div class="section-hd s-red">Culture &amp; Food</div>
+  <p class="section-sub">Beer, burritos, the Coors paradox, and a brewery per 7,000 residents</p>
   <div class="stats" role="list" aria-label="Denver culture and food metrics">
 
     <div class="stat-item" role="listitem">
@@ -627,8 +697,8 @@
     <div class="stat-item tip-left" role="listitem">
       <span class="stat-icon">🎸</span>
       <span class="stat-value" data-counter="redrocks">—</span>
-      <span class="stat-label">Red Rocks Attendees This Season</span>
-      <div class="stat-note">~200 concerts/yr · avg 9,525 capacity at ~80% = ~7,600/show · season runs April–October · est. from Apr 1 · resets each season · National Geographic called it the world's best venue.</div>
+      <span class="stat-label">Red Rocks Attendees This Year</span>
+      <div class="stat-note">~200 concerts/yr · avg 9,525 capacity at ~80% = ~7,600/show · est. ~1.5M attendees/yr · shows run year-round (yes, even winter) · National Geographic called it the world's best venue.</div>
     </div>
 
     <div class="stat-item" role="listitem">
@@ -747,13 +817,13 @@
       'ski-vert': () => {
         const m = new Date().getMonth();                   // 0 = Jan … 11 = Dec
         return (m >= 10 || m <= 3)                         // Nov (10) through Apr (3)
-          ? fn(tod() * 17361) + ' ft'                      // 1.5B ft/day ÷ 86,400 per day
+          ? fn(tod() * 6389) + ' ft'                       // Denver metro 5M visits/yr ÷ 181 days × 20K vert ÷ 86,400
           : '— off season';
       },
       'ski-runs': () => {
         const m = new Date().getMonth();
         return (m >= 10 || m <= 3)
-          ? fn(tod() * 17.36) + ' runs'                    // 1.5M runs/day ÷ 86,400
+          ? fn(tod() * 4.79) + ' runs'                     // Denver metro ~414K runs/day ÷ 86,400
           : '— off season';
       },
       'rmnp':        () => fn(ytd() * 0.1269),             // 4M/yr ÷ 31.536M
@@ -771,13 +841,7 @@
       'coors':        () => fn(ytd() * 159.8) + ' cans',  // Golden ~15M bbl × 336 cans ÷ 31.536M/yr
       'beer-brewed':  () => fn(tod() * 0.317) + ' gal',   // Denver craft 10M gal/yr ÷ 86,400/day
       'beer-consumed':() => fn(tod() * 3.47) + ' pints',  // Denver ~300K pints/day ÷ 86,400
-      'redrocks': () => {
-        const m = new Date().getMonth();
-        if (m < 3 || m > 9) return '— off season';        // April (3) through Oct (9)
-        const seasonStart = new Date(new Date().getFullYear(), 3, 1).getTime();
-        const secs = Math.max(0, (Date.now() - seasonStart) / 1000);
-        return fn(secs * 0.0824) + ' this season';         // 1.524M / 214 days ÷ 86,400
-      },
+      'redrocks': () => fn(ytd() * 0.04756) + ' attendees', // ~1.5M/yr ÷ 31.536M
       'coffee':       () => fn(tod() * 8.102),             // Denver ~700K cups/day ÷ 86,400
       'burritos':     () => fn(tod() * 1.028),             // Denver ~89K/day ÷ 86,400
       'green-chile':  () => fn(tod() * 0.579),             // Denver ~50K/day ÷ 86,400
@@ -836,7 +900,7 @@
         `🍻  Denver beer consumed:     ${fn(t * 3.47)} pints today`,
         `📦  Net departures:           ${fn(y * 0.000254)} people left this year`,
         `❄️  Powder day loss:          ${fc(y * 22.35)} in productivity`,
-        (m >= 10 || m <= 3) ? `⛷️  Ski runs today:           ${fn(t * 17.36)} across CO` : null,
+        (m >= 10 || m <= 3) ? `⛷️  Ski runs today (Denver metro): ${fn(t * 4.79)} runs` : null,
         (m >= 5  && m <= 8) ? `⛰️  14er summits:              ${fn(t * 0.01897)} this summer` : null,
         `☀️  Sunny days:               ${Math.floor(y / 86400 * (300 / 365))} this year`,
         `🐕  Registered dogs:          ~470,000 (most per capita in US)`,
@@ -879,6 +943,24 @@
           }, 2500);
         });
     });
+
+    // ── scroll entrance animations ────────────────────────────────
+    (function () {
+      const items = document.querySelectorAll('.stat-item');
+      // stagger within each row of 4
+      items.forEach((item, idx) => {
+        item.style.transitionDelay = ((idx % 4) * 55) + 'ms';
+      });
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            obs.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.08 });
+      items.forEach(item => obs.observe(item));
+    }());
 
     // ── init ──────────────────────────────────────────────────────
     updateClock();
