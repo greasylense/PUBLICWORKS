@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A real-time diagnostic of Denver, CO. 41 live metrics. Updated every second.">
+  <meta property="og:title" content="Pulse of Denver — Is Denver Okay?">
+  <meta property="og:description" content="41 live metrics: cannabis revenue, I-70 hours lost, DIA passengers, ski runs, craft beer consumed & more — all counting up live.">
+  <meta name="theme-color" content="#EDEBE6">
+  <title>Pulse of Denver — PUBLICWORKS</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:     #EDEBE6;
+      --text:   #111111;
+      --mid:    #7A7775;
+      --faint:  #C8C5BE;
+      --hi:     #1A6B45;
+      --live:   #E83000;
+      --blue:   #0047FF;
+      --rule:   #D4D0CA;
+      --mono:   'IBM Plex Mono', 'SF Mono', monospace;
+      --sans:   'Space Grotesk', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body { background: var(--bg); color: var(--text); font-family: var(--mono); min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ─── back link ─────────────────────────────────────────────── */
+    .back {
+      position: fixed;
+      top: 1.5rem; left: 1.5rem;
+      font-size: 0.625rem;
+      color: var(--mid);
+      z-index: 100;
+      letter-spacing: 0.08em;
+      transition: color 0.15s;
+    }
+    .back:hover { color: var(--blue); }
+    .back:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
+
+    /* ─── header ────────────────────────────────────────────────── */
+    .header {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 5.5rem 2rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .title {
+      font-family: var(--sans);
+      font-size: clamp(2.25rem, 6vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: -0.045em;
+      line-height: 1;
+    }
+    .title-meta {
+      font-size: 0.6875rem;
+      color: var(--mid);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 0.65rem;
+    }
+    .header-right { text-align: right; }
+    .clock {
+      font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+      display: block;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.02em;
+    }
+    .live-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.6rem;
+      color: var(--live);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--live);
+      flex-shrink: 0;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    /* ─── top rule ──────────────────────────────────────────────── */
+    .rule {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      border: none;
+    }
+    .rule::after {
+      content: '';
+      display: block;
+      height: 1px;
+      background: var(--rule);
+    }
+
+    /* ─── method strip ──────────────────────────────────────────── */
+    .method {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.9rem 2rem;
+      font-size: 0.5625rem;
+      color: var(--mid);
+      letter-spacing: 0.07em;
+      line-height: 1.7;
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .method strong {
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 0.5rem;
+      flex-shrink: 0;
+    }
+    .method em {
+      font-style: normal;
+      color: var(--text);
+      opacity: 0.55;
+    }
+
+    /* ─── section header ────────────────────────────────────────── */
+    .section-hd {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 3.5rem 2rem 0.85rem;
+      font-size: 0.6875rem;
+      letter-spacing: 0.18em;
+      color: var(--mid);
+      text-transform: uppercase;
+    }
+
+    /* ─── stats grid ────────────────────────────────────────────── */
+    .stats {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3.5rem 3.5rem;
+    }
+
+    /* ─── individual stat ───────────────────────────────────────── */
+    .stat-item { position: relative; cursor: default; }
+
+    .stat-icon {
+      font-size: 1.25rem;
+      display: block;
+      margin-bottom: 0.65rem;
+      line-height: 1;
+      user-select: none;
+      filter: grayscale(0.35) brightness(0.9);
+      transition: filter 0.2s;
+    }
+    .stat-item:hover .stat-icon { filter: grayscale(0) brightness(1); }
+
+    .stat-value {
+      font-family: var(--mono);
+      font-size: clamp(1.375rem, 2.6vw, 2.125rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      display: block;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .stat-value.hi  { color: var(--hi); }
+    .stat-value.dim { color: #ADADAB; }
+
+    .stat-label {
+      font-size: 0.6875rem;
+      color: var(--mid);
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      display: block;
+      line-height: 1.45;
+      transition: color 0.15s;
+    }
+    .stat-item:hover .stat-label { color: var(--text); }
+
+    /* ─── tooltip (dark on light — deliberate contrast) ─────────── */
+    .stat-note {
+      position: absolute;
+      top: calc(100% + 0.6rem);
+      left: 0;
+      min-width: 230px;
+      max-width: 300px;
+      background: #141414;
+      border: 1px solid #2C2C2C;
+      border-top: 2px solid #444;
+      padding: 0.8rem 1rem;
+      font-size: 0.5625rem;
+      color: #AAAAAA;
+      letter-spacing: 0.06em;
+      line-height: 1.8;
+      z-index: 30;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.18s ease, visibility 0.18s;
+      pointer-events: none;
+    }
+    .stat-item:hover .stat-note { opacity: 1; visibility: visible; }
+    /* Flip tooltip for rightmost column */
+    .stat-item.tip-left .stat-note { left: auto; right: 0; }
+
+
+    /* ─── footer ────────────────────────────────────────────────── */
+    .footer {
+      max-width: 1200px;
+      margin: 4rem auto 0;
+      padding: 2rem 2rem 5rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    .share-btn {
+      font-family: var(--mono);
+      font-size: 0.625rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--bg);
+      background: var(--text);
+      border: none;
+      padding: 0.8rem 1.75rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      flex-shrink: 0;
+    }
+    .share-btn:hover { background: var(--blue); color: #fff; }
+    .share-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+    .sources {
+      font-size: 0.4375rem;
+      color: var(--faint);
+      letter-spacing: 0.06em;
+      max-width: 620px;
+      line-height: 1.9;
+      text-align: right;
+    }
+
+    /* ─── disclaimer ────────────────────────────────────────────── */
+    .disclaimer {
+      font-size: 0.5625rem;
+      color: var(--mid);
+      letter-spacing: 0.06em;
+      line-height: 1.75;
+      padding: 1rem 0;
+      border-top: 1px solid var(--rule);
+      width: 100%;
+    }
+
+    /* ─── responsive ─────────────────────────────────────────────── */
+    @media (max-width: 960px) {
+      .stats { grid-template-columns: repeat(3, 1fr); gap: 3rem 2.5rem; }
+      .stat-item.tip-left .stat-note { left: 0; right: auto; }
+    }
+    @media (max-width: 680px) {
+      .stats { grid-template-columns: repeat(2, 1fr); gap: 2.75rem 2rem; }
+      .header { padding-top: 4rem; }
+      /* anchor all tooltips left on 2-col layout to prevent right overflow */
+      .stat-item.tip-left .stat-note,
+      .stat-item .stat-note { left: 0; right: auto; }
+      .method { font-size: 0.625rem; }
+      .section-hd { padding-top: 2.5rem; }
+    }
+    @media (max-width: 420px) {
+      .stats { grid-template-columns: 1fr; gap: 2.25rem; }
+      .header, .stats, .section-hd, .footer, .method { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .stat-note { max-width: 85vw; left: 0 !important; right: auto !important; }
+      .sources { text-align: left; font-size: 0.5625rem; }
+      .section-hd { padding-top: 2.25rem; }
+    }
+
+    /* ─── touch: show notes inline, no hover tooltip needed ─────── */
+    @media (pointer: coarse) {
+      .stat-note {
+        position: static;
+        opacity: 1;
+        visibility: visible;
+        background: transparent;
+        border: none;
+        border-top: 1px solid var(--rule);
+        padding: 0.5rem 0 0;
+        margin-top: 0.5rem;
+        font-size: 0.5625rem;
+        color: var(--mid);
+        max-width: none;
+        min-width: unset;
+        transition: none;
+        pointer-events: auto;
+        z-index: auto;
+      }
+      /* keep icons full colour — no hover state on touch */
+      .stat-icon { filter: grayscale(0) brightness(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="../../" class="back">← PUBLICWORKS</a>
+
+  <!-- ─── header ───────────────────────────────────────────────── -->
+  <header class="header">
+    <div>
+      <div class="title">PULSE OF DENVER</div>
+      <div class="title-meta">Denver, CO · 5,280 ft · 41 metrics · updating live</div>
+    </div>
+    <div class="header-right">
+      <span class="clock" data-counter="clock">--:-- --</span>
+      <span class="live-tag"><span class="dot"></span>Live · Mountain Time</span>
+    </div>
+  </header>
+
+  <hr class="rule">
+
+  <!-- ─── methodology note ─────────────────────────────────────── -->
+  <div class="method">
+    <strong>How it works</strong>
+    Counters tick up from Jan 1 (or midnight for "today" stats) based on publicly available annual data — by Dec 31 each counter hits its yearly total. Seasonal stats only show when in season. Denver-specific where noted, otherwise Colorado statewide. <em>These are rough estimates and a creative side project — not a live data feed or journalism.</em>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!--  MONEY                                                       -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="section-hd">Money</div>
+  <div class="stats" role="list" aria-label="Denver money metrics">
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🌿</span>
+      <span class="stat-value hi" data-counter="cannabis">—</span>
+      <span class="stat-label">Cannabis Revenue in Denver This Year</span>
+      <div class="stat-note">Denver = ~30–35% of Colorado's market · est. $411M/yr for Denver city · +$13 every second · CO Dept of Revenue 2023. By Dec 31 this counter will read ~$411M.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🏛️</span>
+      <span class="stat-value" data-counter="weed-tax">—</span>
+      <span class="stat-label">Colorado Cannabis Tax Revenue YTD</span>
+      <div class="stat-note">~$282M/yr collected statewide · 15% excise + 15% retail sales tax · funds BEST school construction grants, transportation, behavioral health · CO DOR 2023.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🍃</span>
+      <span class="stat-value" data-counter="weed-grams">—</span>
+      <span class="stat-label">Grams of Weed Sold in Denver Today</span>
+      <div class="stat-note">Est. ~112K g/day · based on Denver's $411M/yr ÷ $10 avg retail price per gram · resets at midnight. Denver has 180+ licensed dispensaries.</div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem">
+      <span class="stat-icon">🏔️</span>
+      <span class="stat-value" data-counter="outdoor-rec">—</span>
+      <span class="stat-label">Colorado Outdoor Rec Revenue YTD</span>
+      <div class="stat-note">$28B/yr statewide · Colorado's fastest-growing economic sector · skiing, hiking, cycling, climbing, camping · Denver metro drives ~40% of state total · OIA 2023.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">✈️</span>
+      <span class="stat-value" data-counter="tourism">—</span>
+      <span class="stat-label">Visitors to Denver Metro This Year</span>
+      <div class="stat-note">32M visitors/yr to Metro Denver · contributes $6.6B/yr to local economy · doesn't include drive-through Colorado visitors · VISIT DENVER Annual Report 2023.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🍽️</span>
+      <span class="stat-value" data-counter="restaurant">—</span>
+      <span class="stat-label">Denver Restaurant Revenue YTD</span>
+      <div class="stat-note">~$3B/yr for Denver city · 5,000+ restaurants · one of the highest per-capita dining spends in the US · Colorado Restaurant Association / BLS OEWS 2023.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">❄️</span>
+      <span class="stat-value" data-counter="powder-loss">—</span>
+      <span class="stat-label">Corporate $ Lost to Powder Days</span>
+      <div class="stat-note">Est. $47M per significant powder event · Denver metro workers taking "powder days" (in-person + remote) · ~15 events/ski season avg · not verifiable, very real. (Obviously not this year — 2025–26 has been painfully dry.)</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🏠</span>
+      <span class="stat-value dim">$515,000</span>
+      <span class="stat-label">Denver Median Home Price</span>
+      <div class="stat-note">Up 71% since 2018 · nearly double the US national median of $306K · Denver Metro Association of Realtors / Zillow 2024. Static — doesn't update in real time.</div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem">
+      <span class="stat-icon">🏢</span>
+      <span class="stat-value dim">$1,787/mo</span>
+      <span class="stat-label">Average Denver Apartment Rent</span>
+      <div class="stat-note">Down from 2022 peak of $1,940 · requires ~$71K/yr income at the 30% rule · studio avg $1,419 · 2BR avg $2,050 · Apartment List 2024.</div>
+    </div>
+
+  </div><!-- /MONEY stats -->
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!--  ROADS & TRANSIT                                             -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="section-hd">Roads &amp; Transit</div>
+  <div class="stats" role="list" aria-label="Denver roads and transit metrics">
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🚗</span>
+      <span class="stat-value" data-counter="traffic">—</span>
+      <span class="stat-label">Hours Lost on I-70 This Year</span>
+      <div class="stat-note">~2.5M hours of delay/yr on the I-70 mountain corridor · Eisenhower Tunnel (11,013 ft elevation) is the primary chokepoint · CDOT / INRIX Traffic Analytics 2023.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">✈️</span>
+      <span class="stat-value" data-counter="dia-pax">—</span>
+      <span class="stat-label">DIA Passengers This Year</span>
+      <div class="stat-note">Denver International Airport · 69.0M passengers in 2023 · 5th busiest US airport · ~189K/day average · largest airport by land area in the US · DEN Authority 2023.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🚌</span>
+      <span class="stat-value" data-counter="rtd">—</span>
+      <span class="stat-label">RTD Boardings in Denver Metro YTD</span>
+      <div class="stat-note">Regional Transportation District · ~85M boardings/yr (2023 recovery) · light rail, commuter rail, bus · peak was 101M in 2019 · RTD Annual Report 2023.</div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem">
+      <span class="stat-icon">🚙</span>
+      <span class="stat-value dim">9.8%</span>
+      <span class="stat-label">Subaru Market Share — Colorado</span>
+      <div class="stat-note">National average is 3.5% · Colorado ranks #1 or #2 in Subaru penetration every year · AWD + outdoorsy lifestyle · Denver metro is most concentrated · S&P Global Mobility 2023.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🚙</span>
+      <span class="stat-value dim">~600,000</span>
+      <span class="stat-label">Subarus Registered in Colorado</span>
+      <div class="stat-note">Roughly 1 in every 10 registered vehicles in Colorado · higher concentration than Japan · the Outback and Forester are the dominant models · S&P Global Mobility 2023.</div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem">
+      <span class="stat-icon">🚧</span>
+      <span class="stat-value dim">250,000</span>
+      <span class="stat-label">Vehicles on I-70 Each Ski Weekend</span>
+      <div class="stat-note">Peak ski season Saturdays · 70+ mile backups are a regular occurrence · CDOT mountain corridor estimates · most are Subarus, obviously · departs at 4am or suffers.</div>
+    </div>
+
+  </div><!-- /ROADS stats -->
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!--  PEOPLE                                                      -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="section-hd">People</div>
+  <div class="stats" role="list" aria-label="Denver people metrics">
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">👋</span>
+      <span class="stat-value" data-counter="arrivals">—</span>
+      <span class="stat-label">People Who Moved to Denver This Year</span>
+      <div class="stat-note">~180K/yr gross in-migration to Denver metro (domestic only) · top origins: California, Texas, Illinois, New York · US Census Bureau ACS / CO State Demography Office.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">📦</span>
+      <span class="stat-value" data-counter="departures">—</span>
+      <span class="stat-label">People Who Left Denver This Year</span>
+      <div class="stat-note">~188K/yr gross out-migration · primary destinations: Austin TX, Phoenix AZ, Salt Lake City UT, Boise ID · departures now slightly outnumber arrivals · US Census ACS 2023.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🏃</span>
+      <span class="stat-value" data-counter="net-loss">—</span>
+      <span class="stat-label">Net People Leaving Denver This Year</span>
+      <div class="stat-note">~8K net domestic annual loss · one-way U-Haul Denver→Austin: $847 · Austin→Denver: $234 · U-Haul prices are a real-time demand indicator. Peak was 2021–2022.</div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem">
+      <span class="stat-icon">🅿️</span>
+      <span class="stat-value" data-counter="parking">—</span>
+      <span class="stat-label">Denver Parking Tickets Issued YTD</span>
+      <div class="stat-note">Denver Mobility & Parking Services issued 547K citations in FY2022 · ~500K/yr avg · most common: expired meter + street sweeping · avg fine $35–75 · very Denver.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🏙️</span>
+      <span class="stat-value dim">715,000</span>
+      <span class="stat-label">Denver City Population</span>
+      <div class="stat-note">2023 Census estimate · Denver metro 2.96M · Colorado total 5.84M · Denver grew 20%+ in the 2010s and is now in slight decline · US Census Bureau.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🐕</span>
+      <span class="stat-value dim">~470,000</span>
+      <span class="stat-label">Registered Dogs in Denver</span>
+      <div class="stat-note">Most dogs per capita of any major US city · 1 dog for every 1.5 residents · Denver has 800+ miles of trails and 28+ off-leash dog parks · Denver Animal Shelter data.</div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem">
+      <span class="stat-icon">🤷</span>
+      <span class="stat-value dim">43%</span>
+      <span class="stat-label">Colorado Residents Born Here</span>
+      <div class="stat-note">Among the lowest native-born rates of any US state · most people moved here "just for a few years" 5–15 years ago · "are you from here?" is a Denver icebreaker · US Census.</div>
+    </div>
+
+  </div><!-- /PEOPLE stats -->
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!--  MOUNTAINS & OUTDOORS                                        -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="section-hd">Mountains &amp; Outdoors</div>
+  <div class="stats" role="list" aria-label="Denver mountains and outdoors metrics">
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">⛷️</span>
+      <span class="stat-value" data-counter="ski-vert">—</span>
+      <span class="stat-label">Ski Vertical Feet Descended Today</span>
+      <div class="stat-note">Colorado's 25+ ski resorts · est. ~150K skiers on peak days × avg 10 runs × avg 1,000 ft = 1.5B ft/day · resets at midnight · shown Nov–Apr ski season only.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🎿</span>
+      <span class="stat-value" data-counter="ski-runs">—</span>
+      <span class="stat-label">Ski Runs Completed Today</span>
+      <div class="stat-note">~150K skiers × avg 10 runs/day = 1.5M runs · resets at midnight · includes all Colorado resorts (Vail, Breckenridge, Steamboat, Copper, A-Basin, etc.) · shown Nov–Apr.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🏔️</span>
+      <span class="stat-value" data-counter="rmnp">—</span>
+      <span class="stat-label">Rocky Mountain NP Visitors YTD</span>
+      <div class="stat-note">40 miles from downtown Denver · 4.0M visitors in 2023 · 3rd most visited US national park · timed entry permits required May–Oct · RMNP is free in winter · NPS 2023.</div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem">
+      <span class="stat-icon">⛰️</span>
+      <span class="stat-value" data-counter="summits">—</span>
+      <span class="stat-label">14er Summits This Summer</span>
+      <div class="stat-note">Colorado's 58 peaks above 14,000 ft · ~200K logged attempts/yr on CO14ers.com (actual number much higher) · most are day hikes from Denver · shown June–September only.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🏃</span>
+      <span class="stat-value" data-counter="trail-miles">—</span>
+      <span class="stat-label">Miles Run or Biked on Denver Trails Today</span>
+      <div class="stat-note">Denver has 850+ miles of off-street trails · est. ~100K users/day × 3mi avg = 300K miles/day · includes Cherry Creek Trail, Platte River Trail, and High Line Canal · resets midnight.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">❄️</span>
+      <span class="stat-value" data-counter="snow-in">—</span>
+      <span class="stat-label">Inches of Snow in Denver This Year</span>
+      <div class="stat-note">Denver averages 57.1"/yr (NOAA 1991–2020 climate normals) · displayed as linear projection from Jan 1 · real snowfall is winter-heavy · most snow falls Oct–Apr.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">☀️</span>
+      <span class="stat-value" data-counter="sunny-days">—</span>
+      <span class="stat-label">Sunny Days in Denver This Year</span>
+      <div class="stat-note">300 sunny days/yr average · more annual sunshine hours than Miami, LA, or San Diego · Denver gets ~3,132 sunshine hours/yr vs Miami's 2,888 · NOAA climate data. Yes, really.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">📏</span>
+      <span class="stat-value dim">5,280 ft</span>
+      <span class="stat-label">Denver Elevation — Exactly One Mile</span>
+      <div class="stat-note">The 13th step of the Colorado State Capitol is officially marked at exactly 5,280 ft · verified by surveyors multiple times · beer hits ~20% harder due to altitude dehydration. Pace yourself.</div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem">
+      <span class="stat-icon">⛰️</span>
+      <span class="stat-value dim">58</span>
+      <span class="stat-label">Colorado Fourteeners</span>
+      <div class="stat-note">Peaks above 14,000 ft · Colorado has 75% of all US fourteeners · Mount Elbert is highest at 14,440 ft · 4 of the 5 highest US peaks are in Colorado · go on, try one.</div>
+    </div>
+
+  </div><!-- /MOUNTAINS stats -->
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!--  CULTURE & FOOD                                              -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="section-hd">Culture &amp; Food</div>
+  <div class="stats" role="list" aria-label="Denver culture and food metrics">
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🏭</span>
+      <span class="stat-value" data-counter="coors">—</span>
+      <span class="stat-label">Coors Cans Produced in Golden This Year</span>
+      <div class="stat-note">Golden, CO — 15 miles from Denver · world's largest single-site brewery · est. ~15M barrels/yr × 336 cans/barrel = ~5B cans/yr · ships nationwide · Molson Coors.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🍺</span>
+      <span class="stat-value" data-counter="beer-brewed">—</span>
+      <span class="stat-label">Gallons of Craft Beer Brewed in Denver Today</span>
+      <div class="stat-note">Denver's 100+ craft breweries produce est. ~10M gal/yr (23% of CO's 43M gal total) · ~27K gal/day · Brewers Association 2023. Resets at midnight. Does not include Coors.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🍻</span>
+      <span class="stat-value" data-counter="beer-consumed">—</span>
+      <span class="stat-label">Beer Pints Consumed in Denver Today</span>
+      <div class="stat-note">Est. ~300K pints/day · 520K Denver adults × Colorado's ~28 gal/yr avg beer consumption per adult (all types, incl. domestic) ÷ 365 × 8 pints/gal · Beer Institute 2023.</div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem">
+      <span class="stat-icon">🎸</span>
+      <span class="stat-value" data-counter="redrocks">—</span>
+      <span class="stat-label">Red Rocks Attendees This Season</span>
+      <div class="stat-note">~200 concerts/yr · avg 9,525 capacity at ~80% = ~7,600/show · season runs April–October · est. from Apr 1 · resets each season · National Geographic called it the world's best venue.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🏅</span>
+      <span class="stat-value dim">100+</span>
+      <span class="stat-label">Craft Breweries in Denver</span>
+      <div class="stat-note">Within Denver city limits · Colorado has 426 total — most per capita in the US · yes, more per capita than Portland · Great American Beer Festival is held in Denver every October.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">☕</span>
+      <span class="stat-value" data-counter="coffee">—</span>
+      <span class="stat-label">Cups of Coffee Consumed in Denver Today</span>
+      <div class="stat-note">~700K cups/day est. · Denver population 715K × ~70% adults × 1.4 cups/day avg · altitude dehydrates you faster, making caffeine hit harder · resets at midnight.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🌯</span>
+      <span class="stat-value" data-counter="burritos">—</span>
+      <span class="stat-label">Breakfast Burritos Served in Denver Today</span>
+      <div class="stat-note">Denver metro's unofficial state meal · est. ~89K/day (Denver metro 2.96M × 3% eat one daily) · available at every gas station, diner, and food truck · green chile included.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🌶️</span>
+      <span class="stat-value" data-counter="green-chile">—</span>
+      <span class="stat-label">Green Chile Servings in Denver Today</span>
+      <div class="stat-note">Colorado's unofficial state dish · Pueblo or Hatch NM green chile on burritos, eggs, burgers, pizza, anything · est. ~50K/day Denver city · "Christmas" = red AND green.</div>
+    </div>
+
+    <div class="stat-item" role="listitem">
+      <span class="stat-icon">🏪</span>
+      <span class="stat-value dim">180+</span>
+      <span class="stat-label">Licensed Dispensaries in Denver</span>
+      <div class="stat-note">Denver city has 180+ licensed cannabis retail locations · more than McDonald's, Starbucks (~75), and 7-Elevens combined in Denver · CO Marijuana Enforcement Division registry.</div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem">
+      <span class="stat-icon">🌮</span>
+      <span class="stat-value dim">1993</span>
+      <span class="stat-label">Year Chipotle Opened Its First Location</span>
+      <div class="stat-note">East Hampden Ave, Denver · Steve Ells opened it with an $85K loan from his father · McDonald's became an early investor in 1998 · now 3,500+ global locations · very Denver.</div>
+    </div>
+
+  </div><!-- /CULTURE stats -->
+
+  <!-- ─── footer ───────────────────────────────────────────────── -->
+  <footer class="footer">
+    <p class="disclaimer">
+      ⚠️ <strong>Heads up:</strong> all figures on this page are rough estimates calculated from publicly available annual data — not a live API, not certified stats, not journalism. I built this because I find Denver genuinely fascinating and slightly absurd. Numbers may be off. Denver probably doesn't mind.
+    </p>
+    <button class="share-btn" id="share-btn">Copy Denver's Vitals</button>
+    <p class="sources">
+      Sources: CDOT OTIS · Brewers Association 2023 · CO State Demography Office · U.S. Census ACS ·
+      CO Dept of Revenue Marijuana Sales Reports · S&amp;P Global Mobility · NSAA · CO Ski Country USA ·
+      VISIT DENVER · FHWA NPMRDS · OIA · BLS OEWS · Denver Animal Shelter · NPS Stats ·
+      CO 14ers.com · DEN Airport Authority · RTD Annual Report · Molson Coors · Denver Mobility &amp;
+      Parking Services · Beer Institute · Apartment List · Zillow / DMAR · CO Restaurant Association.
+      Numbers are artistic projections from annual public data. Denver-specific estimates derived from
+      statewide data where city figures are unavailable. Not a certified live data feed.
+    </p>
+  </footer>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ── time helpers ──────────────────────────────────────────────
+    const Y_START = new Date(new Date().getFullYear(), 0, 1).getTime();
+
+    function ytd() { return (Date.now() - Y_START) / 1000; }
+
+    function tod() {
+      const n = new Date();
+      return (Date.now() - new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime()) / 1000;
+    }
+
+    // ── formatters ────────────────────────────────────────────────
+    const fn  = n => Math.floor(n).toLocaleString();
+    const fn1 = n => n.toFixed(1);
+    const fc  = n => {
+      if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+      if (n >= 1e3) return '$' + Math.floor(n / 1e3).toLocaleString() + 'K';
+      return '$' + Math.floor(n).toLocaleString();
+    };
+    const fcF = n => '$' + Math.floor(n).toLocaleString();
+
+    // ── counter definitions ───────────────────────────────────────
+    // All rates are: annual_total ÷ 31,536,000 sec/yr  (for ytd counters)
+    //           or: daily_total  ÷ 86,400     sec/day  (for tod counters)
+    // End-of-year values match the cited annual totals.
+    const COUNTERS = {
+
+      // MONEY ── Denver-specific where noted
+      'cannabis':    () => fcF(ytd() * 13.03),             // Denver $411M/yr ÷ 31.536M → $411M by Dec 31
+      'weed-tax':    () => fc(ytd() * 8.94),               // CO $282M/yr ÷ 31.536M
+      'weed-grams':  () => fn(tod() * 1.303) + ' g',       // Denver ~112K g/day ÷ 86,400
+      'outdoor-rec': () => fc(ytd() * 887.55),             // CO $28B/yr ÷ 31.536M
+      'tourism':     () => fn(ytd() * 1.015) + ' visitors',// Denver 32M/yr ÷ 31.536M
+      'restaurant':  () => fc(ytd() * 95.13),              // Denver $3B/yr ÷ 31.536M
+      'powder-loss': () => fc(ytd() * 22.35),              // Denver metro est., $705M/yr ÷ 31.536M
+
+      // ROADS
+      'traffic':     () => fn(ytd() * 0.0793) + ' hrs',   // I-70 2.5M hrs/yr ÷ 31.536M
+      'dia-pax':     () => fn(ytd() * 2.188),              // DEN 69M/yr ÷ 31.536M
+      'rtd':         () => fn(ytd() * 2.695),              // RTD 85M/yr ÷ 31.536M
+
+      // PEOPLE
+      'arrivals':    () => fn(ytd() * 0.00571),            // 180K/yr ÷ 31.536M
+      'departures':  () => fn(ytd() * 0.00596),            // 188K/yr ÷ 31.536M
+      'net-loss':    () => fn(ytd() * 0.000254),           // ~8K net/yr ÷ 31.536M
+      'parking':     () => fn(ytd() * 0.01585),            // Denver ~500K/yr ÷ 31.536M
+
+      // MOUNTAINS ── seasonal stats only show during active months
+      'ski-vert': () => {
+        const m = new Date().getMonth();                   // 0 = Jan … 11 = Dec
+        return (m >= 10 || m <= 3)                         // Nov (10) through Apr (3)
+          ? fn(tod() * 17361) + ' ft'                      // 1.5B ft/day ÷ 86,400 per day
+          : '— off season';
+      },
+      'ski-runs': () => {
+        const m = new Date().getMonth();
+        return (m >= 10 || m <= 3)
+          ? fn(tod() * 17.36) + ' runs'                    // 1.5M runs/day ÷ 86,400
+          : '— off season';
+      },
+      'rmnp':        () => fn(ytd() * 0.1269),             // 4M/yr ÷ 31.536M
+      'summits': () => {
+        const m = new Date().getMonth();
+        return (m >= 5 && m <= 8)                          // June (5) through Sept (8)
+          ? fn(tod() * 0.01897)                            // ~200K / 122 days ÷ 86,400
+          : '— summer only';
+      },
+      'trail-miles': () => fn(tod() * 3.47) + ' mi',       // Denver ~300K mi/day ÷ 86,400
+      'snow-in':     () => fn1(ytd() * 0.0000018069) + ' in', // 57.1"/yr ÷ 31.536M
+      'sunny-days':  () => Math.floor(ytd() / 86400 * (300 / 365)) + ' days',
+
+      // CULTURE
+      'coors':        () => fn(ytd() * 159.8) + ' cans',  // Golden ~15M bbl × 336 cans ÷ 31.536M/yr
+      'beer-brewed':  () => fn(tod() * 0.317) + ' gal',   // Denver craft 10M gal/yr ÷ 86,400/day
+      'beer-consumed':() => fn(tod() * 3.47) + ' pints',  // Denver ~300K pints/day ÷ 86,400
+      'redrocks': () => {
+        const m = new Date().getMonth();
+        if (m < 3 || m > 9) return '— off season';        // April (3) through Oct (9)
+        const seasonStart = new Date(new Date().getFullYear(), 3, 1).getTime();
+        const secs = Math.max(0, (Date.now() - seasonStart) / 1000);
+        return fn(secs * 0.0824) + ' this season';         // 1.524M / 214 days ÷ 86,400
+      },
+      'coffee':       () => fn(tod() * 8.102),             // Denver ~700K cups/day ÷ 86,400
+      'burritos':     () => fn(tod() * 1.028),             // Denver ~89K/day ÷ 86,400
+      'green-chile':  () => fn(tod() * 0.579),             // Denver ~50K/day ÷ 86,400
+    };
+
+    // ── DOM cache ─────────────────────────────────────────────────
+    const cache = {};
+    document.querySelectorAll('[data-counter]').forEach(el => {
+      const k = el.dataset.counter;
+      if (!cache[k]) cache[k] = [];
+      cache[k].push(el);
+    });
+
+    // ── Denver clock ──────────────────────────────────────────────
+    function updateClock() {
+      const els = cache['clock'] || [];
+      const now = new Date();
+      let s;
+      try {
+        s = now.toLocaleTimeString('en-US', {
+          timeZone: 'America/Denver',
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+        });
+      } catch (e) { s = now.toLocaleTimeString(); }
+      els.forEach(el => { if (el.textContent !== s) el.textContent = s; });
+      setTimeout(updateClock, 1000);
+    }
+
+    // ── main RAF loop ─────────────────────────────────────────────
+    function loop() {
+      for (const [k, getter] of Object.entries(COUNTERS)) {
+        const val = getter();
+        (cache[k] || []).forEach(el => {
+          if (el.textContent !== val) el.textContent = val;
+        });
+      }
+      requestAnimationFrame(loop);
+    }
+
+    // ── share button ──────────────────────────────────────────────
+    document.getElementById('share-btn').addEventListener('click', () => {
+      const y = ytd();
+      const t = tod();
+      const m = new Date().getMonth();
+
+      const lines = [
+        'PULSE OF DENVER — right now',
+        '',
+        `🌿  Denver cannabis revenue:  ${fcF(y * 13.03)} this year`,
+        `🏛️  CO weed tax collected:    ${fc(y * 8.94)} this year`,
+        `🚗  I-70 hours lost:          ${fn(y * 0.0793)} hrs this year`,
+        `✈️  DIA passengers:           ${fn(y * 2.188)} this year`,
+        `🚌  RTD boardings:            ${fn(y * 2.695)} this year`,
+        `🏭  Coors cans (Golden, CO):  ${fn(y * 159.8)} this year`,
+        `🍺  Denver craft beer brewed: ${fn(t * 0.317)} gal today`,
+        `🍻  Denver beer consumed:     ${fn(t * 3.47)} pints today`,
+        `📦  Net departures:           ${fn(y * 0.000254)} people left this year`,
+        `❄️  Powder day loss:          ${fc(y * 22.35)} in productivity`,
+        (m >= 10 || m <= 3) ? `⛷️  Ski runs today:           ${fn(t * 17.36)} across CO` : null,
+        (m >= 5  && m <= 8) ? `⛰️  14er summits:              ${fn(t * 0.01897)} this summer` : null,
+        `☀️  Sunny days:               ${Math.floor(y / 86400 * (300 / 365))} this year`,
+        `🐕  Registered dogs:          ~470,000 (most per capita in US)`,
+        `📏  Elevation:                5,280 ft · exactly one mile`,
+        `🚙  Subaru share:             9.8% of CO cars (nat. avg 3.5%)`,
+        `🏪  Denver dispensaries:      180+ vs ~75 Starbucks`,
+        '',
+        'Is Denver okay? ' + window.location.href,
+      ].filter(Boolean).join('\n');
+
+      const btn = document.getElementById('share-btn');
+      const orig = btn.textContent;
+
+      const doCopy = txt => (navigator.clipboard && window.isSecureContext)
+        ? navigator.clipboard.writeText(txt)
+        : Promise.reject();
+
+      doCopy(lines)
+        .then(() => {
+          btn.textContent = 'Copied!';
+          btn.style.background = '#1A6B45';
+          btn.style.color = '#fff';
+        })
+        .catch(() => {
+          const ta = Object.assign(document.createElement('textarea'), {
+            value: lines,
+            style: 'position:fixed;opacity:0;pointer-events:none'
+          });
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); btn.textContent = 'Copied!'; }
+          catch (e) { btn.textContent = 'Try again'; }
+          document.body.removeChild(ta);
+        })
+        .finally(() => {
+          setTimeout(() => {
+            btn.textContent = orig;
+            btn.style.background = '';
+            btn.style.color = '';
+          }, 2500);
+        });
+    });
+
+    // ── init ──────────────────────────────────────────────────────
+    updateClock();
+    loop();
+
+  }());
+  </script>
+</body>
+</html>

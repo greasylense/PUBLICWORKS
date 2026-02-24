@@ -1,5 +1,14 @@
 [
   {
+    "id": "pulse-of-denver",
+    "number": "007",
+    "name": "Pulse of Denver",
+    "description": "Real-time diagnostic of a city running on craft beer, powder days, and misplaced ambition",
+    "status": "live",
+    "url": "projects/pulse-of-denver/",
+    "date": "2026-02"
+  },
+  {
     "id": "one-in-eight-billion",
     "number": "001",
     "name": "One in 8 Billion",
