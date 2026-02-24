@@ -1,7 +1,7 @@
 [
   {
     "id": "pulse-of-denver",
-    "number": "007",
+    "number": "006",
     "name": "Pulse of Denver",
     "description": "Real-time diagnostic of a city running on craft beer, powder days, and misplaced ambition",
     "status": "live",
@@ -9,8 +9,26 @@
     "date": "2026-02"
   },
   {
+    "id": "ascii-effect",
+    "number": "005",
+    "name": "ASCII Effect",
+    "description": "Depth-aware ASCII filter with code syntax colors",
+    "status": "live",
+    "url": "projects/ascii-effect/",
+    "date": "2026-02"
+  },
+  {
+    "id": "public-archive",
+    "number": "004",
+    "name": "The Public Archive",
+    "description": "Visual essay on humanity's data footprint",
+    "status": "live",
+    "url": "projects/public-archive/",
+    "date": "2026-01"
+  },
+  {
     "id": "one-in-eight-billion",
-    "number": "001",
+    "number": "003",
     "name": "One in 8 Billion",
     "description": "Discover how unique you are among all of humanity",
     "status": "live",
@@ -28,29 +46,11 @@
   },
   {
     "id": "landscape",
-    "number": "003",
+    "number": "001",
     "name": "Landscape",
     "description": "Infinite glitch landscape collage generator",
     "status": "live",
     "url": "projects/landscape/",
     "date": "2025-01"
-  },
-  {
-    "id": "public-archive",
-    "number": "004",
-    "name": "The Public Archive",
-    "description": "Visual essay on humanity's data footprint",
-    "status": "live",
-    "url": "projects/public-archive/",
-    "date": "2026-01"
-  },
-  {
-    "id": "ascii-effect",
-    "number": "006",
-    "name": "ASCII Effect",
-    "description": "Depth-aware ASCII filter with code syntax colors",
-    "status": "live",
-    "url": "projects/ascii-effect/",
-    "date": "2026-02"
   }
 ]
