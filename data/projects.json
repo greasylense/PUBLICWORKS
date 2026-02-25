@@ -1,5 +1,14 @@
 [
   {
+    "id": "bend-oregon",
+    "number": "007",
+    "name": "Bend, OR",
+    "description": "Live dashboard for a city running on IPAs, vertical feet, and an unreasonable number of roundabouts",
+    "status": "live",
+    "url": "projects/bend-oregon/",
+    "date": "2026-02"
+  },
+  {
     "id": "pulse-of-denver",
     "number": "006",
     "name": "Pulse of Denver",

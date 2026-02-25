@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Bend, OR — a live dashboard. Beer poured, vertical feet skied, roundabouts cleared, dog wags & more, counting in real time.">
+  <meta property="og:title" content="Bend, OR — Live Dashboard">
+  <meta property="og:description" content="30 live metrics for the most interesting small city in America.">
+  <meta name="theme-color" content="#EDEBE4">
+  <title>Bend, OR — PUBLICWORKS</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:    #EDEBE4;
+      --text:  #141210;
+      --mid:   #7A7060;
+      --faint: #D4CFC8;
+      --green: #1E5C32;
+      --sky:   #1A5C8A;
+      --rust:  #B85218;
+      --live:  #C83A10;
+      --rule:  #C8C2BA;
+      --mono:  'IBM Plex Mono', 'SF Mono', monospace;
+      --sans:  'Space Grotesk', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body { background: var(--bg); color: var(--text); font-family: var(--mono); min-height: 100vh; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── back link ── */
+    .back {
+      position: fixed;
+      top: 1.5rem; left: 1.5rem;
+      font-size: 0.6875rem;
+      color: var(--mid);
+      z-index: 100;
+      letter-spacing: 0.08em;
+      transition: color 0.15s;
+    }
+    .back:hover { color: var(--green); }
+    .back:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
+
+    /* ── header ── */
+    .header {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 5.5rem 2rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .title {
+      font-family: var(--sans);
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 700;
+      letter-spacing: -0.045em;
+      line-height: 1;
+    }
+    .title-meta {
+      font-size: 0.75rem;
+      color: var(--mid);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .title-meta span { white-space: nowrap; }
+    .header-right { text-align: right; flex-shrink: 0; }
+    .clock {
+      font-size: clamp(1rem, 1.75vw, 1.25rem);
+      display: block;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+    .live-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.6875rem;
+      color: var(--live);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--live);
+      flex-shrink: 0;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    /* ── dividers ── */
+    .rule {
+      max-width: 1200px; margin: 0 auto; padding: 0 2rem; border: none;
+    }
+    .rule::after {
+      content: ''; display: block; height: 1px; background: var(--rule);
+    }
+
+    /* ── method strip ── */
+    .method {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0.9rem 2rem;
+      font-size: 0.75rem;
+      color: var(--mid);
+      letter-spacing: 0.05em;
+      line-height: 1.7;
+      border-bottom: 1px solid var(--rule);
+      display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center;
+    }
+    .method strong {
+      font-weight: 500; color: var(--text);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      font-size: 0.5625rem; flex-shrink: 0;
+    }
+    .method em { font-style: normal; opacity: 0.5; }
+
+    /* ── filter bar ── */
+    .filter-bar {
+      max-width: 1200px; margin: 0 auto;
+      padding: 1.75rem 2rem 0;
+      display: flex; gap: 0; flex-wrap: wrap; align-items: center;
+      border-bottom: 1px solid var(--rule);
+    }
+    .filter-label {
+      font-size: 0.5625rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--mid); margin-right: 1.25rem; flex-shrink: 0;
+    }
+    .filter-btn {
+      font-family: var(--mono); font-size: 0.6875rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--mid); background: none; border: none;
+      padding: 0.6rem 1.25rem; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .filter-btn:hover { color: var(--text); }
+    .filter-btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+    .filter-btn.active { color: var(--text); font-weight: 500; }
+    .filter-btn[data-filter="all"].active      { border-bottom-color: var(--text); }
+    .filter-btn[data-filter="outdoors"].active { border-bottom-color: var(--green); color: var(--green); }
+    .filter-btn[data-filter="culture"].active  { border-bottom-color: var(--rust); color: var(--rust); }
+    .filter-btn[data-filter="community"].active{ border-bottom-color: var(--sky); color: var(--sky); }
+    .filter-btn[data-filter="nature"].active   { border-bottom-color: var(--mid); }
+
+    /* ── section header ── */
+    .section-hd {
+      max-width: 1200px; margin: 0 auto;
+      padding: 3.5rem 2rem 0.5rem;
+      font-size: 0.5625rem; letter-spacing: 0.22em;
+      color: var(--mid); text-transform: uppercase;
+      display: flex; align-items: center; gap: 0.65rem;
+    }
+    .section-hd::before {
+      content: ''; width: 6px; height: 6px; flex-shrink: 0;
+    }
+    .section-hd.s-outdoor::before  { background: var(--green); }
+    .section-hd.s-culture::before  { background: var(--rust); }
+    .section-hd.s-community::before{ background: var(--sky); }
+    .section-hd.s-nature::before   { background: var(--mid); }
+
+    .section-sub {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0.2rem 2rem 1.25rem;
+      font-size: 0.8125rem; color: var(--mid);
+      letter-spacing: 0.03em; line-height: 1.6;
+    }
+
+    /* ── stats grid ── */
+    .stats {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 2rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3rem 3rem;
+    }
+
+    /* ── stat card ── */
+    .stat-item {
+      position: relative; cursor: default;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .stat-item.visible { opacity: 1; transform: none; }
+    .stat-item[data-hidden] { display: none; }
+
+    .stat-icon {
+      font-size: 1.5rem; display: block;
+      margin-bottom: 0.75rem; line-height: 1; user-select: none;
+      filter: grayscale(0.2);
+      transition: filter 0.2s;
+    }
+    .stat-item:hover .stat-icon { filter: none; }
+
+    .stat-value {
+      font-family: var(--mono);
+      font-size: clamp(1.625rem, 2.8vw, 2.375rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      display: block; line-height: 1;
+      margin-bottom: 0.55rem;
+    }
+    .stat-value.green { color: var(--green); }
+    .stat-value.rust  { color: var(--rust); }
+    .stat-value.sky   { color: var(--sky); }
+    .stat-value.dim   { color: var(--mid); }
+
+    .stat-label {
+      font-size: 0.75rem; color: var(--mid);
+      text-transform: uppercase; letter-spacing: 0.09em;
+      display: block; line-height: 1.5;
+      transition: color 0.15s;
+    }
+    .stat-item:hover .stat-label { color: var(--text); }
+
+    .stat-rate {
+      display: inline-block; margin-top: 0.55rem;
+      font-size: 0.5rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--mid); opacity: 0.55;
+      transition: opacity 0.15s;
+    }
+    .stat-item:hover .stat-rate { opacity: 1; }
+
+    /* ── tooltip ── */
+    .stat-note {
+      position: absolute; top: calc(100% + 0.5rem); left: 0;
+      min-width: 240px; max-width: 300px;
+      background: #171310; border: 1px solid #2E2922;
+      border-top: 2px solid var(--green);
+      padding: 0.85rem 1rem;
+      font-size: 0.6875rem; color: #9E9080;
+      letter-spacing: 0.05em; line-height: 1.85;
+      z-index: 30; opacity: 0; visibility: hidden;
+      transition: opacity 0.18s ease, visibility 0.18s;
+      pointer-events: none;
+    }
+    .stat-item:hover .stat-note { opacity: 1; visibility: visible; }
+    .stat-item.tip-left .stat-note { left: auto; right: 0; }
+
+    /* ── fact strip ── */
+    .fact-strip {
+      max-width: 1200px; margin: 0 auto;
+      padding: 1.75rem 2rem 2rem;
+      border-top: 1px solid var(--rule);
+    }
+    .fact-strip-head {
+      font-size: 0.5rem; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--faint); margin-bottom: 0.9rem;
+    }
+    .fact-rows {
+      display: grid; grid-template-columns: auto 1fr;
+      gap: 0.5rem 2.5rem; font-size: 0.8125rem;
+    }
+    .fact-label { color: var(--mid); white-space: nowrap; letter-spacing: 0.04em; }
+    .fact-val   { color: var(--text); font-weight: 500; }
+    .fact-val.green { color: var(--green); }
+    .fact-val.rust  { color: var(--rust); }
+    .fact-val.sky   { color: var(--sky); }
+
+    /* ── hidden section ── */
+    [data-section].hidden { display: none !important; }
+
+    /* ── footer ── */
+    .footer {
+      max-width: 1200px; margin: 3rem auto 0;
+      padding: 2rem 2rem 5rem;
+      display: flex; align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap; gap: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    .share-btn {
+      font-family: var(--mono); font-size: 0.6875rem;
+      font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--bg); background: var(--text);
+      border: none; padding: 0.8rem 1.75rem;
+      cursor: pointer; transition: background 0.2s; flex-shrink: 0;
+    }
+    .share-btn:hover { background: var(--green); }
+    .share-btn.copied { background: var(--green); }
+    .share-btn:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+    .sources {
+      font-size: 0.5625rem; color: var(--faint);
+      letter-spacing: 0.05em; max-width: 580px;
+      line-height: 2; text-align: right;
+    }
+    .disclaimer {
+      font-size: 0.75rem; color: var(--mid);
+      letter-spacing: 0.04em; line-height: 1.75;
+      padding: 1rem 0; border-top: 1px solid var(--rule); width: 100%;
+    }
+    .disclaimer strong { color: var(--text); }
+
+    /* ── responsive ── */
+    @media (max-width: 960px) {
+      .stats { grid-template-columns: repeat(3, 1fr); gap: 2.75rem 2.5rem; }
+      .stat-item.tip-left .stat-note { left: 0; right: auto; }
+    }
+    @media (max-width: 680px) {
+      .stats { grid-template-columns: repeat(2, 1fr); gap: 2.5rem 2rem; }
+      .header { padding-top: 4rem; }
+      .section-hd { padding-top: 2.5rem; }
+      .stat-item .stat-note { left: 0; right: auto; }
+    }
+    @media (max-width: 420px) {
+      .stats { grid-template-columns: 1fr; gap: 2rem; }
+      .header, .stats, .section-hd, .section-sub,
+      .fact-strip, .footer, .method, .filter-bar {
+        padding-left: 1.25rem; padding-right: 1.25rem;
+      }
+      .stat-note { max-width: 88vw; left: 0 !important; right: auto !important; }
+      .sources { text-align: left; }
+    }
+
+    /* ── touch: notes always visible ── */
+    @media (pointer: coarse) {
+      .stat-note {
+        position: static; opacity: 1; visibility: visible;
+        background: transparent; border: none;
+        border-top: 1px solid var(--rule);
+        padding: 0.55rem 0 0; margin-top: 0.6rem;
+        font-size: 0.6875rem; color: var(--mid);
+        max-width: none; min-width: unset;
+        transition: none; pointer-events: auto; z-index: auto;
+      }
+      .stat-icon { filter: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .stat-item { opacity: 1 !important; transform: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="../../" class="back">← PUBLICWORKS</a>
+
+  <!-- ─── header ──────────────────────────────────────────── -->
+  <header class="header">
+    <div>
+      <div class="title">BEND, OR</div>
+      <div class="title-meta">
+        <span>30 metrics · counting live</span>
+        <span>44.0582° N, 121.3153° W</span>
+        <span>ELEV 3,623 FT</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="clock" data-counter="clock">--:--:-- --</span>
+      <span class="live-tag"><span class="dot"></span>Live · Pacific Time</span>
+    </div>
+  </header>
+
+  <hr class="rule">
+
+  <!-- ─── methodology ─────────────────────────────────────── -->
+  <div class="method">
+    <strong>How it works</strong>
+    Counters tick from midnight (or Jan 1 for YTD) based on estimated rates from public data. Ski &amp; MTB stats are seasonal. Home price and rent are static 2024 figures.
+    <em>Side project — estimates only, not a live data feed.</em>
+  </div>
+
+  <!-- ─── filter bar ───────────────────────────────────────── -->
+  <nav class="filter-bar" aria-label="Filter by category">
+    <span class="filter-label" aria-hidden="true">View —</span>
+    <button class="filter-btn active" data-filter="all"       aria-pressed="true">All</button>
+    <button class="filter-btn"        data-filter="outdoors"  aria-pressed="false">Outdoors</button>
+    <button class="filter-btn"        data-filter="culture"   aria-pressed="false">Culture</button>
+    <button class="filter-btn"        data-filter="community" aria-pressed="false">Community</button>
+    <button class="filter-btn"        data-filter="nature"    aria-pressed="false">Land &amp; Nature</button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  MOUNTAIN & OUTDOORS                                   -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section-hd s-outdoor" data-section="outdoors">Mountain &amp; Outdoors</div>
+  <p class="section-sub" data-section="outdoors">Mt. Bachelor, 500+ miles of singletrack, a dog on every trail, and someone always down to paddle</p>
+  <div class="stats" role="list" aria-label="Outdoor metrics" data-section="outdoors">
+
+    <div class="stat-item" role="listitem" data-category="outdoors">
+      <span class="stat-icon" aria-hidden="true">⛷️</span>
+      <span class="stat-value green" data-counter="ski-vert">—</span>
+      <span class="stat-label">Vertical Feet Skied at Mt. Bachelor Today</span>
+      <span class="stat-rate">+100 ft / 0.29s · seasonal</span>
+      <div class="stat-note">
+        Mt. Bachelor averages ~2,000 skiers on a typical day, each logging ~15,000 ft of vertical (10 runs × 1,500 ft avg). Total: ~30M ft/day. Counter runs Nov–Apr. Resets at midnight.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="outdoors">
+      <span class="stat-icon" aria-hidden="true">🏔️</span>
+      <span class="stat-value green" data-counter="ski-runs">—</span>
+      <span class="stat-label">Ski Runs Completed at Bachelor Today</span>
+      <span class="stat-rate">seasonal</span>
+      <div class="stat-note">
+        Derived from vertical feet ÷ avg 1,500 ft per run. Bachelor has 101 named trails across 3,683 skiable acres. Seasonal counter, Nov–Apr only.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="outdoors">
+      <span class="stat-icon" aria-hidden="true">🐕</span>
+      <span class="stat-value green" data-counter="dog-wags">—</span>
+      <span class="stat-label">Dog Wags Recorded in Bend Today</span>
+      <span class="stat-rate">+1,000 wags / 2.2s</span>
+      <div class="stat-note">
+        Bend's dog population est. ~25,000–30,000. At a conservative 15 wags/minute that's ~21.6M wags/day available. We believe this number completely.
+      </div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem" data-category="outdoors">
+      <span class="stat-icon" aria-hidden="true">🌲</span>
+      <span class="stat-value green" data-counter="trail-miles">—</span>
+      <span class="stat-label">Trail Miles Hiked &amp; Biked Around Bend Today</span>
+      <div class="stat-note">
+        Bend has 500+ miles of singletrack within 30 min of downtown. Est. ~10,000 daily trail users × avg 3 miles each. Year-round (Tumalo, Phil's Trail, Deschutes River Trail).
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="outdoors">
+      <span class="stat-icon" aria-hidden="true">🚵</span>
+      <span class="stat-value green" data-counter="mtb-laps">—</span>
+      <span class="stat-label">Mountain Bike Laps at Phil's Trail Today</span>
+      <span class="stat-rate">seasonal · May–Oct</span>
+      <div class="stat-note">
+        Phil's Trail Complex is one of the most-ridden trail systems in the Pacific Northwest. Est. 600 riders × avg 3 laps on peak days. Counter runs May–Oct. Resets midnight.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="outdoors">
+      <span class="stat-icon" aria-hidden="true">🛶</span>
+      <span class="stat-value green" data-counter="paddle-hrs">—</span>
+      <span class="stat-label">Hours Paddled on the Deschutes Today</span>
+      <span class="stat-rate">seasonal · Apr–Sep</span>
+      <div class="stat-note">
+        The Deschutes River runs right through downtown Bend. Est. ~300 paddlers/day (kayak, SUP, rafts) × avg 2 hrs each on peak season days. Resets midnight.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="outdoors">
+      <span class="stat-icon" aria-hidden="true">🎣</span>
+      <span class="stat-value green" data-counter="fly-fishing">—</span>
+      <span class="stat-label">Fly Fishing Hours on the Deschutes Today</span>
+      <div class="stat-note">
+        The Deschutes is a designated Wild &amp; Scenic river — world-famous for rainbow trout and steelhead fly fishing. Est. ~150 anglers × avg 3 hrs/day. Year-round fishable.
+      </div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem" data-category="outdoors">
+      <span class="stat-icon" aria-hidden="true">☀️</span>
+      <span class="stat-value green" data-counter="sunny-days">—</span>
+      <span class="stat-label">Sunny Days in Bend So Far This Year</span>
+      <div class="stat-note">
+        Bend averages 158 fully sunny days/year (NWS). Some sources cite "300 days" — those include partial cloud cover. Either way: significantly sunnier than Portland. YTD counter.
+      </div>
+    </div>
+
+  </div><!-- /outdoors stats -->
+
+  <div class="fact-strip" data-section="outdoors">
+    <div class="fact-strip-head">Mt. Bachelor specs</div>
+    <div class="fact-rows">
+      <span class="fact-label">Skiable acres</span>        <span class="fact-val green">3,683</span>
+      <span class="fact-label">Named trails</span>         <span class="fact-val">101</span>
+      <span class="fact-label">Vertical drop</span>        <span class="fact-val green">4,318 ft</span>
+      <span class="fact-label">Avg annual snowfall</span>  <span class="fact-val">462 in</span>
+      <span class="fact-label">Summit elevation</span>     <span class="fact-val">9,065 ft</span>
+      <span class="fact-label">Miles of trail in Bend</span><span class="fact-val green">500+</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  CRAFT & CULTURE                                       -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section-hd s-culture" data-section="culture">Craft &amp; Culture</div>
+  <p class="section-sub" data-section="culture">IPA. Subaru. Hydro Flask. Roundabout. Kombucha. In that order, every day, forever.</p>
+  <div class="stats" role="list" aria-label="Culture metrics" data-section="culture">
+
+    <div class="stat-item" role="listitem" data-category="culture">
+      <span class="stat-icon" aria-hidden="true">🍺</span>
+      <span class="stat-value rust" data-counter="ipa-pints">—</span>
+      <span class="stat-label">Pints of IPA Consumed in Bend Today</span>
+      <span class="stat-rate">+1 pint / 2.1s</span>
+      <div class="stat-note">
+        Bend: 22+ craft breweries for ~102K residents — among the highest ratios in the US. Deschutes Brewery alone ships ~400K barrels/yr. Est. ~41,000 pints/day. Resets midnight.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="culture">
+      <span class="stat-icon" aria-hidden="true">🔄</span>
+      <span class="stat-value rust" data-counter="roundabouts">—</span>
+      <span class="stat-label">Roundabouts Cleared in Bend Today</span>
+      <span class="stat-rate">+1 car / 0.5s</span>
+      <div class="stat-note">
+        Bend has 50+ roundabouts — more per capita than almost any US city. The city actively prefers them: safer, lower emissions, better throughput. Est. ~172,800 vehicle-clearings/day.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="culture">
+      <span class="stat-icon" aria-hidden="true">🚗</span>
+      <span class="stat-value rust" data-counter="subarus">—</span>
+      <span class="stat-label">Subarus Spotted in Bend Today</span>
+      <span class="stat-rate">+1 car / 8s</span>
+      <div class="stat-note">
+        Oregon is top-3 nationally for Subaru ownership per capita — Bend leads Oregon. Est. 1 in 8 vehicles is a Subaru. ~10,800 sightings/day. Most are loaded with ski gear or a dog.
+      </div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem" data-category="culture">
+      <span class="stat-icon" aria-hidden="true">💧</span>
+      <span class="stat-value rust" data-counter="hydro-clinks">—</span>
+      <span class="stat-label">Hydro Flask Clinks in Bend Today</span>
+      <span class="stat-rate">+1 clink / 12s</span>
+      <div class="stat-note">
+        Hydro Flask is headquartered in Bend, OR. Est. 65%+ of residents own at least one. Clinks tallied from trailhead meetups, brewery patios, and pre-slope coordination sessions.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="culture">
+      <span class="stat-icon" aria-hidden="true">☕</span>
+      <span class="stat-value rust" data-counter="coffees">—</span>
+      <span class="stat-label">Coffees Consumed in Bend Today</span>
+      <div class="stat-note">
+        Bend has a thriving independent coffee scene (Thump, Lone Pine, Strictly Organic, etc). Est. ~75,000 cups/day across cafes and home brewing. Resets midnight.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="culture">
+      <span class="stat-icon" aria-hidden="true">🍵</span>
+      <span class="stat-value rust" data-counter="kombucha">—</span>
+      <span class="stat-label">Kombucha Bottles Sold in Bend Today</span>
+      <div class="stat-note">
+        High Desert Kombucha is Bend-based and sold at nearly every grocery, café, and trailhead cooler in town. Est. ~1,200 bottles/day across local brands. Resets midnight.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="culture">
+      <span class="stat-icon" aria-hidden="true">🧘</span>
+      <span class="stat-value rust" data-counter="yoga-hrs">—</span>
+      <span class="stat-label">Yoga Class Hours Logged in Bend Today</span>
+      <div class="stat-note">
+        Bend has an unusually high concentration of yoga studios and wellness centers per capita. Est. ~600 class-hours/day across all studios. Resets midnight.
+      </div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem" data-category="culture">
+      <span class="stat-icon" aria-hidden="true">🏭</span>
+      <span class="stat-value rust" data-counter="brewery-visits">—</span>
+      <span class="stat-label">Brewery Taproom Visits in Bend Today</span>
+      <div class="stat-note">
+        22+ taprooms open most days. Deschutes, 10 Barrel, Crux, Boneyard, GoodLife, Ale Apothecary and more. Est. avg 200 visitors per brewery per day = ~4,400/day. Resets midnight.
+      </div>
+    </div>
+
+  </div><!-- /culture stats -->
+
+  <div class="fact-strip" data-section="culture">
+    <div class="fact-strip-head">Bend craft culture facts</div>
+    <div class="fact-rows">
+      <span class="fact-label">Craft breweries</span>            <span class="fact-val rust">22+</span>
+      <span class="fact-label">Breweries per 10K residents</span><span class="fact-val">~2.2</span>
+      <span class="fact-label">Deschutes Brewery founded</span>  <span class="fact-val">1988</span>
+      <span class="fact-label">Hydro Flask HQ</span>             <span class="fact-val rust">Bend, OR</span>
+      <span class="fact-label">Roundabouts in city</span>        <span class="fact-val">50+</span>
+      <span class="fact-label">Avg sunny days / year</span>      <span class="fact-val">~158</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  COMMUNITY & GROWTH                                    -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section-hd s-community" data-section="community">Community &amp; Growth</div>
+  <p class="section-sub" data-section="community">One of the fastest-growing mid-size cities in America. Everyone is from somewhere else, and they're not leaving — until they are.</p>
+  <div class="stats" role="list" aria-label="Community metrics" data-section="community">
+
+    <div class="stat-item" role="listitem" data-category="community">
+      <span class="stat-icon" aria-hidden="true">📦</span>
+      <span class="stat-value sky" data-counter="arrivals">—</span>
+      <span class="stat-label">People Who Moved to Bend This Year</span>
+      <div class="stat-note">
+        Bend grew 43% from 2010–2020, one of the fastest-growing US cities. Current est. ~3,500 new residents/yr. Driven by remote work, outdoor access, and Oregon lifestyle. YTD since Jan 1.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="community">
+      <span class="stat-icon" aria-hidden="true">🚚</span>
+      <span class="stat-value dim" data-counter="departures">—</span>
+      <span class="stat-label">People Who Left Bend This Year</span>
+      <div class="stat-note">
+        Est. ~2,200 residents leave annually — many priced out. They often relocate to Sisters, Redmond, or Prineville as Bend housing costs rise. Net inflow remains ~+1,300/yr. YTD.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="community">
+      <span class="stat-icon" aria-hidden="true">📈</span>
+      <span class="stat-value sky" data-counter="net-gain">—</span>
+      <span class="stat-label">Net New Bend Residents This Year</span>
+      <div class="stat-note">
+        Arrivals minus departures. Est. net ~+1,300 new residents per year. Bend has grown from ~52K in 2000 to ~102K in 2024. YTD since Jan 1.
+      </div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem" data-category="community">
+      <span class="stat-icon" aria-hidden="true">🏗️</span>
+      <span class="stat-value sky" data-counter="housing-permits">—</span>
+      <span class="stat-label">New Housing Permits Issued in Bend This Year</span>
+      <div class="stat-note">
+        Deschutes County issues ~800–1,000 new residential permits/yr. Demand continues to outpace supply. YTD counter since Jan 1.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="community">
+      <span class="stat-icon" aria-hidden="true">🏠</span>
+      <span class="stat-value dim">$649,000</span>
+      <span class="stat-label">Bend Median Home Price</span>
+      <div class="stat-note">
+        Up ~85% since 2019. Requires ~$130K household income at standard 28% DTI. One of the most expensive mid-size markets in the Pacific Northwest. Zillow / RMLS 2024. Static.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="community">
+      <span class="stat-icon" aria-hidden="true">🏢</span>
+      <span class="stat-value dim">$1,650/mo</span>
+      <span class="stat-label">Average Bend Apartment Rent</span>
+      <div class="stat-note">
+        1BR avg $1,650 · 2BR avg $2,050 · studio avg $1,380. Up 40%+ since 2019. Vacancy rate ~3%. Requires ~$66K/yr income. Apartment List / CoStar 2024. Static.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="community">
+      <span class="stat-icon" aria-hidden="true">👥</span>
+      <span class="stat-value dim">~102,000</span>
+      <span class="stat-label">Current Bend Population</span>
+      <div class="stat-note">
+        2024 estimate. Up from ~52,000 in 2000 and ~76,000 in 2010. Now the second-largest city in Oregon east of the Cascades. U.S. Census / Oregon State Demography Office.
+      </div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem" data-category="community">
+      <span class="stat-icon" aria-hidden="true">🏨</span>
+      <span class="stat-value dim">~1,400</span>
+      <span class="stat-label">Active Airbnb Listings in Bend</span>
+      <div class="stat-note">
+        One of the highest short-term rental densities in Oregon. City of Bend now requires STR permits. Many locals point to this as a contributing factor to housing availability and rent costs.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="community">
+      <span class="stat-icon" aria-hidden="true">💰</span>
+      <span class="stat-value dim">+85%</span>
+      <span class="stat-label">Home Price Growth Since 2019</span>
+      <div class="stat-note">
+        Bend went from a median around $350K in 2019 to $649K in 2024. Among the steepest appreciation of any mid-size US city over that period. Zillow / RMLS. Static.
+      </div>
+    </div>
+
+  </div><!-- /community stats -->
+
+  <div class="fact-strip" data-section="community">
+    <div class="fact-strip-head">Bend by the numbers</div>
+    <div class="fact-rows">
+      <span class="fact-label">Population (2024 est.)</span>       <span class="fact-val">~102,000</span>
+      <span class="fact-label">Growth 2010–2024</span>             <span class="fact-val sky">+43%</span>
+      <span class="fact-label">Median household income</span>      <span class="fact-val">~$74,000</span>
+      <span class="fact-label">Home price / income ratio</span>    <span class="fact-val rust">8.8×</span>
+      <span class="fact-label">Median home price (2024)</span>     <span class="fact-val">$649,000</span>
+      <span class="fact-label">Incorporated</span>                 <span class="fact-val">1905</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  LAND & NATURE                                         -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="section-hd s-nature" data-section="nature">Land &amp; Nature</div>
+  <p class="section-sub" data-section="nature">Volcanic peaks, a Wild &amp; Scenic river, old-growth pines, and the occasional wildfire smoke situation</p>
+  <div class="stats" role="list" aria-label="Nature metrics" data-section="nature">
+
+    <div class="stat-item" role="listitem" data-category="nature">
+      <span class="stat-icon" aria-hidden="true">🔥</span>
+      <span class="stat-value dim" data-counter="wildfire-days">—</span>
+      <span class="stat-label">High Wildfire Risk Days in Deschutes County This Year</span>
+      <div class="stat-note">
+        Deschutes County averages ~45 high-risk fire days/year (ODF). Most fall June–Oct. Bend has faced evacuation scares in 2020, 2021, and 2023. The high desert burns. YTD since Jan 1.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="nature">
+      <span class="stat-icon" aria-hidden="true">🦅</span>
+      <span class="stat-value dim" data-counter="bird-checklists">—</span>
+      <span class="stat-label">eBird Checklists Filed in Deschutes County This Year</span>
+      <div class="stat-note">
+        Deschutes County is a birding hotspot — Hatfield Lakes, the Deschutes River, and Cascade foothills host 300+ species. Est. ~2,000 eBird checklists submitted/yr. YTD since Jan 1.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="nature">
+      <span class="stat-icon" aria-hidden="true">🌊</span>
+      <span class="stat-value dim">~1,200 cfs</span>
+      <span class="stat-label">Deschutes River Flow Rate</span>
+      <div class="stat-note">
+        Spring snowmelt pushes the Deschutes to 4,000–5,000 cfs. Late summer drops it to ~600–800 cfs. The ~1,200 cfs figure is a rough year-round average. USGS Gauge 14076500. Static.
+      </div>
+    </div>
+
+    <div class="stat-item" role="listitem" data-category="nature">
+      <span class="stat-icon" aria-hidden="true">🌲</span>
+      <span class="stat-value dim">1,646,000</span>
+      <span class="stat-label">Deschutes National Forest — Total Acres</span>
+      <div class="stat-note">
+        The Deschutes National Forest covers 1.6M+ acres across Central Oregon — home to Mt. Bachelor, Broken Top, Three Sisters Wilderness, and the headwaters of the Deschutes River. USFS.
+      </div>
+    </div>
+
+    <div class="stat-item tip-left" role="listitem" data-category="nature">
+      <span class="stat-icon" aria-hidden="true">🌋</span>
+      <span class="stat-value dim">9</span>
+      <span class="stat-label">Volcanic Peaks Visible from Bend on a Clear Day</span>
+      <div class="stat-note">
+        Mt. Bachelor, Broken Top, South Sister, Middle Sister, North Sister, Mt. Washington, Three Fingered Jack, Mt. Jefferson, and Mt. Hood — all visible from Pilot Butte on a clear day.
+      </div>
+    </div>
+
+  </div><!-- /nature stats -->
+
+  <div class="fact-strip" data-section="nature">
+    <div class="fact-strip-head">Central Oregon natural facts</div>
+    <div class="fact-rows">
+      <span class="fact-label">Deschutes National Forest</span>    <span class="fact-val">1,646,000 acres</span>
+      <span class="fact-label">Three Sisters Wilderness</span>     <span class="fact-val green">286,000 acres</span>
+      <span class="fact-label">Bird species in the region</span>   <span class="fact-val">300+</span>
+      <span class="fact-label">Avg high wildfire risk days/yr</span><span class="fact-val rust">~45</span>
+      <span class="fact-label">Deschutes: Wild &amp; Scenic miles</span><span class="fact-val green">55 mi</span>
+      <span class="fact-label">Newberry Nat'l Volcanic Monument</span><span class="fact-val">55,000 acres</span>
+    </div>
+  </div>
+
+  <!-- ─── footer ───────────────────────────────────────────── -->
+  <footer class="footer">
+    <p class="disclaimer">
+      ⚠️ <strong>Heads up:</strong> all figures are rough estimates from publicly available data — not a live API or certified stats. Built because Bend is one of the most interesting small cities in America and deserves a dashboard that keeps up with it. Numbers may be off. Bend doesn't care — it's already at the trailhead.
+    </p>
+    <button class="share-btn" id="share-btn">Copy Bend's Stats</button>
+    <p class="sources">
+      Sources: ODOT traffic counts · Mt. Bachelor Ski Resort · Oregon Employment Dept ·
+      Deschutes County Assessor · RMLS / Zillow 2024 · Apartment List · CoStar ·
+      Brewers Association · Subaru of America · City of Bend Transportation Planning ·
+      U.S. Census ACS · Oregon State Demography Office · Oregon Dept of Forestry ·
+      USGS Water Resources · USFS Deschutes NF · eBird / Cornell Lab · NWS Bend.
+      Rates are artistic projections from public data. Not a certified live feed.
+    </p>
+  </footer>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ── time helpers ──────────────────────────────────────────────
+    const Y_START = new Date(new Date().getFullYear(), 0, 1).getTime();
+    function ytd() { return (Date.now() - Y_START) / 1000; }
+    function tod() {
+      const n = new Date();
+      return (Date.now() - new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime()) / 1000;
+    }
+
+    // ── formatters ────────────────────────────────────────────────
+    const fn  = n => Math.floor(n).toLocaleString();
+    const fn1 = n => n.toFixed(1);
+
+    // ── seasonal checks ───────────────────────────────────────────
+    const isSki = () => { const m = new Date().getMonth(); return m >= 10 || m <= 3; };
+    const isMTB = () => { const m = new Date().getMonth(); return m >= 4 && m <= 9; };
+    const isPaddle = () => { const m = new Date().getMonth(); return m >= 3 && m <= 8; };
+
+    // ── counter definitions ───────────────────────────────────────
+    //
+    // OUTDOORS
+    //   ski-vert:       2,000 skiers × 15,000 ft/day = 30M ft/day ÷ 86,400 = 347.2/s
+    //   ski-runs:       30M ft ÷ 1,500 ft/run = 20,000 runs/day ÷ 86,400 = 0.2315/s
+    //   dog-wags:       given → +1,000 / 2.2s = 454.545/s
+    //   trail-miles:    10,000 users × 3 mi = 30,000 mi/day ÷ 86,400 = 0.3472/s
+    //   mtb-laps:       600 riders × 3 laps = 1,800/day ÷ 86,400 = 0.02083/s (seasonal)
+    //   paddle-hrs:     300 paddlers × 2 hrs = 600/day ÷ 86,400 = 0.006944/s (seasonal)
+    //   fly-fishing:    150 anglers × 3 hrs = 450/day ÷ 86,400 = 0.005208/s
+    //   sunny-days:     158 days/yr ÷ 31,536,000 = 0.000005010/s (ytd)
+    //
+    // CULTURE
+    //   ipa-pints:      given → +1 / 2.1s = 0.47619/s
+    //   roundabouts:    given → +1 / 0.5s = 2/s
+    //   subarus:        given → +1 / 8s = 0.125/s
+    //   hydro-clinks:   given → +1 / 12s = 0.08333/s
+    //   coffees:        75,000 cups/day ÷ 86,400 = 0.8681/s
+    //   kombucha:       1,200 bottles/day ÷ 86,400 = 0.01389/s
+    //   yoga-hrs:       600 class-hours/day ÷ 86,400 = 0.006944/s
+    //   brewery-visits: 22 × 200 visits = 4,400/day ÷ 86,400 = 0.05093/s
+    //
+    // COMMUNITY (all YTD)
+    //   arrivals:       3,500/yr ÷ 31,536,000 = 0.00011100/s
+    //   departures:     2,200/yr ÷ 31,536,000 = 0.00006977/s
+    //   net-gain:       arrivals - departures = 0.00004123/s
+    //   housing-permits:800/yr ÷ 31,536,000 = 0.00002536/s
+    //
+    // NATURE (YTD)
+    //   wildfire-days:  45 days/yr ÷ 31,536,000 = 0.000001427/s
+    //   bird-checklists:2,000/yr ÷ 31,536,000 = 0.00006344/s
+
+    const COUNTERS = {
+      // OUTDOORS
+      'ski-vert':  () => isSki() ? fn(tod() * 347.2) + ' ft' : '— off season',
+      'ski-runs':  () => isSki() ? fn(tod() * 0.2315) + ' runs' : '— off season',
+      'dog-wags':  () => fn(tod() * 454.545),
+      'trail-miles': () => fn1(tod() * 0.3472) + ' mi',
+      'mtb-laps':  () => isMTB() ? fn(tod() * 0.02083) + ' laps' : '— off season',
+      'paddle-hrs':() => isPaddle() ? fn1(tod() * 0.006944) + ' hrs' : '— off season',
+      'fly-fishing':() => fn1(tod() * 0.005208) + ' hrs',
+      'sunny-days':() => fn1(ytd() * 0.000005010) + ' days',
+
+      // CULTURE
+      'ipa-pints':     () => fn(tod() * 0.47619),
+      'roundabouts':   () => fn(tod() * 2),
+      'subarus':       () => fn(tod() * 0.125),
+      'hydro-clinks':  () => fn(tod() * 0.08333),
+      'coffees':       () => fn(tod() * 0.8681),
+      'kombucha':      () => fn(tod() * 0.01389),
+      'yoga-hrs':      () => fn1(tod() * 0.006944) + ' hrs',
+      'brewery-visits':() => fn(tod() * 0.05093),
+
+      // COMMUNITY (YTD)
+      'arrivals':         () => fn(ytd() * 0.00011100),
+      'departures':       () => fn(ytd() * 0.00006977),
+      'net-gain':         () => fn(ytd() * 0.00004123),
+      'housing-permits':  () => fn(ytd() * 0.00002536),
+
+      // NATURE (YTD)
+      'wildfire-days':    () => fn1(ytd() * 0.000001427) + ' days',
+      'bird-checklists':  () => fn(ytd() * 0.00006344),
+    };
+
+    // ── DOM cache ─────────────────────────────────────────────────
+    const cache = {};
+    document.querySelectorAll('[data-counter]').forEach(el => {
+      const k = el.dataset.counter;
+      if (!cache[k]) cache[k] = [];
+      cache[k].push(el);
+    });
+
+    // ── Pacific time clock ────────────────────────────────────────
+    function updateClock() {
+      const els = cache['clock'] || [];
+      const now = new Date();
+      let s;
+      try {
+        s = now.toLocaleTimeString('en-US', {
+          timeZone: 'America/Los_Angeles',
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+        });
+      } catch (e) { s = now.toLocaleTimeString(); }
+      els.forEach(el => { if (el.textContent !== s) el.textContent = s; });
+      setTimeout(updateClock, 1000);
+    }
+
+    // ── rAF ticker ────────────────────────────────────────────────
+    function tick() {
+      for (const [k, compute] of Object.entries(COUNTERS)) {
+        const els = cache[k];
+        if (!els) continue;
+        const val = compute();
+        els.forEach(el => { if (el.textContent !== val) el.textContent = val; });
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // ── entrance animation ────────────────────────────────────────
+    function animateIn() {
+      const items = document.querySelectorAll('.stat-item');
+      if (!('IntersectionObserver' in window)) {
+        items.forEach(el => el.classList.add('visible'));
+        return;
+      }
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const el = entry.target;
+          const idx = [...items].indexOf(el);
+          setTimeout(() => el.classList.add('visible'), Math.min(idx * 50, 500));
+          observer.unobserve(el);
+        });
+      }, { threshold: 0.08 });
+      items.forEach(el => observer.observe(el));
+    }
+
+    // ── category filter ───────────────────────────────────────────
+    function initFilter() {
+      const btns     = document.querySelectorAll('.filter-btn');
+      const cards    = document.querySelectorAll('.stat-item[data-category]');
+      const sections = document.querySelectorAll('[data-section]');
+
+      btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const f = btn.dataset.filter;
+          btns.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
+          btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
+
+          cards.forEach(card => {
+            const show = f === 'all' || card.dataset.category === f;
+            show ? card.removeAttribute('data-hidden') : card.setAttribute('data-hidden', '');
+          });
+
+          sections.forEach(sec => {
+            const show = f === 'all' || sec.dataset.section === f;
+            sec.classList.toggle('hidden', !show);
+          });
+        });
+      });
+    }
+
+    // ── share / copy ──────────────────────────────────────────────
+    function initShare() {
+      const btn = document.getElementById('share-btn');
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const get = k => (cache[k] || [])[0]?.textContent || '—';
+        const time = new Date().toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour12: true });
+        const txt =
+          `BEND, OR — ${time} PT\n` +
+          `⛷  Vert skied today:       ${get('ski-vert')}\n` +
+          `🍺  Pints of IPA:           ${get('ipa-pints')}\n` +
+          `🐕  Dog wags:               ${get('dog-wags')}\n` +
+          `🔄  Roundabouts cleared:    ${get('roundabouts')}\n` +
+          `🚗  Subarus spotted:        ${get('subarus')}\n` +
+          `💧  Hydro Flask clinks:     ${get('hydro-clinks')}\n` +
+          `☕  Coffees consumed:       ${get('coffees')}\n` +
+          `📦  Moved here this year:   ${get('arrivals')}\n` +
+          `📊  publicworks.studio/projects/bend-oregon/`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(txt).then(() => {
+            btn.textContent = 'Copied ✓';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = "Copy Bend's Stats"; btn.classList.remove('copied'); }, 2500);
+          }).catch(() => {});
+        }
+      });
+    }
+
+    // ── boot ──────────────────────────────────────────────────────
+    updateClock();
+    requestAnimationFrame(tick);
+    animateIn();
+    initFilter();
+    initShare();
+
+  })();
+  </script>
+</body>
+</html>
