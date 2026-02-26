@@ -1,5 +1,14 @@
 [
   {
+    "id": "snow-day",
+    "number": "008",
+    "name": "Snow Day",
+    "description": "Who skis America — state-by-state skiing data, migration flows, and mountain obsession mapped",
+    "status": "live",
+    "url": "projects/snow-day/",
+    "date": "2026-02"
+  },
+  {
     "id": "bend-oregon",
     "number": "007",
     "name": "Bend, OR",

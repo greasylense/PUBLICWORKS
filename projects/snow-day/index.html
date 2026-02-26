@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#D1D1D1">
+  <title>Snow Day — PUBLICWORKS</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #D1D1D1;
+      --text: #0F0F0F;
+      --text-secondary: #6E6E6E;
+      --accent: #0047FF;
+      --alert: #FF4D00;
+      --snow: #F0F4FF;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-mono);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    #back-link {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      z-index: 50;
+      transition: color 0.15s ease;
+    }
+    #back-link:hover { color: var(--accent); }
+
+    /* ---- Header ---- */
+    .header {
+      padding: 6rem 2rem 2rem;
+      text-align: center;
+    }
+    .header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .header .subtitle {
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-top: 0.625rem;
+    }
+
+    /* ---- Map section ---- */
+    .map-section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 0;
+    }
+
+    .map-controls {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .control-label {
+      font-size: 0.5625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-secondary);
+    }
+
+    .toggle-group {
+      display: flex;
+      border: 1px solid var(--text);
+    }
+    .toggle-btn {
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.4rem 0.875rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .toggle-btn:not(:last-child) { border-right: 1px solid var(--text); }
+    .toggle-btn.active {
+      background: var(--text);
+      color: var(--bg);
+    }
+    .toggle-btn:hover:not(.active) { color: var(--text); }
+
+    .flow-toggle {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.5625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .flow-toggle input[type="checkbox"] {
+      accent-color: var(--alert);
+      cursor: pointer;
+    }
+    .flow-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--alert);
+      display: inline-block;
+    }
+
+    /* ---- SVG map ---- */
+    #map-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .state {
+      stroke: var(--bg);
+      stroke-width: 0.6;
+      cursor: pointer;
+      transition: opacity 0.12s ease;
+    }
+    .state:hover { opacity: 0.75; stroke-width: 1.2; }
+    .state.no-data { fill: #BCBCBC; }
+
+    .state-border {
+      fill: none;
+      stroke: var(--bg);
+      stroke-width: 0.4;
+      pointer-events: none;
+    }
+
+    .arc {
+      fill: none;
+      stroke: var(--alert);
+      stroke-width: 1.5;
+      stroke-dasharray: 5 4;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .arc.visible { opacity: 0.65; }
+
+    .arc-arrowhead {
+      fill: var(--alert);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .arc-arrowhead.visible { opacity: 0.65; }
+
+    .origin-dot {
+      fill: var(--alert);
+      stroke: var(--bg);
+      stroke-width: 1.5;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .origin-dot.visible { opacity: 1; }
+
+    /* ---- Legend ---- */
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .legend-label {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+    }
+    #legend-svg {
+      width: 160px;
+      height: 8px;
+      flex-shrink: 0;
+    }
+    .legend-note {
+      font-size: 0.5rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.05em;
+      margin-left: 0.5rem;
+    }
+    .no-data-swatch {
+      width: 16px; height: 8px;
+      background: #BCBCBC;
+      flex-shrink: 0;
+    }
+
+    /* ---- Tooltip ---- */
+    .tooltip {
+      position: fixed;
+      background: var(--text);
+      color: var(--bg);
+      padding: 0.75rem 1rem;
+      font-size: 0.5625rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s ease;
+      z-index: 200;
+      line-height: 1.9;
+      max-width: 230px;
+      letter-spacing: 0.04em;
+    }
+    .tooltip.visible { opacity: 1; }
+    .tooltip-name {
+      font-family: var(--font-display);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      margin-bottom: 0.375rem;
+      text-transform: none;
+    }
+    .tooltip-row { text-transform: uppercase; }
+    .tooltip-val { color: #A0A0A0; }
+    .tooltip-highlight { color: var(--accent); font-weight: 500; }
+    .tooltip-alert { color: var(--alert); }
+
+    /* ---- Stat cards ---- */
+    .stats-section {
+      max-width: 1100px;
+      margin: 2.5rem auto 0;
+      padding: 0 1.5rem 4rem;
+    }
+    .stats-label {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      background: var(--text);
+      border: 1px solid var(--text);
+    }
+    .stat-card {
+      background: var(--bg);
+      padding: 1.25rem 1.5rem;
+    }
+    .stat-card-label {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+    .stat-card-value {
+      font-family: var(--font-display);
+      font-size: clamp(1.25rem, 3vw, 1.625rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+    .stat-card-sub {
+      font-size: 0.5625rem;
+      color: var(--text-secondary);
+      margin-top: 0.375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Intro / explainer ---- */
+    .intro {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1px;
+      background: var(--text);
+      border: 1px solid var(--text);
+    }
+    .intro-block {
+      background: var(--bg);
+      padding: 1.25rem 1.5rem;
+    }
+    .intro-block-label {
+      font-size: 0.5625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-secondary);
+      margin-bottom: 0.375rem;
+    }
+    .intro-block-title {
+      font-family: var(--font-display);
+      font-size: 1.0625rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.375rem;
+    }
+    .intro-block p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* ---- Corridor legend ---- */
+    .corridor-legend {
+      margin-top: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+    }
+    .corridor-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+    }
+    .corridor-line {
+      width: 20px;
+      height: 0;
+      border-top: 2px dashed var(--alert);
+      flex-shrink: 0;
+    }
+    .corridor-line.thick { border-top-width: 3px; }
+    .corridor-line.thin  { border-top-width: 1.5px; }
+
+    @media (max-width: 600px) {
+      .flow-toggle { margin-left: 0; }
+      .header { padding-top: 5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="../../" id="back-link">← PUBLICWORKS</a>
+
+  <div class="header">
+    <h1>Snow Day</h1>
+    <p class="subtitle">Who skis America — state by state</p>
+  </div>
+
+  <div class="intro">
+    <div class="intro-block">
+      <div class="intro-block-label">View: Per Capita</div>
+      <div class="intro-block-title">How ski-obsessed is each state?</div>
+      <p>Color shows what share of each state's population skis. Vermont glows deepest — 1 in 4 residents. Mississippi barely registers. Index 100 = US average (~3.6%).</p>
+    </div>
+    <div class="intro-block">
+      <div class="intro-block-label">View: Total Skiers</div>
+      <div class="intro-block-title">Where do skiers actually live?</div>
+      <p>The map inverts. California becomes #1 (~1.7M skiers), Texas and New York close behind — despite no local mountains. Size beats culture.</p>
+    </div>
+    <div class="intro-block">
+      <div class="intro-block-label">Toggle: Migration Flows</div>
+      <div class="intro-block-title">Where do they go?</div>
+      <p>Dashed lines show confirmed ski travel corridors. Line weight = volume. From Colorado Ski Country USA surveys, Vermont tourism data, and Wisconsin economic studies.</p>
+    </div>
+  </div>
+
+  <div class="map-section">
+    <div class="map-controls">
+      <span class="control-label">View:</span>
+      <div class="toggle-group">
+        <button class="toggle-btn active" data-mode="per-capita">Per Capita</button>
+        <button class="toggle-btn" data-mode="total">Total Skiers</button>
+      </div>
+      <label class="flow-toggle">
+        <input type="checkbox" id="flow-toggle">
+        <span class="flow-dot"></span>
+        <span>Ski migration flows</span>
+      </label>
+    </div>
+
+    <svg id="map-svg" viewBox="0 0 960 580" aria-label="US map showing skiing data by state"></svg>
+
+    <div class="legend-row">
+      <span class="legend-label">Low</span>
+      <svg id="legend-svg" aria-hidden="true"></svg>
+      <span class="legend-label">High</span>
+      <span class="legend-note">&nbsp;|</span>
+      <div class="no-data-swatch"></div>
+      <span class="legend-label">No data</span>
+    </div>
+
+    <div class="corridor-legend" id="corridor-legend" style="display:none">
+      <div class="corridor-item"><div class="corridor-line thick"></div><span>TX → CO &nbsp;8.3% of CO visits</span></div>
+      <div class="corridor-item"><div class="corridor-line"></div><span>FL → CO &nbsp;4.6% of CO visits</span></div>
+      <div class="corridor-item"><div class="corridor-line thin"></div><span>CA / IL / NY → CO &nbsp;~3.5% each</span></div>
+      <div class="corridor-item"><div class="corridor-line thick"></div><span>MA → VT &nbsp;21% of VT visits</span></div>
+      <div class="corridor-item"><div class="corridor-line"></div><span>NY → VT &nbsp;17% of VT visits</span></div>
+      <div class="corridor-item"><div class="corridor-line thin"></div><span>CT / NJ / NH → VT &nbsp;7–9% each</span></div>
+      <div class="corridor-item"><div class="corridor-line"></div><span>CA / NY / TX → UT &nbsp;top out-of-state</span></div>
+      <div class="corridor-item"><div class="corridor-line thick"></div><span>IL → WI &nbsp;36% of WI visits</span></div>
+    </div>
+  </div>
+
+  <div class="stats-section">
+    <p class="stats-label">Highlights</p>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">Highest Per Capita</div>
+        <div class="stat-card-value">Vermont</div>
+        <div class="stat-card-sub">Index 754 — nearly 1 in 4<br>residents ski each year</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Most Total Skiers</div>
+        <div class="stat-card-value">California</div>
+        <div class="stat-card-sub">~1.7M skiers — 15.5% of<br>all US alpine participants</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Biggest Exporter</div>
+        <div class="stat-card-value">Texas</div>
+        <div class="stat-card-sub">~1.1M residents ski —<br>zero mountains at home</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Lowest Per Capita</div>
+        <div class="stat-card-value">Mississippi</div>
+        <div class="stat-card-sub">Index 12 — ~13K skiers,<br>no ski areas, 0 elevation</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip" role="tooltip">
+    <div class="tooltip-name" id="tt-name"></div>
+    <div id="tt-content"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    /* ---- Data ---- */
+    // Sources: SIA Participation Studies 2017/2019-2024, NSGA State Survey, NSAA,
+    // SnowSeasonCentral, KUHL/Google Trends, Storm Skiing, Storm Skiing, WI Economic Impact Study.
+    // Anchored to 9 confirmed states; remaining estimated via SIA regional shares,
+    // NSGA indices, and per-100k search interest. Index 100 = US national avg (~3.6% participation).
+    const SKI_DATA = {
+      // ---- High per-capita mountain states (confirmed anchors) ----
+      50: { state: 'Vermont',        abbr: 'VT', perCapita: 754, total: 150000,   src: 'confirmed' },
+       8: { state: 'Colorado',       abbr: 'CO', perCapita: 571, total: 1200000,  src: 'confirmed' },
+      33: { state: 'New Hampshire',  abbr: 'NH', perCapita: 504, total: 210000,   src: 'confirmed' },
+      30: { state: 'Montana',        abbr: 'MT', perCapita: 499, total: 180000,   src: 'confirmed' },
+      23: { state: 'Maine',          abbr: 'ME', perCapita: 429, total: 110000,   src: 'confirmed' },
+      16: { state: 'Idaho',          abbr: 'ID', perCapita: 412, total: 240000,   src: 'confirmed' },
+      49: { state: 'Utah',           abbr: 'UT', perCapita: 410, total: 580000,   src: 'confirmed' },
+      // ---- Mountain West / high search interest (estimated, medium-high confidence) ----
+      56: { state: 'Wyoming',        abbr: 'WY', perCapita: 375, total: 78000,    src: 'estimated' },
+       2: { state: 'Alaska',         abbr: 'AK', perCapita: 305, total: 81000,    src: 'estimated' },
+      // ---- New England / Mid-Atlantic (SIA confirmed top-10 states) ----
+      25: { state: 'Massachusetts',  abbr: 'MA', perCapita: 285, total: 720000,   src: 'estimated',      flowNote: '#1 source for Vermont (21% of VT visits)' },
+      34: { state: 'New Jersey',     abbr: 'NJ', perCapita: 200, total: 670000,   src: 'NSGA index',     flowNote: 'Sends 7% of Vermont\'s ski visits' },
+       9: { state: 'Connecticut',    abbr: 'CT', perCapita: 200, total: 260000,   src: 'estimated',      flowNote: 'Sends 9% of Vermont\'s ski visits' },
+      44: { state: 'Rhode Island',   abbr: 'RI', perCapita: 162, total: 64000,    src: 'estimated' },
+      36: { state: 'New York',       abbr: 'NY', perCapita: 172, total: 1200000,  src: 'SIA 10.3%',      flowNote: '#2 for Vermont (17%), top-2 for Utah' },
+      // ---- Pacific Northwest ----
+      53: { state: 'Washington',     abbr: 'WA', perCapita: 175, total: 490000,   src: 'SIA top-10' },
+      41: { state: 'Oregon',         abbr: 'OR', perCapita: 170, total: 260000,   src: 'estimated' },
+      // ---- California ----
+       6: { state: 'California',     abbr: 'CA', perCapita: 130, total: 1700000,  src: 'SIA 15.5%',      flowNote: '#1 out-of-state source for Utah; ~3.5% of CO visits' },
+      // ---- Mountain / Southwest ----
+      35: { state: 'New Mexico',     abbr: 'NM', perCapita: 132, total: 100000,   src: 'estimated' },
+      32: { state: 'Nevada',         abbr: 'NV', perCapita: 125, total: 143000,   src: 'estimated' },
+      // ---- Upper Midwest ----
+      27: { state: 'Minnesota',      abbr: 'MN', perCapita: 155, total: 320000,   src: 'estimated' },
+      26: { state: 'Michigan',       abbr: 'MI', perCapita: 140, total: 505000,   src: 'SIA top-10' },
+      55: { state: 'Wisconsin',      abbr: 'WI', perCapita: 120, total: 257000,   src: 'WI econ. study', flowNote: 'Receives 36% of visits from Illinois' },
+      // ---- Mid-Atlantic / Southeast ----
+      42: { state: 'Pennsylvania',   abbr: 'PA', perCapita: 115, total: 537000,   src: 'SIA top-10',     flowNote: '"Skier printing press" — graduates migrate west' },
+      17: { state: 'Illinois',       abbr: 'IL', perCapita: 105, total: 470000,   src: 'SIA top-10',     flowNote: '36% of all WI ski visits; ~3.5% of CO visits' },
+      54: { state: 'West Virginia',  abbr: 'WV', perCapita:  80, total: 50000,    src: 'estimated' },
+      24: { state: 'Maryland',       abbr: 'MD', perCapita:  95, total: 212000,   src: 'estimated' },
+      10: { state: 'Delaware',       abbr: 'DE', perCapita:  62, total: 23000,    src: 'estimated' },
+      51: { state: 'Virginia',       abbr: 'VA', perCapita:  90, total: 284000,   src: 'estimated' },
+      37: { state: 'North Carolina', abbr: 'NC', perCapita:  75, total: 289000,   src: 'estimated' },
+      // ---- Midwest flatlands ----
+      39: { state: 'Ohio',           abbr: 'OH', perCapita:  72, total: 307000,   src: 'estimated' },
+      18: { state: 'Indiana',        abbr: 'IN', perCapita:  67, total: 167000,   src: 'estimated' },
+      29: { state: 'Missouri',       abbr: 'MO', perCapita:  57, total: 127000,   src: 'estimated' },
+      19: { state: 'Iowa',           abbr: 'IA', perCapita:  57, total: 66000,    src: 'estimated' },
+      20: { state: 'Kansas',         abbr: 'KS', perCapita:  18, total: 19000,    src: 'estimated' },
+      31: { state: 'Nebraska',       abbr: 'NE', perCapita:  21, total: 15000,    src: 'estimated' },
+      46: { state: 'South Dakota',   abbr: 'SD', perCapita:  55, total: 18000,    src: 'estimated' },
+      38: { state: 'North Dakota',   abbr: 'ND', perCapita:  37, total: 11000,    src: 'estimated' },
+       4: { state: 'Arizona',        abbr: 'AZ', perCapita:  62, total: 167000,   src: 'estimated' },
+      // ---- South / Low participation ----
+      47: { state: 'Tennessee',      abbr: 'TN', perCapita:  32, total: 81000,    src: 'estimated' },
+      45: { state: 'South Carolina', abbr: 'SC', perCapita:  32, total: 61000,    src: 'estimated' },
+      13: { state: 'Georgia',        abbr: 'GA', perCapita:  30, total: 121000,   src: 'estimated' },
+      40: { state: 'Oklahoma',       abbr: 'OK', perCapita:  18, total: 26000,    src: 'estimated' },
+      21: { state: 'Kentucky',       abbr: 'KY', perCapita:  25, total: 41000,    src: 'estimated' },
+       1: { state: 'Alabama',        abbr: 'AL', perCapita:  16, total: 28000,    src: 'estimated' },
+      28: { state: 'Mississippi',    abbr: 'MS', perCapita:  12, total: 13000,    src: 'estimated' },
+      22: { state: 'Louisiana',      abbr: 'LA', perCapita:  12, total: 20000,    src: 'estimated' },
+       5: { state: 'Arkansas',       abbr: 'AR', perCapita:  15, total: 15000,    src: 'estimated' },
+      15: { state: 'Hawaii',         abbr: 'HI', perCapita:  25, total: 13000,    src: 'estimated' },
+      // ---- Confirmed high-volume, low per-capita (anchors) ----
+      12: { state: 'Florida',        abbr: 'FL', perCapita:  25, total: 860000,   src: 'confirmed', flowNote: '4.6% of all Colorado ski visits (CCUSA)', migrates: true },
+      48: { state: 'Texas',          abbr: 'TX', perCapita:  20, total: 1100000,  src: 'confirmed', flowNote: '8.3% of all Colorado ski visits — #1 out-of-state source (CCUSA)', migrates: true },
+    };
+
+    /* Migration arcs — confirmed sources:
+       CO data: Colorado Ski Country USA survey (aspentimes.com)
+       VT data: Vermont Dept of Tourism biannual study (vtdigger.org)
+       WI data: Wisconsin Economic Impact Study 2021-22
+       UT data: Ski Utah / Kem C. Gardner Policy Institute          */
+    const MIGRATIONS = [
+      // → Colorado (CCUSA survey: TX 8.3%, FL 4.6%, CA/IL/NY ~3.5% each)
+      { from: 48, to: 8,  w: 3.5 },  // TX → CO  (8.3%)
+      { from: 12, to: 8,  w: 2.5 },  // FL → CO  (4.6%)
+      { from:  6, to: 8,  w: 1.5 },  // CA → CO  (~3.5%)
+      { from: 17, to: 8,  w: 1.5 },  // IL → CO  (~3.5%)
+      { from: 36, to: 8,  w: 1.5 },  // NY → CO  (~3.5%)
+      // → Vermont (VT tourism study: MA 21%, NY 17%, CT 9%, NJ 7%, NH 7%)
+      { from: 25, to: 50, w: 3.5 },  // MA → VT  (21%)
+      { from: 36, to: 50, w: 2.5 },  // NY → VT  (17%)
+      { from:  9, to: 50, w: 1.5 },  // CT → VT  (9%)
+      { from: 34, to: 50, w: 1.5 },  // NJ → VT  (7%)
+      { from: 33, to: 50, w: 1.0 },  // NH → VT  (7%, largely local)
+      // → Utah (Ski Utah: CA #1, NY #2, TX growing, CO growing)
+      { from:  6, to: 49, w: 2.0 },  // CA → UT
+      { from: 36, to: 49, w: 1.5 },  // NY → UT
+      { from: 48, to: 49, w: 1.0 },  // TX → UT
+      // → Wisconsin (WI econ study: IL = 36% of all WI ski visits)
+      { from: 17, to: 55, w: 3.0 },  // IL → WI  (36%)
+    ];
+
+    const FIPS_NAMES = {
+       1:'Alabama', 2:'Alaska', 4:'Arizona', 5:'Arkansas', 6:'California',
+       8:'Colorado', 9:'Connecticut', 10:'Delaware', 11:'DC',
+      12:'Florida', 13:'Georgia', 15:'Hawaii', 16:'Idaho', 17:'Illinois',
+      18:'Indiana', 19:'Iowa', 20:'Kansas', 21:'Kentucky', 22:'Louisiana',
+      23:'Maine', 24:'Maryland', 25:'Massachusetts', 26:'Michigan',
+      27:'Minnesota', 28:'Mississippi', 29:'Missouri', 30:'Montana',
+      31:'Nebraska', 32:'Nevada', 33:'New Hampshire', 34:'New Jersey',
+      35:'New Mexico', 36:'New York', 37:'North Carolina', 38:'North Dakota',
+      39:'Ohio', 40:'Oklahoma', 41:'Oregon', 42:'Pennsylvania',
+      44:'Rhode Island', 45:'South Carolina', 46:'South Dakota',
+      47:'Tennessee', 48:'Texas', 49:'Utah', 50:'Vermont', 51:'Virginia',
+      53:'Washington', 54:'West Virginia', 55:'Wisconsin', 56:'Wyoming',
+    };
+
+    /* ---- State ---- */
+    let mode = 'per-capita';
+    let flowsVisible = false;
+    const centroids = {};
+
+    /* ---- Scales ---- */
+    const perCapitaScale = d3.scaleSequential()
+      .domain([0, 800])
+      .interpolator(d3.interpolate('#D8E4F5', '#0047FF'));
+
+    const totalScale = d3.scaleSequential()
+      .domain([0, 1_750_000])
+      .interpolator(d3.interpolate('#D8E4F5', '#0047FF'));
+
+    function getColor(fips) {
+      const d = SKI_DATA[fips];
+      if (!d) return null;
+      const v = mode === 'per-capita' ? d.perCapita : d.total;
+      return (mode === 'per-capita' ? perCapitaScale : totalScale)(v);
+    }
+
+    /* ---- SVG setup ---- */
+    const svg = d3.select('#map-svg');
+    const projection = d3.geoAlbersUsa().scale(1280).translate([480, 300]);
+    const path = d3.geoPath().projection(projection);
+
+    /* ---- Tooltip ---- */
+    const tooltip  = document.getElementById('tooltip');
+    const ttName   = document.getElementById('tt-name');
+    const ttContent = document.getElementById('tt-content');
+
+    function fmt(n) {
+      if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+      if (n >= 1_000)     return (n / 1_000).toFixed(0) + 'K';
+      return n.toLocaleString();
+    }
+
+    function showTip(event, fips) {
+      const d = SKI_DATA[fips];
+      const name = FIPS_NAMES[fips] || 'Unknown';
+      ttName.textContent = name;
+
+      if (d) {
+        const migClass = d.migrates ? 'tooltip-alert' : 'tooltip-highlight';
+        const srcTag = d.src === 'confirmed' ? '' : `<div class="tooltip-row tooltip-val">est. — ${d.src}</div>`;
+        ttContent.innerHTML =
+          `<div class="tooltip-row">Per Capita Index <span class="${migClass}">${d.perCapita}</span></div>` +
+          `<div class="tooltip-row">Total Skiers <span class="tooltip-highlight">~${fmt(d.total)}</span></div>` +
+          (d.flowNote ? `<div class="tooltip-row tooltip-alert" style="text-transform:none;letter-spacing:0">${d.flowNote}</div>` : '') +
+          srcTag;
+      } else {
+        ttContent.innerHTML = `<div class="tooltip-row tooltip-val">No data</div>`;
+      }
+
+      tooltip.classList.add('visible');
+      positionTip(event);
+    }
+
+    function positionTip(event) {
+      const x = event.clientX + 18;
+      const y = event.clientY - 12;
+      const w = tooltip.offsetWidth;
+      const h = tooltip.offsetHeight;
+      tooltip.style.left = (x + w > window.innerWidth  ? x - w - 36 : x) + 'px';
+      tooltip.style.top  = (y + h > window.innerHeight ? y - h + 24 : y) + 'px';
+    }
+
+    function hideTip() { tooltip.classList.remove('visible'); }
+
+    /* ---- Draw map ---- */
+    async function drawMap() {
+      let us;
+      try {
+        us = await d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json');
+      } catch (e) {
+        svg.append('text')
+          .attr('x', 480).attr('y', 300)
+          .attr('text-anchor', 'middle')
+          .attr('font-family', 'IBM Plex Mono, monospace')
+          .attr('font-size', 14)
+          .attr('fill', '#6E6E6E')
+          .text('Map failed to load — check network connection.');
+        return;
+      }
+
+      const statesFeature = topojson.feature(us, us.objects.states);
+
+      /* Compute centroids */
+      statesFeature.features.forEach(f => {
+        const c = path.centroid(f);
+        if (c && !isNaN(c[0])) centroids[+f.id] = c;
+      });
+
+      /* States layer */
+      const statesG = svg.append('g').attr('class', 'states-layer');
+
+      statesG.selectAll('.state')
+        .data(statesFeature.features)
+        .join('path')
+          .attr('class', d => `state${SKI_DATA[+d.id] ? '' : ' no-data'}`)
+          .attr('d', path)
+          .attr('fill', d => getColor(+d.id) || '#BCBCBC')
+          .on('mouseover', (event, d) => showTip(event, +d.id))
+          .on('mousemove', positionTip)
+          .on('mouseleave', hideTip);
+
+      /* State mesh (interior borders) */
+      svg.append('path')
+        .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
+        .attr('class', 'state-border')
+        .attr('d', path);
+
+      /* Migration arcs layer */
+      const arcsG = svg.append('g').attr('class', 'arcs-layer');
+
+      /* Arrow marker */
+      const defs = svg.append('defs');
+      defs.append('marker')
+        .attr('id', 'arrow')
+        .attr('markerWidth', 6)
+        .attr('markerHeight', 6)
+        .attr('refX', 5)
+        .attr('refY', 3)
+        .attr('orient', 'auto')
+        .append('path')
+          .attr('d', 'M0,0 L0,6 L6,3 Z')
+          .attr('fill', '#FF4D00');
+
+      MIGRATIONS.forEach(m => {
+        const from = centroids[m.from];
+        const to   = centroids[m.to];
+        if (!from || !to) return;
+
+        const dx   = to[0] - from[0];
+        const dy   = to[1] - from[1];
+        const dist = Math.hypot(dx, dy);
+        /* Arc curves away from map center (480,300) */
+        const mx   = (from[0] + to[0]) / 2 - dy * 0.22;
+        const my   = (from[1] + to[1]) / 2 + dx * 0.22 - dist * 0.15;
+
+        arcsG.append('path')
+          .attr('class', 'arc')
+          .attr('d', `M${from[0]},${from[1]} Q${mx},${my} ${to[0]},${to[1]}`)
+          .attr('marker-end', 'url(#arrow)')
+          .attr('stroke-width', m.w);
+      });
+
+      /* Origin dots for all feeder states */
+      Object.entries(SKI_DATA)
+        .filter(([, d]) => d.migrates || d.flowNote)
+        .forEach(([fips]) => {
+          const c = centroids[+fips];
+          if (!c) return;
+          arcsG.append('circle')
+            .attr('class', 'origin-dot')
+            .attr('cx', c[0])
+            .attr('cy', c[1])
+            .attr('r', 4);
+        });
+
+      drawLegend();
+    }
+
+    /* ---- Legend ---- */
+    function drawLegend() {
+      const lsvg  = d3.select('#legend-svg');
+      const defs  = lsvg.append('defs');
+      const grad  = defs.append('linearGradient')
+        .attr('id', 'leg-grad')
+        .attr('x1', '0%').attr('x2', '100%');
+      grad.append('stop').attr('offset', '0%').attr('stop-color', '#D8E4F5');
+      grad.append('stop').attr('offset', '100%').attr('stop-color', '#0047FF');
+      lsvg.append('rect').attr('width', '100%').attr('height', '100%').attr('fill', 'url(#leg-grad)');
+    }
+
+    /* ---- Color update on mode switch ---- */
+    function updateColors() {
+      svg.selectAll('.state')
+        .transition().duration(450)
+        .attr('fill', d => getColor(+d.id) || '#BCBCBC');
+    }
+
+    /* ---- Toggle flows ---- */
+    function setFlowVisibility(visible) {
+      svg.selectAll('.arc, .arc-arrowhead, .origin-dot')
+        .classed('visible', visible);
+    }
+
+    /* ---- Event listeners ---- */
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        mode = this.dataset.mode;
+        updateColors();
+      });
+    });
+
+    document.getElementById('flow-toggle').addEventListener('change', function () {
+      flowsVisible = this.checked;
+      setFlowVisibility(flowsVisible);
+      document.getElementById('corridor-legend').style.display = flowsVisible ? 'flex' : 'none';
+    });
+
+    /* ---- Init ---- */
+    drawMap();
+  })();
+  </script>
+</body>
+</html>
