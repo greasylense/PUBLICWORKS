@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Portrait of the statistically average resident, state by state.">
+  <meta name="theme-color" content="#D1D1D1">
+  <title>Average American — PUBLICWORKS</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #D1D1D1;
+      --text: #0F0F0F;
+      --muted: #6E6E6E;
+      --accent: #0047FF;
+      --alert: #FF4D00;
+      --rule: #0F0F0F;
+      --panel-bg: #C4C4C4;
+      --hover-fill: #B0B0B0;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-mono); min-height: 100vh; overflow: hidden; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── back link ─────────────────────────────────────── */
+    #back-link {
+      position: fixed;
+      top: 1.5rem; left: 1.5rem;
+      font-size: 0.6875rem;
+      color: var(--muted);
+      z-index: 200;
+      letter-spacing: 0.06em;
+      transition: color 0.15s;
+    }
+    #back-link:hover { color: var(--accent); }
+
+    /* ── app shell ─────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── top header ────────────────────────────────────── */
+    #top-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 1.5rem 2rem 1rem 7rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    #top-bar h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 2.5vw, 1.375rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    #top-bar p {
+      font-size: 0.6875rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      max-width: 36ch;
+      text-align: right;
+    }
+
+    /* ── main body ─────────────────────────────────────── */
+    #body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── map ───────────────────────────────────────────── */
+    #map-wrap {
+      flex: 1 1 60%;
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    #map-wrap svg {
+      width: 100%;
+      height: 100%;
+    }
+    .state-path {
+      fill: #BDBDBD;
+      stroke: #D1D1D1;
+      stroke-width: 0.8;
+      cursor: pointer;
+      transition: fill 0.12s;
+    }
+    .state-path:hover { fill: #A0A0A0; }
+    .state-path.selected { fill: var(--accent); }
+    .state-path.selected:hover { fill: #0039D6; }
+
+    /* state borders overlay */
+    .state-border {
+      fill: none;
+      stroke: #D1D1D1;
+      stroke-width: 0.8;
+      pointer-events: none;
+    }
+
+    /* map instruction overlay */
+    #map-hint {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      font-size: 0.625rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    /* ── panel ─────────────────────────────────────────── */
+    #panel {
+      flex: 0 0 380px;
+      border-left: 1px solid var(--rule);
+      background: var(--panel-bg);
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    #default-msg {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      text-align: center;
+      padding: 2rem;
+    }
+    #default-msg .dm-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    #default-msg .dm-sub {
+      font-size: 0.6875rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      max-width: 22ch;
+    }
+    #default-msg .dm-arrow {
+      font-size: 1.5rem;
+      opacity: 0.2;
+      margin-bottom: 0.5rem;
+    }
+
+    #profile { display: none; }
+
+    /* profile header */
+    .profile-header {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    .profile-state {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+    .profile-label {
+      font-size: 0.625rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .profile-name-row {
+      margin-top: 1rem;
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+    }
+    .profile-name {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .profile-name-note {
+      font-size: 0.625rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    /* key stats bar */
+    .key-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-bottom: 1px solid var(--rule);
+    }
+    .key-stat {
+      padding: 0.875rem 1rem;
+      border-right: 1px solid var(--rule);
+    }
+    .key-stat:last-child { border-right: none; }
+    .key-stat-val {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .key-stat-label {
+      font-size: 0.5625rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.25rem;
+    }
+
+    /* sections */
+    .section {
+      border-bottom: 1px solid var(--rule);
+    }
+    .section-header {
+      padding: 0.625rem 1.5rem;
+      font-size: 0.5625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.5rem 1.5rem;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .data-row:last-child { border-bottom: none; }
+    .data-label {
+      font-size: 0.625rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+      padding-right: 1rem;
+    }
+    .data-val {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      text-align: right;
+      letter-spacing: 0.02em;
+    }
+    .data-val.accent { color: var(--accent); }
+    .data-val.alert  { color: var(--alert); }
+
+    /* source note */
+    .source-note {
+      padding: 1rem 1.5rem;
+      font-size: 0.5625rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      line-height: 1.6;
+    }
+
+    /* ── responsive ────────────────────────────────────── */
+    @media (max-width: 720px) {
+      body { overflow: auto; }
+      #app { height: auto; }
+      #body { flex-direction: column; overflow: visible; }
+      #map-wrap { flex: none; height: 55vw; min-height: 260px; }
+      #panel { flex: none; border-left: none; border-top: 1px solid var(--rule); }
+      #top-bar { flex-direction: column; gap: 0.25rem; padding: 3.5rem 1rem 0.75rem; }
+      #top-bar p { text-align: left; max-width: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .state-path { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+<a href="../../" id="back-link">← PUBLICWORKS</a>
+
+<div id="app">
+  <div id="top-bar">
+    <h1>Average American</h1>
+    <p>Click any state to profile its most statistically common resident</p>
+  </div>
+
+  <div id="body">
+    <div id="map-wrap">
+      <svg id="map" aria-label="Interactive US map — click a state"></svg>
+      <div id="map-hint">← click any state</div>
+    </div>
+
+    <div id="panel">
+      <div id="default-msg">
+        <div class="dm-arrow">←</div>
+        <div class="dm-title">Select a State</div>
+        <div class="dm-sub">Click any state to reveal its most statistically average resident</div>
+      </div>
+
+      <div id="profile">
+        <div class="profile-header">
+          <div class="profile-label">Most Average Resident of</div>
+          <div class="profile-state" id="p-state"></div>
+          <div class="profile-name-row">
+            <div class="profile-name" id="p-name"></div>
+            <div class="profile-name-note">most common first name</div>
+          </div>
+        </div>
+
+        <div class="key-stats">
+          <div class="key-stat">
+            <div class="key-stat-val" id="p-age"></div>
+            <div class="key-stat-label">Median Age</div>
+          </div>
+          <div class="key-stat">
+            <div class="key-stat-val" id="p-income"></div>
+            <div class="key-stat-label">Median Income</div>
+          </div>
+          <div class="key-stat">
+            <div class="key-stat-val" id="p-gen"></div>
+            <div class="key-stat-label">Generation</div>
+          </div>
+        </div>
+
+        <!-- 1. Core Identity -->
+        <div class="section">
+          <div class="section-header">01 — Core Identity</div>
+          <div class="data-row"><span class="data-label">Sex</span><span class="data-val" id="p-sex"></span></div>
+          <div class="data-row"><span class="data-label">Race / Ethnicity</span><span class="data-val" id="p-race"></span></div>
+          <div class="data-row"><span class="data-label">Marital Status</span><span class="data-val" id="p-marital"></span></div>
+          <div class="data-row"><span class="data-label">Household</span><span class="data-val" id="p-household"></span></div>
+        </div>
+
+        <!-- 2. Heritage -->
+        <div class="section">
+          <div class="section-header">02 — Heritage &amp; Language</div>
+          <div class="data-row"><span class="data-label">Ancestry</span><span class="data-val" id="p-ancestry"></span></div>
+          <div class="data-row"><span class="data-label">2nd Language</span><span class="data-val" id="p-language"></span></div>
+          <div class="data-row"><span class="data-label">Citizenship</span><span class="data-val" id="p-citizenship"></span></div>
+        </div>
+
+        <!-- 3. Economic -->
+        <div class="section">
+          <div class="section-header">03 — Economic &amp; Professional</div>
+          <div class="data-row"><span class="data-label">Employment</span><span class="data-val" id="p-employment"></span></div>
+          <div class="data-row"><span class="data-label">Industry</span><span class="data-val" id="p-industry"></span></div>
+          <div class="data-row"><span class="data-label">Commute</span><span class="data-val" id="p-commute"></span></div>
+          <div class="data-row"><span class="data-label">Housing</span><span class="data-val" id="p-housing"></span></div>
+          <div class="data-row"><span class="data-label">Vehicles</span><span class="data-val" id="p-vehicles"></span></div>
+        </div>
+
+        <!-- 4. Education -->
+        <div class="section">
+          <div class="section-header">04 — Education</div>
+          <div class="data-row"><span class="data-label">Attainment</span><span class="data-val" id="p-education"></span></div>
+          <div class="data-row"><span class="data-label">Field of Study</span><span class="data-val" id="p-field"></span></div>
+          <div class="data-row"><span class="data-label">Primary Internet</span><span class="data-val" id="p-internet"></span></div>
+        </div>
+
+        <!-- 5. Health -->
+        <div class="section">
+          <div class="section-header">05 — Health &amp; Lifestyle</div>
+          <div class="data-row"><span class="data-label">Health Insurance</span><span class="data-val" id="p-insurance"></span></div>
+          <div class="data-row"><span class="data-label">Disability Reported</span><span class="data-val" id="p-disability"></span></div>
+          <div class="data-row"><span class="data-label">BMI Category</span><span class="data-val" id="p-bmi"></span></div>
+          <div class="data-row"><span class="data-label">Weekly Exercise</span><span class="data-val" id="p-exercise"></span></div>
+        </div>
+
+        <!-- 6. Psychographics -->
+        <div class="section">
+          <div class="section-header">06 — Psychographics &amp; Habits</div>
+          <div class="data-row"><span class="data-label">Political Lean</span><span class="data-val" id="p-politics"></span></div>
+          <div class="data-row"><span class="data-label">Religion</span><span class="data-val" id="p-religion"></span></div>
+          <div class="data-row"><span class="data-label">Top Social Platform</span><span class="data-val" id="p-social"></span></div>
+          <div class="data-row"><span class="data-label">Common Hobby</span><span class="data-val" id="p-hobby"></span></div>
+        </div>
+
+        <div class="source-note">
+          Data synthesized from U.S. Census ACS 5-Year Estimates, CDC BRFSS, Gallup polling, Pew Research, and consumer panel surveys. Values represent modal/median figures for each state, not individuals.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ── State Data ──────────────────────────────────────────────────────────────
+  // Keyed by FIPS code (string). Values are modal/median metrics per state.
+  const STATES = {
+    "01": { name:"Alabama",       abbr:"AL", firstName:"James",   age:39.2, income:54943, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"Scots-Irish American", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"Walking",        politics:"Republican",   religion:"Baptist",            social:"Facebook",  hobby:"Hunting & fishing" },
+    "02": { name:"Alaska",        abbr:"AK", firstName:"Michael", age:34.6, income:77640, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Yup'ik",     citizenship:"Native-born", employment:"Full-time", industry:"Government",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Trades",          internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Hiking",         politics:"Republican",   religion:"Protestant",         social:"Facebook",  hobby:"Hunting & fishing" },
+    "04": { name:"Arizona",       abbr:"AZ", firstName:"Michael", age:38.5, income:62055, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Construction",    commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Hiking",         politics:"Republican",   religion:"None / Unaffiliated",social:"Facebook",  hobby:"Hiking & golf" },
+    "05": { name:"Arkansas",      abbr:"AR", firstName:"James",   age:38.3, income:51734, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"Scots-Irish American", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Manufacturing",   commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"High school",   field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"None",           politics:"Republican",   religion:"Baptist",            social:"Facebook",  hobby:"Hunting & fishing" },
+    "06": { name:"California",    abbr:"CA", firstName:"Maria",   age:37.6, income:84907, gen:"Millennial",  sex:"Female", race:"Hispanic / Latino",marital:"Married",   household:"Married, 2 children",   ancestry:"Mexican American",     language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Technology",      commute:"Car (alone)", housing:"Rents", vehicles:1, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Democrat",     religion:"Catholic",           social:"Instagram",  hobby:"Hiking & cooking" },
+    "08": { name:"Colorado",      abbr:"CO", firstName:"Michael", age:37.2, income:77127, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Technology",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Business",        internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Healthy",    exercise:"Running",        politics:"Democrat",     religion:"None / Unaffiliated",social:"Instagram", hobby:"Skiing & hiking" },
+    "09": { name:"Connecticut",   abbr:"CT", firstName:"Michael", age:41.3, income:83771, gen:"Gen X",       sex:"Female", race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"Italian American",     language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Finance",         commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Business",        internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Democrat",     religion:"Catholic",           social:"Facebook",  hobby:"Gardening" },
+    "10": { name:"Delaware",      abbr:"DE", firstName:"Michael", age:41.4, income:72724, gen:"Gen X",       sex:"Female", race:"White",            marital:"Married",   household:"Married couple",        ancestry:"Irish American",       language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Finance",         commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Democrat",     religion:"Protestant",         social:"Facebook",  hobby:"Gardening" },
+    "12": { name:"Florida",       abbr:"FL", firstName:"Michael", age:42.4, income:59734, gen:"Gen X",       sex:"Female", race:"White",            marital:"Married",   household:"Married couple",        ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"Walking",        politics:"Republican",   religion:"Protestant",         social:"Facebook",  hobby:"Boating & golf" },
+    "13": { name:"Georgia",       abbr:"GA", firstName:"James",   age:37.1, income:65030, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"Scots-Irish American", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Logistics",       commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"Walking",        politics:"Republican",   religion:"Baptist",            social:"Facebook",  hobby:"Sports & cooking" },
+    "15": { name:"Hawaii",        abbr:"HI", firstName:"Michael", age:39.1, income:83173, gen:"Millennial",  sex:"Female", race:"Asian",            marital:"Married",   household:"Married, 1 child",      ancestry:"Filipino / Japanese",  language:"Tagalog",    citizenship:"Native-born", employment:"Full-time", industry:"Tourism",         commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Hospitality",     internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Healthy",    exercise:"Walking",        politics:"Democrat",     religion:"Buddhist / Catholic",social:"Instagram",  hobby:"Surfing & cooking" },
+    "16": { name:"Idaho",         abbr:"ID", firstName:"Michael", age:36.8, income:59564, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Agriculture",     commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Healthy",    exercise:"Hiking",         politics:"Republican",   religion:"LDS (Mormon)",       social:"Facebook",  hobby:"Hiking & hunting" },
+    "17": { name:"Illinois",      abbr:"IL", firstName:"Michael", age:38.9, income:69187, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Business",        internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Democrat",     religion:"Catholic",           social:"Facebook",  hobby:"Sports & gaming" },
+    "18": { name:"Indiana",       abbr:"IN", firstName:"Michael", age:37.9, income:60125, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Manufacturing",   commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"None",           politics:"Republican",   religion:"Protestant",         social:"Facebook",  hobby:"Motorsports" },
+    "19": { name:"Iowa",          abbr:"IA", firstName:"Michael", age:38.4, income:63815, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Agriculture",     commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Republican",   religion:"Protestant",         social:"Facebook",  hobby:"Fishing & sports" },
+    "20": { name:"Kansas",        abbr:"KS", firstName:"Michael", age:37.2, income:62087, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Agriculture",     commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Republican",   religion:"Protestant",         social:"Facebook",  hobby:"Hunting & sports" },
+    "21": { name:"Kentucky",      abbr:"KY", firstName:"James",   age:39.3, income:55629, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"Scots-Irish American", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Manufacturing",   commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"High school",   field:"Trades",          internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"None",           politics:"Republican",   religion:"Baptist",            social:"Facebook",  hobby:"Hunting & basketball" },
+    "22": { name:"Louisiana",     abbr:"LA", firstName:"Michael", age:37.3, income:54216, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"French American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Energy",          commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"Walking",        politics:"Republican",   religion:"Catholic",           social:"Facebook",  hobby:"Fishing & cooking" },
+    "23": { name:"Maine",         abbr:"ME", firstName:"Michael", age:45.1, income:62852, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married couple",        ancestry:"French Canadian",      language:"French",     citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Democrat",     religion:"None / Unaffiliated",social:"Facebook",  hobby:"Hiking & fishing" },
+    "24": { name:"Maryland",      abbr:"MD", firstName:"Michael", age:39.1, income:90203, gen:"Millennial",  sex:"Female", race:"Black",            marital:"Married",   household:"Married, 1 child",      ancestry:"African American",     language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Government",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Business",        internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"Walking",        politics:"Democrat",     religion:"Protestant",         social:"Facebook",  hobby:"Cooking & sports" },
+    "25": { name:"Massachusetts", abbr:"MA", firstName:"Michael", age:40.0, income:89645, gen:"Millennial",  sex:"Female", race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"Irish American",       language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Education",       commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Healthcare",      internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Healthy",    exercise:"Running",        politics:"Democrat",     religion:"Catholic",           social:"Instagram",  hobby:"Running & cooking" },
+    "26": { name:"Michigan",      abbr:"MI", firstName:"Michael", age:40.0, income:62557, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Automotive",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Trades",          internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"None",           politics:"Republican",   religion:"Protestant",         social:"Facebook",  hobby:"Hunting & sports" },
+    "27": { name:"Minnesota",     abbr:"MN", firstName:"Michael", age:38.6, income:77706, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German / Scandinavian",language:"Somali",     citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Healthcare",      internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Democrat",     religion:"Lutheran",           social:"Facebook",  hobby:"Fishing & hockey" },
+    "28": { name:"Mississippi",   abbr:"MS", firstName:"James",   age:37.8, income:47717, gen:"Millennial",  sex:"Male",   race:"Black",            marital:"Married",   household:"Married, 1 child",      ancestry:"African American",     language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"None",           politics:"Republican",   religion:"Baptist",            social:"Facebook",  hobby:"Fishing & sports" },
+    "29": { name:"Missouri",      abbr:"MO", firstName:"James",   age:38.9, income:61043, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"None",           politics:"Republican",   religion:"Protestant",         social:"Facebook",  hobby:"Hunting & sports" },
+    "30": { name:"Montana",       abbr:"MT", firstName:"Michael", age:40.2, income:58873, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German / Norwegian",   language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Agriculture",     commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Trades",          internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Hiking",         politics:"Republican",   religion:"None / Unaffiliated",social:"Facebook",  hobby:"Hunting & fishing" },
+    "31": { name:"Nebraska",      abbr:"NE", firstName:"Michael", age:37.1, income:65976, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Agriculture",     commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Republican",   religion:"Protestant",         social:"Facebook",  hobby:"Hunting & sports" },
+    "32": { name:"Nevada",        abbr:"NV", firstName:"Michael", age:38.1, income:64895, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Hospitality",     commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"None",           politics:"Republican",   religion:"None / Unaffiliated",social:"Facebook",  hobby:"Gaming & outdoors" },
+    "33": { name:"New Hampshire", abbr:"NH", firstName:"Michael", age:43.3, income:82610, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"French Canadian",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Technology",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Technology",      internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Hiking",         politics:"Independent",  religion:"None / Unaffiliated",social:"Facebook",  hobby:"Skiing & hiking" },
+    "34": { name:"New Jersey",    abbr:"NJ", firstName:"Michael", age:40.3, income:89703, gen:"Gen X",       sex:"Female", race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"Italian American",     language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Pharmaceuticals", commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Business",        internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Democrat",     religion:"Catholic",           social:"Instagram",  hobby:"Gardening & sports" },
+    "35": { name:"New Mexico",    abbr:"NM", firstName:"Maria",   age:38.7, income:51945, gen:"Millennial",  sex:"Female", race:"Hispanic / Latino",marital:"Married",   household:"Married, 2 children",   ancestry:"Mexican American",     language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Government",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"High school",   field:"Business",        internet:"Smartphone", insurance:"Medicaid",          disability:"None",  bmi:"Obese",      exercise:"Walking",        politics:"Democrat",     religion:"Catholic",           social:"Facebook",  hobby:"Hiking & art" },
+    "36": { name:"New York",      abbr:"NY", firstName:"Michael", age:39.2, income:72108, gen:"Millennial",  sex:"Female", race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"Italian American",     language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Finance",         commute:"Car (alone)", housing:"Rents", vehicles:1, education:"Bachelor's",    field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Democrat",     religion:"Catholic",           social:"Instagram",  hobby:"Dining out & gaming" },
+    "37": { name:"North Carolina",abbr:"NC", firstName:"James",   age:39.2, income:62891, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"Scots-Irish American", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Manufacturing",   commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"Walking",        politics:"Republican",   religion:"Baptist",            social:"Facebook",  hobby:"Basketball & gardening" },
+    "38": { name:"North Dakota",  abbr:"ND", firstName:"Michael", age:35.7, income:66519, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"German / Norwegian",   language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Energy",          commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Trades",          internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"None",           politics:"Republican",   religion:"Lutheran",           social:"Facebook",  hobby:"Hunting & fishing" },
+    "39": { name:"Ohio",          abbr:"OH", firstName:"Michael", age:39.6, income:62262, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Manufacturing",   commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"None",           politics:"Republican",   religion:"Protestant",         social:"Facebook",  hobby:"Sports & hunting" },
+    "40": { name:"Oklahoma",      abbr:"OK", firstName:"James",   age:37.1, income:55826, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"Scots-Irish American", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Energy",          commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"None",           politics:"Republican",   religion:"Baptist",            social:"Facebook",  hobby:"Hunting & sports" },
+    "41": { name:"Oregon",        abbr:"OR", firstName:"Michael", age:40.0, income:71562, gen:"Gen X",       sex:"Female", race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Healthcare",      internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Hiking",         politics:"Democrat",     religion:"None / Unaffiliated",social:"Instagram",  hobby:"Hiking & gardening" },
+    "42": { name:"Pennsylvania",  abbr:"PA", firstName:"Michael", age:40.9, income:67587, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German / Italian",     language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"None",           politics:"Republican",   religion:"Catholic",           social:"Facebook",  hobby:"Sports & hunting" },
+    "44": { name:"Rhode Island",  abbr:"RI", firstName:"Michael", age:41.0, income:71169, gen:"Gen X",       sex:"Female", race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"Italian / Portuguese", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Healthcare",      internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Walking",        politics:"Democrat",     religion:"Catholic",           social:"Facebook",  hobby:"Cooking & sports" },
+    "45": { name:"South Carolina",abbr:"SC", firstName:"James",   age:39.9, income:58234, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"Scots-Irish American", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Manufacturing",   commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"Walking",        politics:"Republican",   religion:"Baptist",            social:"Facebook",  hobby:"Golf & fishing" },
+    "46": { name:"South Dakota",  abbr:"SD", firstName:"Michael", age:37.2, income:61152, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 2 children",   ancestry:"German / Norwegian",   language:"Lakota",     citizenship:"Native-born", employment:"Full-time", industry:"Agriculture",     commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Trades",          internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"None",           politics:"Republican",   religion:"Lutheran",           social:"Facebook",  hobby:"Hunting & rodeo" },
+    "47": { name:"Tennessee",     abbr:"TN", firstName:"James",   age:39.0, income:59695, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"Scots-Irish American", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"Walking",        politics:"Republican",   religion:"Baptist",            social:"Facebook",  hobby:"Hunting & music" },
+    "48": { name:"Texas",         abbr:"TX", firstName:"Jose",    age:35.4, income:64034, gen:"Millennial",  sex:"Male",   race:"Hispanic / Latino",marital:"Married",   household:"Married, 2 children",   ancestry:"Mexican American",     language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Energy",          commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Obese",      exercise:"Walking",        politics:"Republican",   religion:"Catholic",           social:"Facebook",  hobby:"Sports & rodeo" },
+    "49": { name:"Utah",          abbr:"UT", firstName:"Michael", age:31.7, income:74197, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 3 children",   ancestry:"English American",     language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Technology",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Business",        internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Healthy",    exercise:"Hiking",         politics:"Republican",   religion:"LDS (Mormon)",       social:"Facebook",  hobby:"Skiing & hiking" },
+    "50": { name:"Vermont",       abbr:"VT", firstName:"Michael", age:44.2, income:67674, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married couple",        ancestry:"French Canadian",      language:"French",     citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Education",       internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Healthy",    exercise:"Hiking",         politics:"Democrat",     religion:"None / Unaffiliated",social:"Facebook",  hobby:"Skiing & hiking" },
+    "51": { name:"Virginia",      abbr:"VA", firstName:"Michael", age:38.6, income:80615, gen:"Millennial",  sex:"Female", race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German / Scots-Irish", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Government",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Business",        internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Running",        politics:"Democrat",     religion:"Protestant",         social:"Instagram",  hobby:"Running & gardening" },
+    "53": { name:"Washington",    abbr:"WA", firstName:"Michael", age:37.9, income:82400, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Technology",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Bachelor's",    field:"Technology",      internet:"Laptop",     insurance:"Employer-provided", disability:"None",  bmi:"Healthy",    exercise:"Hiking",         politics:"Democrat",     religion:"None / Unaffiliated",social:"Instagram",  hobby:"Hiking & gaming" },
+    "54": { name:"West Virginia", abbr:"WV", firstName:"James",   age:42.7, income:48037, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"Scots-Irish American", language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Healthcare",      commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"High school",   field:"Trades",          internet:"Smartphone", insurance:"Employer-provided", disability:"Yes — mobility",bmi:"Obese",  exercise:"None",           politics:"Republican",   religion:"Baptist",            social:"Facebook",  hobby:"Hunting & ATV" },
+    "55": { name:"Wisconsin",     abbr:"WI", firstName:"Michael", age:40.0, income:64168, gen:"Gen X",       sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Manufacturing",   commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Business",        internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"None",           politics:"Republican",   religion:"Lutheran / Catholic",social:"Facebook",  hobby:"Hunting & ice fishing" },
+    "56": { name:"Wyoming",       abbr:"WY", firstName:"Michael", age:37.5, income:65304, gen:"Millennial",  sex:"Male",   race:"White",            marital:"Married",   household:"Married, 1 child",      ancestry:"German American",      language:"Spanish",    citizenship:"Native-born", employment:"Full-time", industry:"Energy",          commute:"Car (alone)", housing:"Owns",  vehicles:2, education:"Some college",  field:"Trades",          internet:"Smartphone", insurance:"Employer-provided", disability:"None",  bmi:"Overweight", exercise:"Hiking",         politics:"Republican",   religion:"Protestant",         social:"Facebook",  hobby:"Hunting & rodeo" }
+  };
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function fmt$  (n) { return '$' + n.toLocaleString(); }
+  function fmtAge(n) { return n.toFixed(1); }
+
+  function colorByPolitics(p) {
+    if (p.includes('Democrat'))    return 'accent';
+    if (p.includes('Republican'))  return 'alert';
+    return '';
+  }
+  function colorByBMI(b) {
+    if (b === 'Obese') return 'alert';
+    if (b === 'Healthy') return 'accent';
+    return '';
+  }
+
+  function setField(id, val, cls) {
+    const el = document.getElementById(id);
+    el.textContent = val;
+    el.className = 'data-val' + (cls ? ' ' + cls : '');
+  }
+
+  function renderProfile(d) {
+    document.getElementById('p-state').textContent    = d.name;
+    document.getElementById('p-name').textContent     = d.firstName;
+    document.getElementById('p-age').textContent      = fmtAge(d.age);
+    document.getElementById('p-income').textContent   = fmt$(d.income);
+    document.getElementById('p-gen').textContent      = d.gen;
+
+    setField('p-sex',        d.sex);
+    setField('p-race',       d.race);
+    setField('p-marital',    d.marital);
+    setField('p-household',  d.household);
+
+    setField('p-ancestry',   d.ancestry);
+    setField('p-language',   d.language);
+    setField('p-citizenship',d.citizenship);
+
+    setField('p-employment', d.employment);
+    setField('p-industry',   d.industry);
+    setField('p-commute',    d.commute);
+    setField('p-housing',    d.housing);
+    setField('p-vehicles',   d.vehicles + (d.vehicles === 1 ? ' vehicle' : ' vehicles'));
+
+    setField('p-education',  d.education);
+    setField('p-field',      d.field);
+    setField('p-internet',   d.internet);
+
+    setField('p-insurance',  d.insurance);
+    setField('p-disability', d.disability);
+    setField('p-bmi',        d.bmi, colorByBMI(d.bmi));
+    setField('p-exercise',   d.exercise);
+
+    setField('p-politics',   d.politics, colorByPolitics(d.politics));
+    setField('p-religion',   d.religion);
+    setField('p-social',     d.social);
+    setField('p-hobby',      d.hobby);
+
+    document.getElementById('default-msg').style.display = 'none';
+    document.getElementById('profile').style.display     = 'block';
+    document.getElementById('panel').scrollTop           = 0;
+  }
+
+  // ── D3 Map ──────────────────────────────────────────────────────────────────
+  const svg = d3.select('#map');
+  const mapWrap = document.getElementById('map-wrap');
+
+  let projection, path, selectedFips = null;
+
+  function getSize() {
+    return { w: mapWrap.clientWidth, h: mapWrap.clientHeight };
+  }
+
+  function buildProjection(w, h) {
+    return d3.geoAlbersUsa().fitSize([w, h], { type: 'Sphere' });
+  }
+
+  fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json')
+    .then(r => r.json())
+    .then(us => {
+      const { w, h } = getSize();
+      const states = topojson.feature(us, us.objects.states);
+      const mesh   = topojson.mesh(us, us.objects.states, (a, b) => a !== b);
+
+      projection = buildProjection(w, h);
+      path = d3.geoPath().projection(projection);
+
+      svg.attr('viewBox', `0 0 ${w} ${h}`).attr('preserveAspectRatio', 'xMidYMid meet');
+
+      // Draw states
+      svg.selectAll('.state-path')
+        .data(states.features)
+        .join('path')
+        .attr('class', 'state-path')
+        .attr('d', path)
+        .attr('tabindex', '0')
+        .attr('role', 'button')
+        .attr('aria-label', d => {
+          const fips = d.id ? String(d.id).padStart(2, '0') : null;
+          return STATES[fips] ? STATES[fips].name : 'Unknown state';
+        })
+        .on('click', function(event, d) {
+          const fips = String(d.id).padStart(2, '0');
+          if (!STATES[fips]) return;
+
+          svg.selectAll('.state-path').classed('selected', false);
+          d3.select(this).classed('selected', true);
+          selectedFips = fips;
+          renderProfile(STATES[fips]);
+        })
+        .on('keydown', function(event, d) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            this.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+          }
+        });
+
+      // Draw border mesh
+      svg.append('path')
+        .datum(mesh)
+        .attr('class', 'state-border')
+        .attr('d', path);
+
+      // Tooltip on hover (state name)
+      const tooltip = d3.select('body').append('div')
+        .attr('id', 'map-tooltip')
+        .style('position', 'fixed')
+        .style('pointer-events', 'none')
+        .style('background', '#0F0F0F')
+        .style('color', '#D1D1D1')
+        .style('font-family', 'var(--font-mono)')
+        .style('font-size', '0.625rem')
+        .style('letter-spacing', '0.06em')
+        .style('padding', '0.375rem 0.625rem')
+        .style('opacity', '0')
+        .style('transition', 'opacity 0.1s')
+        .style('z-index', '500')
+        .style('white-space', 'nowrap')
+        .style('text-transform', 'uppercase');
+
+      svg.selectAll('.state-path')
+        .on('mouseover', function(event, d) {
+          const fips = String(d.id).padStart(2, '0');
+          const st = STATES[fips];
+          if (!st) return;
+          tooltip.text(st.name + ' — click to explore').style('opacity', '1');
+        })
+        .on('mousemove', function(event) {
+          tooltip
+            .style('left', (event.clientX + 14) + 'px')
+            .style('top',  (event.clientY - 28) + 'px');
+        })
+        .on('mouseout', function() {
+          tooltip.style('opacity', '0');
+        });
+
+      // Resize handler
+      window.addEventListener('resize', () => {
+        const { w: nw, h: nh } = getSize();
+        projection = buildProjection(nw, nh);
+        path = d3.geoPath().projection(projection);
+        svg.attr('viewBox', `0 0 ${nw} ${nh}`);
+        svg.selectAll('.state-path').attr('d', path);
+        svg.select('.state-border').attr('d', path);
+      });
+    })
+    .catch(err => {
+      document.getElementById('map-wrap').innerHTML =
+        '<p style="padding:2rem;font-size:0.75rem;color:var(--muted)">Map failed to load. Check your connection.</p>';
+      console.error(err);
+    });
+
+})();
+</script>
+</body>
+</html>

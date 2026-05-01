@@ -1,5 +1,14 @@
 [
   {
+    "id": "average-american",
+    "number": "009",
+    "name": "Average American",
+    "description": "Interactive state-by-state portrait of the most statistically common resident — income, habits, identity, and more",
+    "status": "live",
+    "url": "projects/average-american/",
+    "date": "2026-03"
+  },
+  {
     "id": "snow-day",
     "number": "008",
     "name": "Snow Day",
