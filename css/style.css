@@ -330,6 +330,55 @@ button:focus-visible {
   width: 100%;
 }
 
+/* ---------- Project Preview Tooltip ---------- */
+.project-preview {
+  position: fixed;
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-family: var(--font-mono);
+  padding: var(--space-sm) var(--space-md);
+  pointer-events: none;
+  z-index: 500;
+  opacity: 0;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  transform: translateY(6px);
+  max-width: 300px;
+  min-width: 180px;
+}
+
+.project-preview.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.project-preview-label {
+  font-size: 0.5625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 0.25rem;
+}
+
+.project-preview-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-bottom: var(--space-xs);
+  color: var(--color-bg);
+}
+
+.project-preview-desc {
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  opacity: 0.7;
+}
+
+.project-preview-meta {
+  margin-top: var(--space-xs);
+  font-size: 0.5625rem;
+  opacity: 0.4;
+  letter-spacing: 0.05em;
+}
+
 /* ---------- Loading State ---------- */
 .project-list[aria-busy="true"] {
   opacity: 0.5;

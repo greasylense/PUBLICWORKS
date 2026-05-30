@@ -91,6 +91,9 @@
   function createProjectItem(project) {
     const li = document.createElement('li');
     li.className = 'project-item';
+    li.dataset.name = project.name;
+    li.dataset.description = project.description || '';
+    li.dataset.date = project.date || '';
 
     const isExternal = project.url && project.url.startsWith('http');
     const href = project.url || `projects/${project.id}/`;
@@ -356,6 +359,83 @@
     updatePosition();
   }
 
+  // ---------- Project Preview Tooltip ----------
+  function initProjectPreviews() {
+    if (isTouchDevice()) return;
+
+    const { projectList } = elements;
+    if (!projectList) return;
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'project-preview';
+    tooltip.setAttribute('aria-hidden', 'true');
+    tooltip.innerHTML = `
+      <div class="project-preview-label">Preview</div>
+      <div class="project-preview-name"></div>
+      <div class="project-preview-desc"></div>
+      <div class="project-preview-meta"></div>
+    `;
+    document.body.appendChild(tooltip);
+
+    let currentItem = null;
+    let mouseX = 0;
+    let mouseY = 0;
+
+    function positionTooltip() {
+      const offset = 18;
+      const tw = tooltip.offsetWidth;
+      const th = tooltip.offsetHeight;
+      let x = mouseX + offset;
+      let y = mouseY + offset;
+
+      if (x + tw > window.innerWidth - 16) {
+        x = mouseX - tw - offset;
+      }
+      if (y + th > window.innerHeight - 16) {
+        y = mouseY - th - offset;
+      }
+
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    }
+
+    function showTooltip(item) {
+      tooltip.querySelector('.project-preview-name').textContent = item.dataset.name;
+      tooltip.querySelector('.project-preview-desc').textContent = item.dataset.description;
+      tooltip.querySelector('.project-preview-meta').textContent = item.dataset.date
+        ? item.dataset.date.replace('-', ' / ')
+        : '';
+      positionTooltip();
+      tooltip.classList.add('is-visible');
+    }
+
+    function hideTooltip() {
+      tooltip.classList.remove('is-visible');
+      currentItem = null;
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      if (currentItem) positionTooltip();
+    }, { passive: true });
+
+    projectList.addEventListener('mouseover', (e) => {
+      const item = e.target.closest('.project-item');
+      if (item && item !== currentItem) {
+        currentItem = item;
+        showTooltip(item);
+      }
+    });
+
+    projectList.addEventListener('mouseout', (e) => {
+      const item = e.target.closest('.project-item');
+      if (item && !item.contains(e.relatedTarget)) {
+        hideTooltip();
+      }
+    });
+  }
+
   // ---------- Easter Egg: Physics Drop ----------
   function initEasterEgg() {
     const trigger = document.getElementById('easter-egg-trigger');
@@ -605,6 +685,7 @@
     initCursorEffect();
     initScrollIndicator();
     initEasterEgg();
+    initProjectPreviews();
   }
 
   // Run on DOM ready

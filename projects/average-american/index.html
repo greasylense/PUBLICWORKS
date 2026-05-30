@@ -284,6 +284,72 @@
     @media (prefers-reduced-motion: reduce) {
       .state-path { transition: none; }
     }
+
+    /* ── view bar ──────────────────────────────────────── */
+    #view-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid var(--rule);
+      padding-left: 7rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    #view-bar::-webkit-scrollbar { display: none; }
+    .view-btn {
+      flex-shrink: 0;
+      padding: 0.5rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.5625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border: none;
+      border-right: 1px solid rgba(0,0,0,0.1);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.12s, background 0.12s;
+      white-space: nowrap;
+    }
+    .view-btn:first-child { border-left: 1px solid rgba(0,0,0,0.1); }
+    .view-btn:hover { color: var(--text); background: rgba(0,0,0,0.04); }
+    .view-btn.active { color: var(--text); background: rgba(0,0,0,0.07); font-weight: 500; }
+
+    /* ── map legend ────────────────────────────────────── */
+    #map-legend {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      pointer-events: none;
+      display: none;
+      background: rgba(209,209,209,0.9);
+      padding: 0.625rem 0.75rem;
+      border: 1px solid rgba(0,0,0,0.12);
+    }
+    .legend-title {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .legend-grad-bar { width: 100px; height: 6px; margin-bottom: 0.25rem; }
+    .legend-range {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.4375rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      width: 100px;
+    }
+    .legend-swatches { display: flex; flex-direction: column; gap: 0.3rem; }
+    .legend-swatch-row { display: flex; align-items: center; gap: 0.4rem; }
+    .swatch-dot { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
+    .swatch-lbl { font-size: 0.5rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+
+    @media (max-width: 720px) {
+      #view-bar { padding-left: 0; }
+    }
   </style>
 </head>
 <body>
@@ -296,10 +362,19 @@
     <p>Click any state to profile its most statistically common resident</p>
   </div>
 
+  <div id="view-bar">
+    <button class="view-btn active" data-view="profile">Profile</button>
+    <button class="view-btn" data-view="income">Income</button>
+    <button class="view-btn" data-view="age">Age</button>
+    <button class="view-btn" data-view="bmi">BMI</button>
+    <button class="view-btn" data-view="politics">Political</button>
+  </div>
+
   <div id="body">
     <div id="map-wrap">
       <svg id="map" aria-label="Interactive US map — click a state"></svg>
       <div id="map-hint">← click any state</div>
+      <div id="map-legend"></div>
     </div>
 
     <div id="panel">
@@ -524,6 +599,113 @@
 
   let projection, path, selectedFips = null;
 
+  // ── View Modes / Heat Maps ──────────────────────────────────────────────────
+  let currentView = 'profile';
+
+  // rank-based color: each state is colored by its rank among all 50 states, not
+  // its absolute value, so tightly-clustered data still uses the full color range.
+  function makeRankColor(vals, interpolator) {
+    const sorted = vals.slice().sort((a, b) => a - b);
+    return v => {
+      const i = sorted.findIndex(s => s >= v);
+      const t = (i < 0 ? sorted.length - 1 : i) / (sorted.length - 1);
+      return interpolator(0.15 + t * 0.85);
+    };
+  }
+
+  const HEAT_CONFIGS = {
+    income: {
+      label: 'Median Household Income',
+      type: 'sequential',
+      getValue: d => d.income,
+      colorScale: makeRankColor(Object.values(STATES).map(d => d.income), d3.interpolateOranges),
+      formatVal: v => '$' + v.toLocaleString(),
+      legendMin: '$47k  (lowest)', legendMax: '$92k  (highest)',
+      gradFrom: '#FDBE72', gradTo: '#7F2604'
+    },
+    age: {
+      label: 'Median Age',
+      type: 'sequential',
+      getValue: d => d.age,
+      colorScale: makeRankColor(Object.values(STATES).map(d => d.age), d3.interpolatePurples),
+      formatVal: v => v.toFixed(1) + ' yrs',
+      legendMin: '31 yrs  (youngest)', legendMax: '46 yrs  (oldest)',
+      gradFrom: '#CBC9E2', gradTo: '#3F007D'
+    },
+    bmi: {
+      label: 'BMI Category',
+      type: 'categorical',
+      getValue: d => d.bmi,
+      colorMap: { 'Healthy': '#0047FF', 'Overweight': '#888888', 'Obese': '#FF4D00' },
+      formatVal: v => v,
+      categories: ['Healthy', 'Overweight', 'Obese']
+    },
+    politics: {
+      label: 'Political Lean',
+      type: 'categorical',
+      getValue: d => d.politics,
+      colorMap: { 'Democrat': '#0047FF', 'Republican': '#FF4D00', 'Independent': '#888888' },
+      formatVal: v => v,
+      categories: ['Democrat', 'Republican', 'Independent']
+    }
+  };
+
+  function getStateFill(fips) {
+    if (fips === selectedFips) return '#0047FF';
+    if (currentView === 'profile') return null;
+    const st = STATES[fips];
+    if (!st) return '#C4C4C4';
+    const cfg = HEAT_CONFIGS[currentView];
+    if (cfg.type === 'sequential') return cfg.colorScale(cfg.getValue(st));
+    return cfg.colorMap[cfg.getValue(st)] || '#C4C4C4';
+  }
+
+  function refreshColors() {
+    svg.selectAll('.state-path')
+      .classed('selected', false)
+      .style('fill', function(d) {
+        return getStateFill(String(d.id).padStart(2, '0'));
+      });
+  }
+
+  function renderLegend(cfg) {
+    const el = document.getElementById('map-legend');
+    if (cfg.type === 'sequential') {
+      el.innerHTML =
+        `<div class="legend-title">${cfg.label}</div>` +
+        `<div class="legend-grad-bar" style="background:linear-gradient(to right,${cfg.gradFrom},${cfg.gradTo})"></div>` +
+        `<div class="legend-range"><span>${cfg.legendMin}</span><span>${cfg.legendMax}</span></div>`;
+    } else {
+      const rows = cfg.categories.map(c =>
+        `<div class="legend-swatch-row"><div class="swatch-dot" style="background:${cfg.colorMap[c]}"></div><span class="swatch-lbl">${c}</span></div>`
+      ).join('');
+      el.innerHTML = `<div class="legend-title">${cfg.label}</div><div class="legend-swatches">${rows}</div>`;
+    }
+    el.style.display = 'block';
+  }
+
+  function applyView(mode) {
+    currentView = mode;
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === mode));
+    const legend = document.getElementById('map-legend');
+    const hint   = document.getElementById('map-hint');
+    if (mode === 'profile') {
+      legend.style.display = 'none';
+      hint.style.display   = 'block';
+      svg.selectAll('.state-path')
+        .style('fill', null)
+        .classed('selected', function(d) { return String(d.id).padStart(2, '0') === selectedFips; });
+    } else {
+      hint.style.display = 'none';
+      renderLegend(HEAT_CONFIGS[mode]);
+      refreshColors();
+    }
+  }
+
+  document.querySelectorAll('.view-btn').forEach(b => {
+    b.addEventListener('click', () => applyView(b.dataset.view));
+  });
+
   function getSize() {
     return { w: mapWrap.clientWidth, h: mapWrap.clientHeight };
   }
@@ -560,9 +742,13 @@
           const fips = String(d.id).padStart(2, '0');
           if (!STATES[fips]) return;
 
-          svg.selectAll('.state-path').classed('selected', false);
-          d3.select(this).classed('selected', true);
           selectedFips = fips;
+          if (currentView === 'profile') {
+            svg.selectAll('.state-path').classed('selected', false);
+            d3.select(this).classed('selected', true);
+          } else {
+            refreshColors();
+          }
           renderProfile(STATES[fips]);
         })
         .on('keydown', function(event, d) {
@@ -600,7 +786,17 @@
           const fips = String(d.id).padStart(2, '0');
           const st = STATES[fips];
           if (!st) return;
-          tooltip.text(st.name + ' — click to explore').style('opacity', '1');
+          let tip;
+          if (currentView === 'profile') {
+            tip = st.name + ' — click to explore';
+          } else {
+            const cfg = HEAT_CONFIGS[currentView];
+            tip = st.name + ' — ' + cfg.formatVal(cfg.getValue(st));
+          }
+          tooltip.text(tip).style('opacity', '1');
+          if (currentView !== 'profile' && fips !== selectedFips) {
+            d3.select(this).style('opacity', '0.7');
+          }
         })
         .on('mousemove', function(event) {
           tooltip
@@ -609,6 +805,7 @@
         })
         .on('mouseout', function() {
           tooltip.style('opacity', '0');
+          d3.select(this).style('opacity', '1');
         });
 
       // Resize handler
