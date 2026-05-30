@@ -92,8 +92,7 @@
     const li = document.createElement('li');
     li.className = 'project-item';
     li.dataset.name = project.name;
-    li.dataset.description = project.description || '';
-    li.dataset.date = project.date || '';
+    li.dataset.url = project.url || `projects/${project.id}/`;
 
     const isExternal = project.url && project.url.startsWith('http');
     const href = project.url || `projects/${project.id}/`;
@@ -370,29 +369,50 @@
     tooltip.className = 'project-preview';
     tooltip.setAttribute('aria-hidden', 'true');
     tooltip.innerHTML = `
-      <div class="project-preview-label">Preview</div>
-      <div class="project-preview-name"></div>
-      <div class="project-preview-desc"></div>
-      <div class="project-preview-meta"></div>
+      <div class="project-preview-viewport"></div>
+      <div class="project-preview-bar">
+        <span class="project-preview-bar-name"></span>
+        <span class="project-preview-bar-hint">↗ open</span>
+      </div>
     `;
     document.body.appendChild(tooltip);
 
+    const viewport = tooltip.querySelector('.project-preview-viewport');
+    const barName = tooltip.querySelector('.project-preview-bar-name');
+
+    // Cache iframes so revisiting a project doesn't reload
+    const iframeCache = new Map();
+    let activeIframe = null;
     let currentItem = null;
     let mouseX = 0;
     let mouseY = 0;
 
+    function getOrCreateIframe(url, name) {
+      if (iframeCache.has(url)) return iframeCache.get(url);
+
+      const iframe = document.createElement('iframe');
+      iframe.className = 'project-preview-iframe';
+      iframe.setAttribute('tabindex', '-1');
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.setAttribute('loading', 'lazy');
+      iframe.src = url;
+      iframeCache.set(url, iframe);
+      return iframe;
+    }
+
     function positionTooltip() {
-      const offset = 18;
+      const offset = 20;
       const tw = tooltip.offsetWidth;
       const th = tooltip.offsetHeight;
       let x = mouseX + offset;
-      let y = mouseY + offset;
+      let y = mouseY - th / 2;
 
       if (x + tw > window.innerWidth - 16) {
         x = mouseX - tw - offset;
       }
+      if (y < 16) y = 16;
       if (y + th > window.innerHeight - 16) {
-        y = mouseY - th - offset;
+        y = window.innerHeight - th - 16;
       }
 
       tooltip.style.left = x + 'px';
@@ -400,11 +420,19 @@
     }
 
     function showTooltip(item) {
-      tooltip.querySelector('.project-preview-name').textContent = item.dataset.name;
-      tooltip.querySelector('.project-preview-desc').textContent = item.dataset.description;
-      tooltip.querySelector('.project-preview-meta').textContent = item.dataset.date
-        ? item.dataset.date.replace('-', ' / ')
-        : '';
+      const url = item.dataset.url;
+      const name = item.dataset.name;
+      if (!url) return;
+
+      // Swap out iframe if different project
+      const iframe = getOrCreateIframe(url, name);
+      if (iframe !== activeIframe) {
+        viewport.innerHTML = '';
+        viewport.appendChild(iframe);
+        activeIframe = iframe;
+      }
+
+      barName.textContent = name;
       positionTooltip();
       tooltip.classList.add('is-visible');
     }
