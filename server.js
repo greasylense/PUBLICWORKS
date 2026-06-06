@@ -33,42 +33,36 @@ app.post('/api/grade', async (req, res) => {
     return res.status(400).json({ error: 'name and description are required' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'GEMINI_API_KEY is not configured on the server' });
+    return res.status(500).json({ error: 'GROQ_API_KEY is not configured on the server' });
   }
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: PROMPT_TEMPLATE(name, description) }] }],
-          generationConfig: { responseMimeType: 'application/json', temperature: 0.4 }
-        })
-      }
-    );
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: PROMPT_TEMPLATE(name, description) }],
+        response_format: { type: 'json_object' },
+        temperature: 0.4
+      })
+    });
 
-    if (!geminiRes.ok) {
-      const err = await geminiRes.json().catch(() => ({}));
-      return res.status(geminiRes.status).json({ error: err.error?.message || `Gemini error ${geminiRes.status}` });
+    if (!groqRes.ok) {
+      const err = await groqRes.json().catch(() => ({}));
+      return res.status(groqRes.status).json({ error: err.error?.message || `Groq error ${groqRes.status}` });
     }
 
-    const data = await geminiRes.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('Empty response from Gemini');
+    const data = await groqRes.json();
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) throw new Error('Empty response from Groq');
 
-    let result;
-    try {
-      result = JSON.parse(text);
-    } catch {
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) result = JSON.parse(match[0]);
-      else throw new Error('Could not parse Gemini response as JSON');
-    }
-
+    const result = JSON.parse(text);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

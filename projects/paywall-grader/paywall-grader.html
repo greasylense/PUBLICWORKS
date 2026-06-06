@@ -686,28 +686,113 @@
     .pv-trust-section {
       width: 100%;
       border-top: 1px solid #eee;
-      padding-top: 0.625rem;
-      margin-top: 0.25rem;
+      padding-top: 0.75rem;
+      margin-top: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
     }
-    .pv-trust-label {
-      font-family: var(--font-mono);
-      font-size: 0.5rem;
-      color: #bbb;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 0.35rem;
+
+    /* Money-back guarantee */
+    .pv-guarantee {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #f0faf4;
+      border: 1px solid #c3e6cb;
+      padding: 0.45rem 0.7rem;
     }
-    .pv-badges { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-    .pv-badge {
+    .pv-guarantee-icon { font-size: 0.875rem; }
+    .pv-guarantee-text { font-family: var(--font-display); font-size: 0.68rem; font-weight: 700; color: #1a6b35; }
+    .pv-guarantee-sub { font-size: 0.58rem; color: #4a9a65; font-family: var(--font-display); }
+
+    /* Testimonial */
+    .pv-testimonial {
+      background: #fafafa;
+      border-left: 2px solid #ddd;
+      padding: 0.5rem 0.75rem;
+    }
+    .pv-testimonial-text { font-size: 0.66rem; font-style: italic; color: #444; line-height: 1.5; margin-bottom: 0.25rem; font-family: var(--font-display); }
+    .pv-testimonial-author { font-family: var(--font-mono); font-size: 0.52rem; color: #999; }
+    .pv-testimonial-stars { color: #f59e0b; letter-spacing: 0.05em; font-size: 0.6rem; }
+
+    /* Subscriber count */
+    .pv-sub-count {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      justify-content: center;
+    }
+    .pv-sub-count-num { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: #111; letter-spacing: -0.02em; }
+    .pv-sub-count-label { font-size: 0.62rem; color: #888; font-family: var(--font-display); }
+
+    /* Press logos */
+    .pv-press {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.875rem;
+      padding: 0.35rem 0;
+    }
+    .pv-press span { font-family: var(--font-display); font-size: 0.62rem; font-weight: 700; color: #bbb; letter-spacing: 0.04em; text-transform: uppercase; }
+
+    /* Security badges */
+    .pv-security {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .pv-security-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
       font-family: var(--font-mono);
       font-size: 0.52rem;
-      color: #555;
-      border: 1px solid #ccc;
-      padding: 0.18rem 0.45rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      background: #f8f8f8;
+      color: #888;
+      border: 1px solid #e0e0e0;
+      padding: 0.2rem 0.5rem;
+      background: #fafafa;
     }
+
+    /* Countdown timer urgency */
+    .pv-countdown {
+      background: #111;
+      padding: 0.75rem 1rem;
+      text-align: center;
+    }
+    .pv-countdown-label { font-family: var(--font-mono); font-size: 0.52rem; color: #888; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.4rem; }
+    .pv-countdown-timer { display: flex; align-items: center; justify-content: center; gap: 0.35rem; }
+    .pv-cd-unit { text-align: center; }
+    .pv-cd-num { font-family: var(--font-mono); font-size: 1.35rem; font-weight: 500; color: #f97316; line-height: 1; display: block; min-width: 2.2ch; }
+    .pv-cd-lbl { font-family: var(--font-mono); font-size: 0.42rem; color: #555; text-transform: uppercase; letter-spacing: 0.1em; }
+    .pv-cd-sep { font-family: var(--font-mono); font-size: 1.1rem; color: #f97316; margin-bottom: 0.6rem; line-height: 1; }
+
+    /* Limited time price */
+    .pv-limited {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: #fff8f0;
+      border: 1px solid #fed7aa;
+      padding: 0.45rem 0.75rem;
+    }
+    .pv-limited-badge { font-family: var(--font-mono); font-size: 0.5rem; font-weight: 700; color: #ea580c; text-transform: uppercase; letter-spacing: 0.08em; background: #fed7aa; padding: 0.15rem 0.4rem; }
+    .pv-limited-was { font-family: var(--font-display); font-size: 0.68rem; color: #aaa; text-decoration: line-through; }
+    .pv-limited-now { font-family: var(--font-display); font-size: 0.875rem; font-weight: 700; color: #ea580c; }
+
+    /* Seats remaining */
+    .pv-seats {
+      background: #fff8f0;
+      border: 1px solid #fed7aa;
+      padding: 0.45rem 0.7rem;
+    }
+    .pv-seats-text { font-family: var(--font-display); font-size: 0.66rem; color: #92400e; margin-bottom: 0.35rem; }
+    .pv-seats-bar { height: 4px; background: #fde8c8; width: 100%; }
+    .pv-seats-fill { height: 4px; background: #ea580c; width: 18%; }
 
     /* Multiple plans preview */
     .pv-multi { display: flex; flex-direction: column; gap: 0.875rem; flex: 1; }
@@ -1549,11 +1634,92 @@
   }
 
   // ── LIVE PREVIEW ──
+  let pvTimerInterval = null;
+
+  function startPreviewTimer() {
+    if (pvTimerInterval) clearInterval(pvTimerInterval);
+    let secs = 14 * 60 + 59;
+    pvTimerInterval = setInterval(() => {
+      const hEl = document.getElementById('pv-cd-h');
+      const mEl = document.getElementById('pv-cd-m');
+      const sEl = document.getElementById('pv-cd-s');
+      if (!hEl) { clearInterval(pvTimerInterval); pvTimerInterval = null; return; }
+      secs = Math.max(0, secs - 1);
+      hEl.textContent = String(Math.floor(secs / 3600)).padStart(2, '0');
+      mEl.textContent = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
+      sEl.textContent = String(secs % 60).padStart(2, '0');
+    }, 1000);
+  }
+
   function trustSection(trust, urgency) {
-    const all = [...trust, ...urgency];
-    if (!all.length) return '';
-    const badges = all.map(t => `<span class="pv-badge">${esc(t)}</span>`).join('');
-    return `<div class="pv-trust-section"><div class="pv-trust-label">Trust &amp; urgency signals</div><div class="pv-badges">${badges}</div></div>`;
+    if (!trust.length && !urgency.length) return '';
+
+    let html = '<div class="pv-trust-section">';
+
+    trust.forEach(t => {
+      if (t === 'Money-back guarantee') {
+        html += `<div class="pv-guarantee">
+          <span class="pv-guarantee-icon">🛡</span>
+          <div>
+            <div class="pv-guarantee-text">30-Day Money-Back Guarantee</div>
+            <div class="pv-guarantee-sub">No questions asked. Full refund, always.</div>
+          </div>
+        </div>`;
+      } else if (t === 'Testimonials') {
+        html += `<div class="pv-testimonial">
+          <div class="pv-testimonial-stars">★★★★★</div>
+          <div class="pv-testimonial-text">"Completely changed how I work. Paid for itself in the first week."</div>
+          <div class="pv-testimonial-author">— Sarah K., Product Designer</div>
+        </div>`;
+      } else if (t === 'Subscriber count') {
+        html += `<div class="pv-sub-count">
+          <span class="pv-sub-count-num">2.4M+</span>
+          <span class="pv-sub-count-label">subscribers worldwide</span>
+        </div>`;
+      } else if (t === 'Press logos') {
+        html += `<div class="pv-press">
+          <span>Forbes</span>
+          <span>TechCrunch</span>
+          <span>Wired</span>
+          <span>The Verge</span>
+        </div>`;
+      } else if (t === 'Security badges') {
+        html += `<div class="pv-security">
+          <span class="pv-security-item">🔒 256-bit SSL</span>
+          <span class="pv-security-item">✓ Verified Secure</span>
+          <span class="pv-security-item">PCI Compliant</span>
+        </div>`;
+      }
+    });
+
+    urgency.forEach(u => {
+      if (u === 'Countdown timer') {
+        html += `<div class="pv-countdown">
+          <div class="pv-countdown-label">Offer expires in</div>
+          <div class="pv-countdown-timer">
+            <div class="pv-cd-unit"><span class="pv-cd-num" id="pv-cd-h">00</span><span class="pv-cd-lbl">HRS</span></div>
+            <span class="pv-cd-sep">:</span>
+            <div class="pv-cd-unit"><span class="pv-cd-num" id="pv-cd-m">14</span><span class="pv-cd-lbl">MIN</span></div>
+            <span class="pv-cd-sep">:</span>
+            <div class="pv-cd-unit"><span class="pv-cd-num" id="pv-cd-s">59</span><span class="pv-cd-lbl">SEC</span></div>
+          </div>
+        </div>`;
+      } else if (u === 'Limited time price') {
+        html += `<div class="pv-limited">
+          <span class="pv-limited-badge">Limited Time</span>
+          <span class="pv-limited-was">$24.99/mo</span>
+          <span class="pv-limited-now">$9.99/mo</span>
+        </div>`;
+      } else if (u === 'Seats remaining') {
+        html += `<div class="pv-seats">
+          <div class="pv-seats-text">⚡ Only <strong>3 spots</strong> remaining at this price</div>
+          <div class="pv-seats-bar"><div class="pv-seats-fill"></div></div>
+        </div>`;
+      }
+    });
+
+    html += '</div>';
+    return html;
   }
 
   function platformLine(platform) {
@@ -1651,6 +1817,14 @@
     }
 
     preview.innerHTML = inner;
+
+    // Start live countdown if that urgency signal is selected
+    if (v.urgency.includes('Countdown timer')) {
+      startPreviewTimer();
+    } else if (pvTimerInterval) {
+      clearInterval(pvTimerInterval);
+      pvTimerInterval = null;
+    }
   }
 
   // Wire up all form inputs
