@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/grade.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/grade", "dest": "/api/grade.js" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}
