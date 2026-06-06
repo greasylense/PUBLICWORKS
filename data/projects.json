@@ -1,5 +1,14 @@
 [
   {
+    "id": "paywall-grader",
+    "number": "010",
+    "name": "Paywall Grader",
+    "description": "Browse 8 real paywall patterns or build your own — then get an AI-powered effectiveness score with CRO breakdown",
+    "status": "live",
+    "url": "projects/paywall-grader/paywall-grader.html",
+    "date": "2026-06"
+  },
+  {
     "id": "average-american",
     "number": "009",
     "name": "Average American",

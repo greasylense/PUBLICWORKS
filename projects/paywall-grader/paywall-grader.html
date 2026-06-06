@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#D1D1D1">
+  <title>Paywall Grader — PUBLICWORKS</title>
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── BRAND VARS ── */
+    :root {
+      --bg: #D1D1D1;
+      --text: #0F0F0F;
+      --muted: #6E6E6E;
+      --accent: #0047FF;
+      --alert: #FF4D00;
+      --rule: #0F0F0F;
+      --surface: #C4C4C4;
+      --surface-light: #DADADA;
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    input, textarea { font: inherit; }
+    a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ── BACK LINK ── */
+    #back-link {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      font-size: 0.6875rem;
+      color: var(--muted);
+      z-index: 100;
+      letter-spacing: 0.06em;
+      transition: color 0.15s;
+    }
+    #back-link:hover { color: var(--accent); }
+
+    /* ── APP SHELL ── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── TOP BAR ── */
+    #top-bar {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 1.5rem 2rem 1.25rem 7rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    #top-bar h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 2.5vw, 1.375rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .top-label {
+      font-size: 0.6875rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      margin-bottom: 0.25rem;
+    }
+    #top-bar p {
+      font-size: 0.6875rem;
+      color: var(--muted);
+      max-width: 38ch;
+      text-align: right;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── TAB BAR ── */
+    #tab-bar {
+      display: flex;
+      border-bottom: 1px solid var(--rule);
+      padding-left: 7rem;
+    }
+    .tab-btn {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      padding: 0.875rem 1.5rem;
+      border-right: 1px solid var(--rule);
+      transition: color 0.15s, background 0.15s;
+      text-transform: uppercase;
+    }
+    .tab-btn:first-child { border-left: 1px solid var(--rule); }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--text); background: var(--surface); }
+
+    /* ── MAIN CONTENT ── */
+    #content {
+      flex: 1;
+      padding: 2rem 2rem 4rem 7rem;
+      max-width: 1100px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size: 0.625rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ═══════════════════════════════════
+       TAB 1: GALLERY
+    ═══════════════════════════════════ */
+    .gallery-wrap {
+      display: grid;
+      grid-template-columns: 2rem 1fr 2rem;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .g-nav {
+      width: 2rem; height: 2rem;
+      border: 1px solid var(--rule);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted);
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .g-nav:hover:not(:disabled) { color: var(--text); background: var(--surface); }
+    .g-nav:disabled { opacity: 0.25; cursor: default; }
+
+    .gallery-outer { overflow: hidden; }
+    .gallery-track {
+      display: flex;
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      will-change: transform;
+    }
+    .card-slide {
+      min-width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 1.5rem 0;
+    }
+
+    /* ── CARD SHELL ── */
+    .pw-card {
+      width: 360px;
+      border: 1px solid var(--rule);
+      background: var(--surface-light);
+      display: flex;
+      flex-direction: column;
+    }
+    .pw-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.625rem 0.875rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    .card-type {
+      font-size: 0.625rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .pre-score {
+      font-size: 0.625rem;
+      letter-spacing: 0.04em;
+    }
+    .pre-score.good { color: var(--accent); }
+    .pre-score.mid  { color: var(--muted); }
+    .pre-score.low  { color: var(--alert); }
+
+    .card-mock { flex: 1; }
+
+    .pw-card-foot {
+      padding: 0.625rem 0.875rem;
+      border-top: 1px solid var(--rule);
+    }
+    .grade-btn {
+      width: 100%;
+      border: 1px solid var(--rule);
+      padding: 0.5rem;
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+      color: var(--text);
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .grade-btn:hover:not(:disabled) { background: var(--text); color: var(--bg); }
+    .grade-btn:disabled { color: var(--muted); border-color: var(--muted); cursor: not-allowed; }
+    .grade-btn.loading { color: var(--muted); pointer-events: none; }
+
+    /* ── DOT NAV ── */
+    .g-dots {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .g-dot {
+      width: 5px; height: 5px;
+      background: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+    }
+    .g-dot.on { background: var(--text); width: 16px; }
+
+    /* ═══════════════════════════════════
+       PAYWALL MOCKUPS
+    ═══════════════════════════════════ */
+
+    /* 1 — Hard Gate (Spotify-style) */
+    .m-hg {
+      background: #191414;
+      min-height: 340px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .hg-blur {
+      flex: 1;
+      padding: 1.25rem;
+      filter: blur(3px);
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .hg-line {
+      height: 8px;
+      background: #3a3a3a;
+      border-radius: 2px;
+      margin-bottom: 10px;
+    }
+    .hg-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 15%, rgba(25,20,20,0.96) 50%, #191414 100%);
+      display: flex;
+      align-items: flex-end;
+      padding: 1.5rem;
+    }
+    .hg-modal { width: 100%; text-align: center; }
+    .hg-brand { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; color: #1DB954; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    .hg-h { font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 0.25rem; font-family: var(--font-display); }
+    .hg-p { font-size: 0.68rem; color: #888; margin-bottom: 0.875rem; font-family: var(--font-display); }
+    .hg-cta {
+      display: block;
+      background: #1DB954;
+      color: #000;
+      font-weight: 700;
+      font-size: 0.7rem;
+      padding: 0.5rem 1.5rem;
+      border-radius: 25px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-family: var(--font-display);
+    }
+
+    /* 2 — Soft Nudge (NYT-style) */
+    .m-sn { background: #fff; min-height: 340px; display: flex; flex-direction: column; }
+    .sn-hdr { font-family: 'Times New Roman', serif; font-size: 1rem; font-weight: 700; color: #000; text-align: center; padding: 0.5rem; border-bottom: 2px solid #000; }
+    .sn-banner {
+      background: #fffbf5;
+      border-bottom: 1px solid #ddd;
+      padding: 0.6rem 0.875rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .sn-msg { font-size: 0.66rem; color: #111; font-family: 'Times New Roman', serif; line-height: 1.4; }
+    .sn-msg strong { font-weight: 700; }
+    .sn-actions { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; flex-shrink: 0; }
+    .sn-sub {
+      background: #000;
+      color: #fff;
+      font-size: 0.55rem;
+      font-weight: 700;
+      padding: 0.28rem 0.6rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .sn-dismiss { font-size: 0.58rem; color: #999; }
+    .sn-body { padding: 0.875rem; flex: 1; }
+    .sn-tag { font-size: 0.54rem; text-transform: uppercase; letter-spacing: 0.15em; color: #000; font-weight: 700; margin-bottom: 0.35rem; }
+    .sn-art-h { font-family: 'Times New Roman', serif; font-size: 0.95rem; font-weight: 700; color: #000; line-height: 1.3; margin-bottom: 0.4rem; }
+    .sn-art-p { font-size: 0.66rem; color: #444; font-family: 'Times New Roman', serif; line-height: 1.5; }
+
+    /* 3 — Pricing Table (Netflix-style) */
+    .m-pt {
+      background: #141414;
+      min-height: 340px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.25rem 1rem;
+      gap: 0.875rem;
+    }
+    .pt-logo { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: #E50914; letter-spacing: -0.02em; }
+    .pt-h { font-size: 0.78rem; font-weight: 600; color: #fff; font-family: var(--font-display); }
+    .pt-plans { display: flex; gap: 0.4rem; width: 100%; }
+    .pt-plan {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 0.7rem 0.4rem;
+      text-align: center;
+      position: relative;
+    }
+    .pt-plan.pop { border-color: #E50914; background: rgba(229,9,20,0.07); }
+    .pt-badge {
+      position: absolute;
+      top: -8px; left: 50%;
+      transform: translateX(-50%);
+      background: #E50914;
+      color: #fff;
+      font-size: 0.46rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-family: var(--font-display);
+    }
+    .pt-name { font-size: 0.54rem; color: #777; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.25rem; font-family: var(--font-display); }
+    .pt-price { font-size: 0.9rem; font-weight: 700; color: #fff; font-family: var(--font-display); }
+    .pt-per { font-size: 0.5rem; color: #555; }
+    .pt-cta { width: 100%; background: #E50914; color: #fff; font-size: 0.68rem; font-weight: 700; padding: 0.48rem; text-align: center; font-family: var(--font-display); }
+
+    /* 4 — Free Trial Hook */
+    .m-ft {
+      background: linear-gradient(135deg, #1a0533, #0d0824);
+      min-height: 340px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 2rem 1.5rem; text-align: center; gap: 0.7rem;
+    }
+    .ft-icon { width: 46px; height: 46px; background: linear-gradient(135deg, #7c3aed, #5b21b6); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .ft-h { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: #fff; letter-spacing: -0.02em; }
+    .ft-sub { font-size: 0.7rem; color: #c4b5fd; font-family: var(--font-display); }
+    .ft-nocc {
+      font-family: var(--font-mono);
+      font-size: 0.56rem; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.1em;
+      background: rgba(124,58,237,0.1); padding: 0.2rem 0.7rem;
+      border: 1px solid rgba(124,58,237,0.3);
+    }
+    .ft-cta { background: #7c3aed; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 0.6rem 2rem; width: 100%; text-align: center; font-family: var(--font-display); }
+    .ft-terms { font-size: 0.56rem; color: rgba(255,255,255,0.22); font-family: var(--font-display); }
+
+    /* 5 — Annual Push */
+    .m-ap {
+      background: #0a0f1e;
+      min-height: 340px; display: flex; flex-direction: column; align-items: center;
+      padding: 1.5rem 1rem; gap: 0.8rem;
+    }
+    .ap-head-h { font-size: 0.82rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: 0.2rem; font-family: var(--font-display); }
+    .ap-head-s { font-size: 0.6rem; color: #666; text-align: center; font-family: var(--font-display); }
+    .ap-toggle { display: flex; background: rgba(255,255,255,0.04); padding: 3px; gap: 3px; }
+    .ap-opt { font-size: 0.6rem; padding: 0.28rem 0.75rem; color: #555; font-family: var(--font-display); }
+    .ap-opt.on { background: #f97316; color: #fff; font-weight: 600; }
+    .ap-save { background: rgba(249,115,22,0.1); color: #f97316; border: 1px solid rgba(249,115,22,0.3); font-family: var(--font-mono); font-size: 0.56rem; font-weight: 500; padding: 0.18rem 0.6rem; }
+    .ap-big { font-family: var(--font-display); font-size: 2rem; font-weight: 700; color: #fff; letter-spacing: -0.03em; text-align: center; }
+    .ap-period { font-size: 0.64rem; color: #666; text-align: center; font-family: var(--font-display); }
+    .ap-was { font-size: 0.6rem; color: rgba(255,255,255,0.2); text-decoration: line-through; text-align: center; font-family: var(--font-display); }
+    .ap-cta { width: 100%; background: #f97316; color: #fff; font-weight: 700; font-size: 0.72rem; padding: 0.58rem; text-align: center; font-family: var(--font-display); }
+    .ap-feat { display: flex; align-items: center; gap: 0.4rem; font-size: 0.6rem; color: #777; padding: 0.16rem 0; font-family: var(--font-display); }
+    .ap-dot { width: 4px; height: 4px; background: #f97316; flex-shrink: 0; }
+
+    /* 6 — Countdown */
+    .m-cd {
+      background: linear-gradient(180deg, #0f0a00, #1a0a00);
+      min-height: 340px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 1.5rem 1rem; gap: 0.75rem; text-align: center;
+    }
+    .cd-tag { font-family: var(--font-mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.15em; color: #ef4444; background: rgba(239,68,68,0.08); padding: 0.18rem 0.6rem; border: 1px solid rgba(239,68,68,0.2); }
+    .cd-h { font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; color: #fff; }
+    .cd-timer { display: flex; gap: 0.35rem; align-items: center; }
+    .cd-unit { text-align: center; }
+    .cd-digits { font-family: var(--font-mono); font-size: 1.5rem; font-weight: 500; color: #f97316; line-height: 1; min-width: 2.5ch; }
+    .cd-ulabel { font-size: 0.46rem; color: #555; text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--font-mono); }
+    .cd-sep { font-family: var(--font-mono); font-size: 1.2rem; color: #f97316; margin-bottom: 0.75rem; }
+    .cd-was { font-size: 0.6rem; color: #444; font-family: var(--font-display); }
+    .cd-was s { color: #333; }
+    .cd-price { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; color: #f97316; }
+    .cd-cta { width: 100%; background: #ef4444; color: #fff; font-weight: 700; font-size: 0.72rem; padding: 0.58rem; text-align: center; font-family: var(--font-display); }
+
+    /* 7 — Feature Wall */
+    .m-fw { background: #0f172a; min-height: 340px; padding: 1.25rem 1rem; }
+    .fw-h { font-size: 0.82rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: 0.875rem; font-family: var(--font-display); }
+    .fw-table { width: 100%; border-collapse: collapse; }
+    .fw-th { font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.22rem 0.35rem; text-align: center; color: #555; font-family: var(--font-mono); }
+    .fw-th.paid { color: #3b82f6; font-weight: 500; }
+    .fw-td { font-size: 0.6rem; color: #ccc; padding: 0.22rem 0.35rem 0.22rem 0; font-family: var(--font-display); }
+    .fw-tc { text-align: center; padding: 0.22rem 0.35rem; font-size: 0.7rem; }
+    .fw-ok { color: #22c55e; }
+    .fw-lock { color: #3b82f6; }
+    .fw-no { color: #333; }
+    .fw-rule td { padding: 0.08rem 0; }
+    .fw-line { border-top: 1px solid rgba(255,255,255,0.04); }
+    .fw-cta { display: block; width: 100%; background: #3b82f6; color: #fff; font-weight: 700; font-size: 0.68rem; padding: 0.5rem; text-align: center; margin-top: 0.875rem; font-family: var(--font-display); }
+
+    /* 8 — Social Proof */
+    .m-sp {
+      background: linear-gradient(180deg, #001a15, #000e0b);
+      min-height: 340px; padding: 1.25rem 1rem;
+      display: flex; flex-direction: column; gap: 0.7rem;
+    }
+    .sp-num { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; color: #fff; letter-spacing: -0.02em; text-align: center; }
+    .sp-sub-text { font-size: 0.6rem; color: #00D4AA; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; text-align: center; }
+    .sp-stars { text-align: center; font-size: 0.82rem; letter-spacing: 0.04em; }
+    .sp-stars span { font-size: 0.56rem; color: #555; margin-left: 3px; font-family: var(--font-display); }
+    .sp-qs { display: flex; flex-direction: column; gap: 0.38rem; }
+    .sp-q { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 0.45rem 0.58rem; }
+    .sp-qt { font-size: 0.58rem; color: #888; font-style: italic; line-height: 1.4; margin-bottom: 0.18rem; font-family: var(--font-display); }
+    .sp-auth { font-size: 0.5rem; color: #444; font-family: var(--font-mono); }
+    .sp-cta { background: #00D4AA; color: #001a15; font-weight: 700; font-size: 0.7rem; padding: 0.55rem; text-align: center; margin-top: auto; font-family: var(--font-display); }
+
+    /* ═══════════════════════════════════
+       RESULT PANEL
+    ═══════════════════════════════════ */
+    .result-panel {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.5s ease, opacity 0.35s ease;
+      margin-top: 2rem;
+    }
+    .result-panel.open { max-height: 1200px; opacity: 1; }
+    .result-inner {
+      border-top: 1px solid var(--rule);
+      padding-top: 1.5rem;
+    }
+    .r-loading { padding: 2rem 0; }
+    .r-loading p { font-size: 0.6875rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .r-loading .dots::after {
+      content: '...';
+      animation: dotanim 1.2s steps(4, end) infinite;
+    }
+    @keyframes dotanim {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+    }
+
+    .r-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    .score-block { flex-shrink: 0; }
+    .score-num {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .score-num.good { color: var(--accent); }
+    .score-num.mid  { color: var(--muted); }
+    .score-num.low  { color: var(--alert); }
+    .score-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+    .score-grade {
+      font-size: 0.6875rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+    .score-label {
+      font-size: 0.6875rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .r-meta { flex: 1; }
+    .r-paywall-name {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .r-summary { font-size: 0.6875rem; color: var(--muted); line-height: 1.7; }
+
+    .r-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 600px) { .r-body { grid-template-columns: 1fr; } }
+
+    .r-col-label {
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .r-col-label.s { color: var(--accent); }
+    .r-col-label.w { color: var(--alert); }
+    .r-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .r-list li {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.6875rem;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+    .r-list li .icon { flex-shrink: 0; font-style: normal; }
+    .r-rec { border-top: 1px solid var(--rule); padding-top: 1.25rem; }
+    .r-rec-label { font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 0.5rem; }
+    .r-rec-text { font-family: var(--font-display); font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.5; color: var(--text); }
+
+    /* ═══════════════════════════════════
+       TAB 2: BUILDER
+    ═══════════════════════════════════ */
+    .builder-layout {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 3rem;
+      align-items: start;
+    }
+    @media (max-width: 840px) {
+      .builder-layout { grid-template-columns: 1fr; }
+      .builder-preview { order: -1; }
+    }
+
+    /* ── FORM ── */
+    .fg { margin-bottom: 1.25rem; }
+    .flabel {
+      display: block;
+      font-size: 0.625rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.4rem;
+    }
+    .req { color: var(--accent); }
+    .finput {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--rule);
+      padding: 0.4rem 0;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .finput:focus { border-bottom-color: var(--accent); }
+    .finput::placeholder { color: var(--muted); font-size: 0.75rem; }
+
+    .fgroup { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+    .fopt { position: relative; }
+    .fopt input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .fopt label {
+      display: inline-block;
+      font-size: 0.625rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--muted);
+      padding: 0.3rem 0.65rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .fopt input:checked + label { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .fopt label:hover { border-color: var(--text); color: var(--text); }
+    .fopt input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .grade-main-btn {
+      width: 100%;
+      border: 1px solid var(--rule);
+      padding: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+      background: transparent;
+      margin-top: 1.5rem;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .grade-main-btn:hover:not(:disabled) { background: var(--text); color: var(--bg); }
+    .grade-main-btn:disabled { color: var(--muted); border-color: var(--muted); cursor: not-allowed; }
+
+    /* ── LIVE PREVIEW ── */
+    .preview-label {
+      font-size: 0.625rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .preview-card {
+      border: 1px solid var(--rule);
+      background: #fff;
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+      padding: 1.75rem 1.5rem;
+      transition: all 0.2s;
+    }
+    .pv-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6875rem;
+      color: #ccc;
+      text-align: center;
+      font-family: var(--font-display);
+    }
+
+    /* Single plan preview */
+    .pv-single {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; gap: 0.875rem; flex: 1; justify-content: center;
+    }
+    .pv-headline {
+      font-family: var(--font-display);
+      font-size: 1.25rem; font-weight: 700;
+      letter-spacing: -0.02em; line-height: 1.2;
+      color: #111;
+    }
+    .pv-sub { font-size: 0.78rem; color: #777; font-family: var(--font-display); line-height: 1.5; max-width: 26ch; }
+    .pv-price-box {
+      background: #f5f5f5;
+      border: 1px solid #e0e0e0;
+      padding: 0.6rem 1.5rem;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      color: #555;
+    }
+    .pv-cta {
+      background: #111;
+      color: #fff;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 0.65rem 2rem;
+      width: 100%;
+      max-width: 240px;
+      text-align: center;
+    }
+    .pv-friction { font-family: var(--font-mono); font-size: 0.56rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.08em; }
+    .pv-platform {
+      width: 100%;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.52rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      border-top: 1px solid #eee;
+      padding-top: 0.625rem;
+      margin-top: auto;
+    }
+    .pv-trust-section {
+      width: 100%;
+      border-top: 1px solid #eee;
+      padding-top: 0.625rem;
+      margin-top: 0.25rem;
+    }
+    .pv-trust-label {
+      font-family: var(--font-mono);
+      font-size: 0.5rem;
+      color: #bbb;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.35rem;
+    }
+    .pv-badges { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .pv-badge {
+      font-family: var(--font-mono);
+      font-size: 0.52rem;
+      color: #555;
+      border: 1px solid #ccc;
+      padding: 0.18rem 0.45rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #f8f8f8;
+    }
+
+    /* Multiple plans preview */
+    .pv-multi { display: flex; flex-direction: column; gap: 0.875rem; flex: 1; }
+    .pv-multi-h { font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; color: #111; letter-spacing: -0.01em; }
+    .pv-plans { display: flex; gap: 0.4rem; }
+    .pv-plan {
+      flex: 1;
+      border: 1px solid #e0e0e0;
+      padding: 0.7rem 0.4rem;
+      text-align: center;
+      position: relative;
+    }
+    .pv-plan.featured { border-color: #111; }
+    .pv-plan-badge {
+      position: absolute;
+      top: -8px; left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      color: #fff;
+      font-size: 0.46rem;
+      padding: 1px 6px;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-family: var(--font-mono);
+    }
+    .pv-plan-name { font-size: 0.54rem; color: #999; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.25rem; font-family: var(--font-mono); }
+    .pv-plan-price { font-size: 0.9rem; font-weight: 700; color: #111; font-family: var(--font-display); }
+    .pv-multi-cta { width: 100%; background: #111; color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 0.78rem; padding: 0.6rem; text-align: center; }
+    .pv-multi-trust { font-family: var(--font-mono); font-size: 0.52rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* Free trial preview */
+    .pv-trial {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; gap: 0.75rem; flex: 1; justify-content: center;
+    }
+    .pv-trial-days {
+      font-family: var(--font-display);
+      font-size: 2rem; font-weight: 700;
+      letter-spacing: -0.03em; color: #111;
+      line-height: 1;
+    }
+    .pv-trial-sub { font-size: 0.6rem; color: #aaa; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; margin-top: -0.25rem; }
+    .pv-nocc {
+      font-family: var(--font-mono);
+      font-size: 0.56rem; color: #555;
+      border: 1px solid #ccc; padding: 0.2rem 0.6rem;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .pv-terms { font-size: 0.56rem; color: #bbb; font-family: var(--font-display); }
+
+    /* Freemium preview */
+    .pv-freemium { display: flex; flex-direction: column; gap: 0.75rem; flex: 1; }
+    .pv-freemium-h { font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; color: #111; }
+    .pv-tier-table { width: 100%; border-collapse: collapse; }
+    .pv-tier-th { font-size: 0.54rem; color: #999; text-align: center; padding: 0.2rem 0.3rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+    .pv-tier-th.pro { color: #0047FF; font-weight: 500; }
+    .pv-tier-td { font-size: 0.6rem; color: #555; padding: 0.2rem 0.3rem 0.2rem 0; font-family: var(--font-display); }
+    .pv-tier-tc { text-align: center; padding: 0.2rem 0.3rem; font-size: 0.68rem; }
+    .pv-ok { color: #22c55e; }
+    .pv-no { color: #ddd; }
+    .pv-pay { color: #0047FF; }
+    .pv-upgrade { width: 100%; background: #0047FF; color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 0.75rem; padding: 0.58rem; text-align: center; margin-top: auto; }
+
+    /* ── FOOTER ── */
+    #page-footer {
+      border-top: 1px solid var(--rule);
+      padding: 1.25rem 2rem 1.25rem 7rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-text { font-size: 0.625rem; color: var(--muted); letter-spacing: 0.04em; }
+    .footer-text a { color: var(--muted); }
+    .footer-text a:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      #top-bar, #tab-bar, #content, #page-footer { padding-left: 1rem; }
+      #top-bar { flex-direction: column; gap: 0.5rem; }
+      #top-bar p { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+<a id="back-link" href="../../index.html">← PUBLICWORKS</a>
+
+<div id="app">
+
+  <header id="top-bar">
+    <div>
+      <div class="top-label">010 — Paywall Grader</div>
+      <h1>Paywall Grader</h1>
+    </div>
+    <p>Browse real paywall patterns or build your own — then get an AI-powered effectiveness score with CRO breakdown.</p>
+  </header>
+
+  <nav id="tab-bar" role="tablist">
+    <button class="tab-btn active" id="tab-gallery-btn" role="tab" aria-selected="true" aria-controls="tab-gallery">Grade a Paywall</button>
+    <button class="tab-btn" id="tab-builder-btn" role="tab" aria-selected="false" aria-controls="tab-builder">Build &amp; Grade</button>
+  </nav>
+
+  <div id="content">
+
+    <!-- ═══ TAB 1: GALLERY ═══ -->
+    <div class="tab-panel active" id="tab-gallery" role="tabpanel">
+      <div class="section-label">Browse paywall patterns — select one to grade</div>
+
+      <div class="gallery-wrap">
+        <button class="g-nav" id="g-prev" aria-label="Previous" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+
+        <div class="gallery-outer">
+          <div class="gallery-track" id="gallery-track">
+
+            <!-- 1: The Hard Gate -->
+            <div class="card-slide">
+              <div class="pw-card">
+                <div class="pw-card-head">
+                  <span class="card-type">The Hard Gate</span>
+                  <span class="pre-score mid">72/100</span>
+                </div>
+                <div class="card-mock">
+                  <div class="m-hg">
+                    <div class="hg-blur">
+                      <div class="hg-line" style="width:80%"></div>
+                      <div class="hg-line" style="width:65%"></div>
+                      <div class="hg-line" style="width:92%"></div>
+                      <div class="hg-line" style="width:74%"></div>
+                      <div class="hg-line" style="width:55%"></div>
+                      <div class="hg-line" style="width:88%"></div>
+                    </div>
+                    <div class="hg-overlay">
+                      <div class="hg-modal">
+                        <div class="hg-brand">Streamify</div>
+                        <div class="hg-h">Listen to everything. Anywhere.</div>
+                        <div class="hg-p">$9.99 / month · Cancel anytime</div>
+                        <span class="hg-cta">Get Premium</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="pw-card-foot">
+                  <button class="grade-btn" data-idx="0">Grade This</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2: The Soft Nudge -->
+            <div class="card-slide">
+              <div class="pw-card">
+                <div class="pw-card-head">
+                  <span class="card-type">The Soft Nudge</span>
+                  <span class="pre-score mid">68/100</span>
+                </div>
+                <div class="card-mock">
+                  <div class="m-sn">
+                    <div class="sn-hdr">The Daily Record</div>
+                    <div class="sn-banner">
+                      <span class="sn-msg"><strong>2 free articles remaining.</strong><br>Subscribe for unlimited access.</span>
+                      <div class="sn-actions">
+                        <span class="sn-sub">Subscribe</span>
+                        <span class="sn-dismiss">✕ dismiss</span>
+                      </div>
+                    </div>
+                    <div class="sn-body">
+                      <div class="sn-tag">Politics</div>
+                      <div class="sn-art-h">Congress reaches deal on landmark infrastructure legislation</div>
+                      <div class="sn-art-p">Lawmakers on both sides of the aisle announced a bipartisan agreement late Tuesday that would allocate $1.2 trillion toward roads, bridges, and digital infrastructure over the next decade, marking the largest such investment in a generation...</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="pw-card-foot">
+                  <button class="grade-btn" data-idx="1">Grade This</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3: The Pricing Table -->
+            <div class="card-slide">
+              <div class="pw-card">
+                <div class="pw-card-head">
+                  <span class="card-type">The Pricing Table</span>
+                  <span class="pre-score good">81/100</span>
+                </div>
+                <div class="card-mock">
+                  <div class="m-pt">
+                    <div class="pt-logo">Netwatch</div>
+                    <div class="pt-h">Choose your plan</div>
+                    <div class="pt-plans">
+                      <div class="pt-plan"><div class="pt-name">Basic</div><div class="pt-price">$6<span class="pt-per">/mo</span></div></div>
+                      <div class="pt-plan pop"><div class="pt-badge">Most Popular</div><div class="pt-name">Standard</div><div class="pt-price">$13<span class="pt-per">/mo</span></div></div>
+                      <div class="pt-plan"><div class="pt-name">Premium</div><div class="pt-price">$18<span class="pt-per">/mo</span></div></div>
+                    </div>
+                    <div class="pt-cta">Continue with Standard</div>
+                  </div>
+                </div>
+                <div class="pw-card-foot">
+                  <button class="grade-btn" data-idx="2">Grade This</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4: The Free Trial Hook -->
+            <div class="card-slide">
+              <div class="pw-card">
+                <div class="pw-card-head">
+                  <span class="card-type">The Free Trial Hook</span>
+                  <span class="pre-score good">86/100</span>
+                </div>
+                <div class="card-mock">
+                  <div class="m-ft">
+                    <div class="ft-icon">✦</div>
+                    <div class="ft-h">Try 7 days free.</div>
+                    <div class="ft-sub">Full access to everything. No strings.</div>
+                    <span class="ft-nocc">No credit card required</span>
+                    <div class="ft-cta">Start Free Trial</div>
+                    <div class="ft-terms">After trial, $12.99/mo. Cancel anytime.</div>
+                  </div>
+                </div>
+                <div class="pw-card-foot">
+                  <button class="grade-btn" data-idx="3">Grade This</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5: The Annual Push -->
+            <div class="card-slide">
+              <div class="pw-card">
+                <div class="pw-card-head">
+                  <span class="card-type">The Annual Push</span>
+                  <span class="pre-score mid">79/100</span>
+                </div>
+                <div class="card-mock">
+                  <div class="m-ap">
+                    <div><div class="ap-head-h">Upgrade your plan</div><div class="ap-head-s">Choose how you pay</div></div>
+                    <div class="ap-toggle"><span class="ap-opt">Monthly</span><span class="ap-opt on">Annual</span></div>
+                    <span class="ap-save">🎉 Save 40% with annual</span>
+                    <div><div class="ap-big">$7<span style="font-size:1rem">.99</span></div><div class="ap-period">per month, billed annually</div><div class="ap-was">$13.99/mo if billed monthly</div></div>
+                    <div class="ap-cta">Get Annual Plan</div>
+                    <div><div class="ap-feat"><span class="ap-dot"></span>Unlimited access</div><div class="ap-feat"><span class="ap-dot"></span>Offline downloads</div><div class="ap-feat"><span class="ap-dot"></span>Priority support</div></div>
+                  </div>
+                </div>
+                <div class="pw-card-foot">
+                  <button class="grade-btn" data-idx="4">Grade This</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6: The Countdown -->
+            <div class="card-slide">
+              <div class="pw-card">
+                <div class="pw-card-head">
+                  <span class="card-type">The Countdown</span>
+                  <span class="pre-score low">58/100</span>
+                </div>
+                <div class="card-mock">
+                  <div class="m-cd">
+                    <span class="cd-tag">⚡ Flash Sale Ending Soon</span>
+                    <div class="cd-h">Don't miss this offer.</div>
+                    <div class="cd-timer">
+                      <div class="cd-unit"><div class="cd-digits" id="cd-h">02</div><div class="cd-ulabel">HRS</div></div>
+                      <div class="cd-sep">:</div>
+                      <div class="cd-unit"><div class="cd-digits" id="cd-m">47</div><div class="cd-ulabel">MIN</div></div>
+                      <div class="cd-sep">:</div>
+                      <div class="cd-unit"><div class="cd-digits" id="cd-s">33</div><div class="cd-ulabel">SEC</div></div>
+                    </div>
+                    <div class="cd-was">Was <s>$14.99/mo</s></div>
+                    <div class="cd-price">$4.99/mo</div>
+                    <div class="cd-cta">Claim Offer Now</div>
+                  </div>
+                </div>
+                <div class="pw-card-foot">
+                  <button class="grade-btn" data-idx="5">Grade This</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 7: The Feature Wall -->
+            <div class="card-slide">
+              <div class="pw-card">
+                <div class="pw-card-head">
+                  <span class="card-type">The Feature Wall</span>
+                  <span class="pre-score mid">75/100</span>
+                </div>
+                <div class="card-mock">
+                  <div class="m-fw">
+                    <div class="fw-h">Unlock your full potential</div>
+                    <table class="fw-table">
+                      <thead><tr>
+                        <th class="fw-th" style="text-align:left">Feature</th>
+                        <th class="fw-th">Free</th>
+                        <th class="fw-th paid">Pro</th>
+                      </tr></thead>
+                      <tbody>
+                        <tr><td class="fw-td">Basic access</td><td class="fw-tc fw-ok">✓</td><td class="fw-tc fw-ok">✓</td></tr>
+                        <tr class="fw-rule"><td colspan="3"><div class="fw-line"></div></td></tr>
+                        <tr><td class="fw-td">Unlimited exports</td><td class="fw-tc fw-no">—</td><td class="fw-tc fw-lock">🔓</td></tr>
+                        <tr class="fw-rule"><td colspan="3"><div class="fw-line"></div></td></tr>
+                        <tr><td class="fw-td">Advanced analytics</td><td class="fw-tc fw-no">—</td><td class="fw-tc fw-lock">🔓</td></tr>
+                        <tr class="fw-rule"><td colspan="3"><div class="fw-line"></div></td></tr>
+                        <tr><td class="fw-td">Priority support</td><td class="fw-tc fw-no">—</td><td class="fw-tc fw-lock">🔓</td></tr>
+                        <tr class="fw-rule"><td colspan="3"><div class="fw-line"></div></td></tr>
+                        <tr><td class="fw-td">Team collaboration</td><td class="fw-tc fw-no">—</td><td class="fw-tc fw-lock">🔓</td></tr>
+                      </tbody>
+                    </table>
+                    <span class="fw-cta">Upgrade to Pro — $12/mo</span>
+                  </div>
+                </div>
+                <div class="pw-card-foot">
+                  <button class="grade-btn" data-idx="6">Grade This</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 8: The Social Proof -->
+            <div class="card-slide">
+              <div class="pw-card">
+                <div class="pw-card-head">
+                  <span class="card-type">The Social Proof</span>
+                  <span class="pre-score good">83/100</span>
+                </div>
+                <div class="card-mock">
+                  <div class="m-sp">
+                    <div><div class="sp-num">2.4M+</div><div class="sp-sub-text">subscribers worldwide</div></div>
+                    <div class="sp-stars">⭐⭐⭐⭐⭐ <span>4.8/5.0 · 18,400 reviews</span></div>
+                    <div class="sp-qs">
+                      <div class="sp-q"><div class="sp-qt">"Changed the way I work completely. Worth every penny."</div><div class="sp-auth">— Sarah K., Product Designer</div></div>
+                      <div class="sp-q"><div class="sp-qt">"I was skeptical but the free trial convinced me instantly."</div><div class="sp-auth">— Marcus T., Startup Founder</div></div>
+                    </div>
+                    <div class="sp-cta">Join 2.4M subscribers →</div>
+                  </div>
+                </div>
+                <div class="pw-card-foot">
+                  <button class="grade-btn" data-idx="7">Grade This</button>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /track -->
+        </div><!-- /outer -->
+
+        <button class="g-nav" id="g-next" aria-label="Next">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div><!-- /gallery-wrap -->
+
+      <div class="g-dots" id="g-dots" style="margin-bottom:2rem"></div>
+
+      <!-- Gallery Result -->
+      <div class="result-panel" id="gallery-result">
+        <div class="result-inner" id="gallery-result-inner"></div>
+      </div>
+    </div><!-- /tab-gallery -->
+
+    <!-- ═══ TAB 2: BUILDER ═══ -->
+    <div class="tab-panel" id="tab-builder" role="tabpanel">
+      <div class="builder-layout">
+
+        <!-- Form -->
+        <div>
+          <div class="section-label">Describe your paywall</div>
+
+          <div class="fg">
+            <label class="flabel" for="pw-headline">Main hook <span class="req">*</span></label>
+            <input type="text" class="finput" id="pw-headline" placeholder="e.g. Watch everything, anywhere." maxlength="120">
+          </div>
+
+          <div class="fg">
+            <label class="flabel" for="pw-sub">Supporting line</label>
+            <input type="text" class="finput" id="pw-sub" placeholder="e.g. Cancel anytime. No commitments." maxlength="120">
+          </div>
+
+          <div class="fg">
+            <label class="flabel">Offer type <span class="req">*</span></label>
+            <div class="fgroup">
+              <div class="fopt"><input type="radio" name="offer-type" id="ot-single" value="Single plan"><label for="ot-single">Single plan</label></div>
+              <div class="fopt"><input type="radio" name="offer-type" id="ot-multi" value="Multiple plans"><label for="ot-multi">Multiple plans</label></div>
+              <div class="fopt"><input type="radio" name="offer-type" id="ot-trial" value="Free trial"><label for="ot-trial">Free trial</label></div>
+              <div class="fopt"><input type="radio" name="offer-type" id="ot-freemium" value="Freemium"><label for="ot-freemium">Freemium</label></div>
+            </div>
+          </div>
+
+          <!-- Single price — shown for all offer types except Multiple plans -->
+          <div class="fg" id="single-price-row">
+            <label class="flabel" for="pw-price">Pricing shown</label>
+            <input type="text" class="finput" id="pw-price" placeholder="e.g. $9.99/mo, or $79/yr (save 33%)" maxlength="100">
+          </div>
+
+          <!-- Three plan prices — shown only when Multiple plans is selected -->
+          <div class="fg" id="multi-price-row" style="display:none">
+            <label class="flabel">Plan pricing</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.625rem;margin-top:0.25rem">
+              <div>
+                <div class="flabel" style="font-size:0.56rem;margin-bottom:0.3rem">Basic</div>
+                <input type="text" class="finput" id="pw-price-basic" placeholder="$6/mo" maxlength="30">
+              </div>
+              <div>
+                <div class="flabel" style="font-size:0.56rem;margin-bottom:0.3rem">Pro — featured</div>
+                <input type="text" class="finput" id="pw-price-mid" placeholder="$13/mo" maxlength="30">
+              </div>
+              <div>
+                <div class="flabel" style="font-size:0.56rem;margin-bottom:0.3rem">Team</div>
+                <input type="text" class="finput" id="pw-price-team" placeholder="$22/mo" maxlength="30">
+              </div>
+            </div>
+          </div>
+
+          <div class="fg">
+            <label class="flabel" for="pw-cta">CTA button text <span class="req">*</span></label>
+            <input type="text" class="finput" id="pw-cta" placeholder="e.g. Start Free Trial / Subscribe Now" maxlength="60">
+          </div>
+
+          <div class="fg">
+            <label class="flabel">Friction level</label>
+            <div class="fgroup">
+              <div class="fopt"><input type="radio" name="friction" id="fr-none" value="No credit card required"><label for="fr-none">No CC required</label></div>
+              <div class="fopt"><input type="radio" name="friction" id="fr-cc" value="Credit card required"><label for="fr-cc">CC required</label></div>
+              <div class="fopt"><input type="radio" name="friction" id="fr-account" value="Account creation first"><label for="fr-account">Account first</label></div>
+              <div class="fopt"><input type="radio" name="friction" id="fr-social" value="Social login only"><label for="fr-social">Social login</label></div>
+            </div>
+          </div>
+
+          <div class="fg">
+            <label class="flabel">Trust signals</label>
+            <div class="fgroup" id="pw-trust">
+              <div class="fopt"><input type="checkbox" id="tr-guarantee" value="Money-back guarantee"><label for="tr-guarantee">Money-back guarantee</label></div>
+              <div class="fopt"><input type="checkbox" id="tr-testimonials" value="Testimonials"><label for="tr-testimonials">Testimonials</label></div>
+              <div class="fopt"><input type="checkbox" id="tr-count" value="Subscriber count"><label for="tr-count">Subscriber count</label></div>
+              <div class="fopt"><input type="checkbox" id="tr-press" value="Press logos"><label for="tr-press">Press logos</label></div>
+              <div class="fopt"><input type="checkbox" id="tr-security" value="Security badges"><label for="tr-security">Security badges</label></div>
+            </div>
+          </div>
+
+          <div class="fg">
+            <label class="flabel">Urgency / scarcity</label>
+            <div class="fgroup">
+              <div class="fopt"><input type="checkbox" id="urg-timer" value="Countdown timer"><label for="urg-timer">Countdown timer</label></div>
+              <div class="fopt"><input type="checkbox" id="urg-price" value="Limited time price"><label for="urg-price">Limited time price</label></div>
+              <div class="fopt"><input type="checkbox" id="urg-seats" value="Seats remaining"><label for="urg-seats">Seats remaining</label></div>
+            </div>
+          </div>
+
+          <div class="fg">
+            <label class="flabel">Platform <span class="req">*</span></label>
+            <div class="fgroup">
+              <div class="fopt"><input type="radio" name="platform" id="pl-mobile" value="Mobile app"><label for="pl-mobile">Mobile app</label></div>
+              <div class="fopt"><input type="radio" name="platform" id="pl-web" value="Web browser"><label for="pl-web">Web browser</label></div>
+              <div class="fopt"><input type="radio" name="platform" id="pl-ctv" value="CTV / Smart TV"><label for="pl-ctv">CTV / Smart TV</label></div>
+              <div class="fopt"><input type="radio" name="platform" id="pl-all" value="All platforms"><label for="pl-all">All platforms</label></div>
+            </div>
+          </div>
+
+          <button class="grade-main-btn" id="grade-builder-btn" disabled>Grade My Paywall</button>
+
+          <!-- Builder Result -->
+          <div class="result-panel" id="builder-result" style="margin-top:0">
+            <div class="result-inner" id="builder-result-inner"></div>
+          </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="builder-preview">
+          <div class="preview-label">Live Preview</div>
+          <div class="preview-card" id="live-preview">
+            <div class="pv-empty">Fill in the form to see your paywall preview.</div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /tab-builder -->
+
+  </div><!-- /content -->
+
+  <footer id="page-footer">
+    <span class="footer-text">Built for <a href="../../index.html">Public Works</a></span>
+    <span class="footer-text">Powered by Gemini 2.0 Flash</span>
+  </footer>
+
+</div><!-- /app -->
+
+<script>
+(function() {
+  'use strict';
+
+  // ── PRE-BUILT GALLERY ANALYSIS ──
+  // Gallery cards use hardcoded expert analysis — no API call needed.
+  // Only the builder tab sends to Gemini.
+  const paywalls = [
+    {
+      name: 'The Hard Gate',
+      analysis: {
+        score: 72, grade: 'C',
+        summary: 'A high-friction, high-commitment ask with no safety net. The blurred content creates curiosity effectively, but forcing users to commit cold — with no trial, no social proof, and no free tier in sight — blocks the majority of top-of-funnel traffic before they can experience the product.',
+        strengths: [
+          'Visual deprivation (blurred content) creates genuine curiosity and a sense of what is being withheld',
+          'Single-plan simplicity eliminates decision paralysis — there is exactly one choice to make',
+          'Strong brand presence in the modal reduces unfamiliarity anxiety'
+        ],
+        weaknesses: [
+          'No try-before-you-buy option forces cold commitment, dramatically raising abandonment',
+          'Zero social proof or trust signals — users have no external validation that the product is worth paying for',
+          'No free tier visible means users who are not ready to pay have nowhere to go'
+        ],
+        top_recommendation: 'Add a "Start free trial — no credit card required" secondary CTA beneath the primary button. Even 7 days of access converts trial users at 40–60% higher rates than cold subscription asks.'
+      }
+    },
+    {
+      name: 'The Soft Nudge',
+      analysis: {
+        score: 68, grade: 'D',
+        summary: 'The metered model earns trust by letting content speak first, but the low urgency and one-tap dismissal make conversion rates predictably thin. Users who hit "dismiss" rarely return to subscribe organically, and the banner gives them every reason to keep deferring.',
+        strengths: [
+          'Content-first approach builds trust — users can evaluate what they are paying for before committing',
+          'Non-intrusive design does not create negative brand association the way hard gates do',
+          'Dismissible UX respects user autonomy, which correlates with lower churn among users who do convert'
+        ],
+        weaknesses: [
+          '"2 free articles remaining" lacks urgency — most users wait until zero and then find a workaround',
+          'No pricing is shown in the banner, so users cannot evaluate the ask without leaving the article',
+          'The dismiss button is too prominent and easy — it should require more intent to close'
+        ],
+        top_recommendation: 'Surface pricing directly in the banner ("Subscribe from $X/mo") and replace the dismiss button with a smaller, less prominent link. Users who can see the price convert at meaningfully higher rates than those sent to a separate pricing page.'
+      }
+    },
+    {
+      name: 'The Pricing Table',
+      analysis: {
+        score: 81, grade: 'B',
+        summary: 'A textbook implementation of choice architecture that works. The "Most Popular" badge on the middle plan anchors the majority of users to the intended tier, transparent pricing builds trust, and the three-column layout gives users perceived control without overwhelming them.',
+        strengths: [
+          '"Most Popular" badge leverages social proof and decoy pricing to anchor users to the Standard tier',
+          'Comparative pricing across three tiers gives users a sense of agency and self-selection',
+          'Clear plan differentiation prevents users from over-thinking and creates natural up-sell logic'
+        ],
+        weaknesses: [
+          'No trial or money-back guarantee means all risk sits with the user — a significant conversion barrier for fence-sitters',
+          'Premium tier pricing may anchor Standard as expensive for price-sensitive users rather than affordable'
+        ],
+        top_recommendation: 'Add a "30-day money-back guarantee" badge beneath the featured plan CTA. Risk reversal at the moment of decision is one of the highest-leverage trust signals in subscription conversion — it directly addresses the biggest remaining objection.'
+      }
+    },
+    {
+      name: 'The Free Trial Hook',
+      analysis: {
+        score: 86, grade: 'A',
+        summary: 'Near-optimal conversion architecture. The "no credit card required" badge is the single most effective friction reducer in subscription paywall design, and this pattern deploys it correctly alongside a clean, single-focus layout with transparent post-trial terms.',
+        strengths: [
+          '"No credit card required" eliminates the primary conversion barrier — fear of being charged accidentally',
+          'Single-focus design with one CTA eliminates distraction and choice paralysis entirely',
+          'Post-trial pricing shown transparently beneath the CTA builds long-term trust and reduces churn from surprised users'
+        ],
+        weaknesses: [
+          'No social proof or validation signals — first-time visitors have no external evidence the product is worth their time',
+          'No urgency mechanism means users who are interested but distracted will procrastinate and often never return'
+        ],
+        top_recommendation: 'Add 2–3 short testimonials or a subscriber count ("Join 480,000 subscribers") directly beneath the CTA. Social validation at the moment of decision closes the gap between "interested" and "converted" for users who are still on the fence.'
+      }
+    },
+    {
+      name: 'The Annual Push',
+      analysis: {
+        score: 79, grade: 'B',
+        summary: 'Strong use of anchoring and pre-selection bias that effectively steers users toward the higher-LTV annual plan. The crossed-out monthly price and savings badge work together well, but the complete absence of a trial option means unconvinced users have no low-risk entry point.',
+        strengths: [
+          'Pre-selected annual plan leverages status quo bias — users must actively choose to downgrade to monthly',
+          '"Save 40%" badge with crossed-out monthly price creates a clear and compelling value anchor',
+          'Benefit bullets reinforce what the user is getting, not just what they are paying'
+        ],
+        weaknesses: [
+          'No trial option creates a binary choice — pay now or leave — which excludes a large segment of interested but unconvinced users',
+          'Benefit bullets are generic ("Unlimited access," "Priority support") rather than differentiated or outcome-focused'
+        ],
+        top_recommendation: 'Offer a 7-day trial even for the annual plan. Counter-intuitively, trialing annual subscribers churn less than cold annual sign-ups because they have already experienced the product. The trial removes the last objection for users who want the price but fear the commitment.'
+      }
+    },
+    {
+      name: 'The Countdown',
+      analysis: {
+        score: 58, grade: 'D',
+        summary: 'High urgency design with an extreme discount that creates short-term pressure at the cost of long-term credibility. Countdown timers are effective when genuine, but a 67% flash discount combined with a fabricated timer is widely recognized by users and actively damages brand trust.',
+        strengths: [
+          'Real-time countdown creates a genuine urgency signal that captures attention and triggers loss aversion',
+          'Large discount is attention-grabbing for highly price-sensitive segments who respond to price over value'
+        ],
+        weaknesses: [
+          'A 67% discount raises an immediate credibility question — if $4.99 is viable, why is the list price $14.99?',
+          'Fabricated countdown timers are widely recognized by modern users and create cynicism, not urgency',
+          'Zero trust signals or social proof — the entire paywall rests on price pressure with no value reinforcement',
+          'Selects for low-LTV, high-churn subscribers who are motivated by the discount, not the product'
+        ],
+        top_recommendation: 'Replace the fabricated timer with a genuine event-tied offer (new season launch, annual pricing window, founding member pricing) and add a subscriber count or press badge to restore credibility. Manufactured urgency converts once; genuine urgency builds a brand.'
+      }
+    },
+    {
+      name: 'The Feature Wall',
+      analysis: {
+        score: 75, grade: 'C',
+        summary: 'Feature comparison is the right strategy for product-led growth where the value gap between free and paid is concrete and demonstrable. This execution is clear and logical, but misses the critical trust and urgency signals that push evaluating users from "considering" to "converting."',
+        strengths: [
+          'Lock icons on premium features make the value of upgrading visually explicit and concrete — users know exactly what they are missing',
+          'Free tier creates low-friction entry into the product funnel, building habitual usage before the upgrade ask',
+          'Transparent pricing on the CTA eliminates a click before commitment'
+        ],
+        weaknesses: [
+          'No trial or risk-reversal mechanism — users upgrading from free to paid have no safety net if the paid features disappoint',
+          'No urgency signal — users can stay on the free tier indefinitely with zero consequence, reducing conversion pressure',
+          'No social proof near the upgrade CTA to validate that paying for Pro is a decision others have made and benefited from'
+        ],
+        top_recommendation: 'Add "Join 50,000 Pro users" or equivalent social proof directly beside the upgrade CTA. Feature walls convert on logic; social proof converts on belonging. Combining both addresses users who understand the features but still need permission to commit.'
+      }
+    },
+    {
+      name: 'The Social Proof',
+      analysis: {
+        score: 83, grade: 'B',
+        summary: 'Trust-first is a powerful strategy when subscriber volume and ratings are genuinely strong, and this execution stacks proof signals effectively. The omission of pricing is a calculated risk — it works for established brands but creates friction for users who need to evaluate value before committing.',
+        strengths: [
+          '2.4M subscriber count provides powerful herd validation — large numbers signal that the decision to subscribe is normal and safe',
+          'Named testimonials with specific outcomes ("Changed the way I work") feel authentic and are more persuasive than generic praise',
+          'Star rating with review volume (18,400) adds quantitative credibility alongside the qualitative testimonials'
+        ],
+        weaknesses: [
+          'No pricing on the paywall itself creates uncertainty that delays decision-making — users must click through to find out what they are committing to',
+          'No friction-reduction mechanism (trial, guarantee) — users must commit fully without a safety net'
+        ],
+        top_recommendation: 'Add a single pricing line ("Plans from $X/mo · Cancel anytime") directly beneath the CTA. Pricing transparency at the moment of decision reduces the anxiety of an unknown commitment without undermining the trust-first narrative that makes this pattern effective.'
+      }
+    }
+  ];
+
+  const TOTAL = 8;
+  let currentCard = 0;
+
+  // ── TABS ──
+  document.getElementById('tab-gallery-btn').addEventListener('click', () => switchTab('gallery'));
+  document.getElementById('tab-builder-btn').addEventListener('click', () => switchTab('builder'));
+
+  function switchTab(id) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+    document.getElementById(`tab-${id}`).classList.add('active');
+    const btn = document.getElementById(`tab-${id}-btn`);
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+  }
+
+  // ── GALLERY ──
+  const track = document.getElementById('gallery-track');
+  const gPrev = document.getElementById('g-prev');
+  const gNext = document.getElementById('g-next');
+  const dotsEl = document.getElementById('g-dots');
+
+  for (let i = 0; i < TOTAL; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'g-dot' + (i === 0 ? ' on' : '');
+    dot.setAttribute('aria-label', paywalls[i].name);
+    dot.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(dot);
+  }
+
+  function goTo(idx) {
+    currentCard = Math.max(0, Math.min(idx, TOTAL - 1));
+    track.style.transform = `translateX(-${currentCard * 100}%)`;
+    dotsEl.querySelectorAll('.g-dot').forEach((d, i) => {
+      d.className = 'g-dot' + (i === currentCard ? ' on' : '');
+    });
+    gPrev.disabled = currentCard === 0;
+    gNext.disabled = currentCard === TOTAL - 1;
+  }
+
+  gPrev.addEventListener('click', () => goTo(currentCard - 1));
+  gNext.addEventListener('click', () => goTo(currentCard + 1));
+
+  document.addEventListener('keydown', e => {
+    if (document.getElementById('tab-gallery').classList.contains('active')) {
+      if (e.key === 'ArrowLeft') goTo(currentCard - 1);
+      if (e.key === 'ArrowRight') goTo(currentCard + 1);
+    }
+  });
+
+  // Touch swipe
+  let touchX = 0;
+  const galOuter = document.querySelector('.gallery-outer');
+  galOuter.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+  galOuter.addEventListener('touchend', e => {
+    const diff = touchX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) goTo(currentCard + (diff > 0 ? 1 : -1));
+  });
+
+  // ── GALLERY GRADE BUTTONS — pre-built, no API ──
+  document.querySelectorAll('.grade-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const idx = parseInt(this.dataset.idx);
+      const pw = paywalls[idx];
+      const panelEl = document.getElementById('gallery-result');
+      const innerEl = document.getElementById('gallery-result-inner');
+      panelEl.classList.add('open');
+      renderResult(pw.analysis, pw.name, innerEl);
+      // Scroll result into view
+      setTimeout(() => panelEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    });
+  });
+
+  // ── BUILDER: send to Gemini via server ──
+  async function runGradeAPI(description, name, panelEl, innerEl) {
+    panelEl.classList.add('open');
+    innerEl.innerHTML = `<div class="r-loading"><p>Analyzing<span class="dots"></span></p></div>`;
+
+    try {
+      let res;
+      try {
+        res = await fetch('/api/grade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description })
+        });
+      } catch {
+        throw new Error('Cannot reach server. Make sure you started it with: npm run dev');
+      }
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg = body.error || '';
+        if (res.status === 405) throw new Error('Server is not running the Node backend. Start it with: npm run dev');
+        if (msg.includes('quota') || msg.includes('QUOTA')) throw new Error('Gemini quota exceeded. Check billing at aistudio.google.com or try again later.');
+        if (msg.includes('API_KEY') || msg.includes('api key') || res.status === 400) throw new Error('Invalid or missing Gemini API key. Update GEMINI_API_KEY in the .env file.');
+        throw new Error(msg || `Server error ${res.status}`);
+      }
+
+      const result = await res.json();
+      renderResult(result, name, innerEl);
+      setTimeout(() => panelEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+    } catch (err) {
+      innerEl.innerHTML = `
+        <div style="padding:1.5rem 0;border-top:1px solid var(--rule)">
+          <p style="font-size:0.625rem;color:var(--alert);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.4rem">Error</p>
+          <p style="font-size:0.75rem;color:var(--text);font-family:var(--font-display)">${esc(err.message)}</p>
+        </div>`;
+    }
+  }
+
+  // ── SHARED RESULT RENDERER ──
+  function scoreClass(score) {
+    if (score >= 75) return 'good';
+    if (score >= 50) return 'mid';
+    return 'low';
+  }
+
+  function scoreLabel(score) {
+    if (score >= 85) return 'Highly optimized';
+    if (score >= 65) return 'Solid foundation';
+    if (score >= 45) return 'Mixed signals';
+    return 'Needs rework';
+  }
+
+  function renderResult(result, name, container) {
+    const sc = scoreClass(result.score);
+    const strengths = (result.strengths || []).map(s => `<li><span class="icon">+</span><span>${esc(s)}</span></li>`).join('');
+    const weaknesses = (result.weaknesses || []).map(w => `<li><span class="icon">−</span><span>${esc(w)}</span></li>`).join('');
+
+    container.innerHTML = `
+      <div class="r-header">
+        <div class="score-block">
+          <div class="score-num ${sc} score-animate">0</div>
+          <div class="score-meta">
+            <span class="score-grade">${esc(result.grade || '')} ·</span>
+            <span class="score-label">${scoreLabel(result.score)}</span>
+          </div>
+        </div>
+        <div class="r-meta">
+          <div class="r-paywall-name">${esc(name)}</div>
+          <div class="r-summary">${esc(result.summary || '')}</div>
+        </div>
+      </div>
+      <div class="r-body">
+        <div>
+          <div class="r-col-label s">Strengths</div>
+          <ul class="r-list">${strengths}</ul>
+        </div>
+        <div>
+          <div class="r-col-label w">Weaknesses</div>
+          <ul class="r-list">${weaknesses}</ul>
+        </div>
+      </div>
+      <div class="r-rec">
+        <div class="r-rec-label">Top Recommendation</div>
+        <div class="r-rec-text">${esc(result.top_recommendation || '')}</div>
+      </div>`;
+
+    // Score count-up animation
+    const el = container.querySelector('.score-animate');
+    const target = parseInt(result.score) || 0;
+    const start = performance.now();
+    const dur = 1000;
+    (function tick(now) {
+      const p = Math.min((now - start) / dur, 1);
+      el.textContent = Math.round((1 - Math.pow(1 - p, 3)) * target);
+      if (p < 1) requestAnimationFrame(tick);
+    })(start);
+  }
+
+  // ── BUILDER FORM ──
+  const headlineEl = document.getElementById('pw-headline');
+  const subEl      = document.getElementById('pw-sub');
+  const priceEl    = document.getElementById('pw-price');
+  const ctaEl      = document.getElementById('pw-cta');
+  const gradeBtn   = document.getElementById('grade-builder-btn');
+
+  function getVals() {
+    const offerType = (document.querySelector('input[name="offer-type"]:checked') || {}).value || '';
+    return {
+      headline:   headlineEl.value.trim(),
+      sub:        subEl.value.trim(),
+      offerType,
+      price:      priceEl.value.trim(),
+      planBasic:  (document.getElementById('pw-price-basic') || {}).value?.trim() || '',
+      planMid:    (document.getElementById('pw-price-mid') || {}).value?.trim() || '',
+      planTeam:   (document.getElementById('pw-price-team') || {}).value?.trim() || '',
+      cta:        ctaEl.value.trim(),
+      friction:   (document.querySelector('input[name="friction"]:checked') || {}).value || '',
+      trust:      Array.from(document.querySelectorAll('#pw-trust input:checked')).map(i => i.value),
+      urgency:    Array.from(document.querySelectorAll('#pw-urgency input:checked')).map(i => i.value),
+      platform:   (document.querySelector('input[name="platform"]:checked') || {}).value || '',
+    };
+  }
+
+  function checkReady() {
+    const v = getVals();
+    gradeBtn.disabled = !(v.headline && v.offerType && v.cta && v.platform);
+  }
+
+  // Toggle single vs multi price inputs when offer type changes
+  function syncPriceRows() {
+    const isMulti = (document.querySelector('input[name="offer-type"]:checked') || {}).value === 'Multiple plans';
+    document.getElementById('single-price-row').style.display = isMulti ? 'none' : '';
+    document.getElementById('multi-price-row').style.display  = isMulti ? '' : 'none';
+  }
+
+  // ── LIVE PREVIEW ──
+  function trustSection(trust, urgency) {
+    const all = [...trust, ...urgency];
+    if (!all.length) return '';
+    const badges = all.map(t => `<span class="pv-badge">${esc(t)}</span>`).join('');
+    return `<div class="pv-trust-section"><div class="pv-trust-label">Trust &amp; urgency signals</div><div class="pv-badges">${badges}</div></div>`;
+  }
+
+  function platformLine(platform) {
+    if (!platform) return '';
+    return `<div class="pv-platform">Optimised for ${esc(platform)}</div>`;
+  }
+
+  function updatePreview() {
+    const v = getVals();
+    const preview = document.getElementById('live-preview');
+
+    if (!v.headline && !v.offerType) {
+      preview.innerHTML = '<div class="pv-empty">Fill in the form to see your paywall preview.</div>';
+      return;
+    }
+
+    let inner = '';
+
+    if (v.offerType === 'Multiple plans') {
+      inner = `
+        <div class="pv-multi">
+          ${v.headline ? `<div class="pv-multi-h">${esc(v.headline)}</div>` : ''}
+          ${v.sub ? `<div class="pv-sub" style="font-family:var(--font-display);font-size:0.72rem;color:#888;margin-top:-0.25rem">${esc(v.sub)}</div>` : ''}
+          <div class="pv-plans">
+            <div class="pv-plan">
+              <div class="pv-plan-name">Basic</div>
+              <div class="pv-plan-price">${esc(v.planBasic) || '—'}</div>
+            </div>
+            <div class="pv-plan featured">
+              <div class="pv-plan-badge">Most Popular</div>
+              <div class="pv-plan-name">Pro</div>
+              <div class="pv-plan-price">${esc(v.planMid) || '—'}</div>
+            </div>
+            <div class="pv-plan">
+              <div class="pv-plan-name">Team</div>
+              <div class="pv-plan-price">${esc(v.planTeam) || '—'}</div>
+            </div>
+          </div>
+          ${v.cta ? `<div class="pv-multi-cta">${esc(v.cta)}</div>` : ''}
+          ${v.friction ? `<div class="pv-multi-trust">${esc(v.friction)}</div>` : ''}
+          ${trustSection(v.trust, v.urgency)}
+          ${platformLine(v.platform)}
+        </div>`;
+
+    } else if (v.offerType === 'Free trial') {
+      const trialMatch = (v.headline || '').match(/(\d+)\s*day/i);
+      const days = trialMatch ? trialMatch[1] : '7';
+      inner = `
+        <div class="pv-trial">
+          ${v.headline ? `<div class="pv-headline" style="font-size:1rem">${esc(v.headline)}</div>` : ''}
+          <div><div class="pv-trial-days">${days} days</div><div class="pv-trial-sub">Free trial</div></div>
+          ${v.sub ? `<div class="pv-sub">${esc(v.sub)}</div>` : ''}
+          ${v.friction === 'No credit card required' ? `<span class="pv-nocc">No credit card required</span>` : ''}
+          ${v.cta ? `<div class="pv-cta">${esc(v.cta)}</div>` : ''}
+          ${v.price ? `<div class="pv-terms">Then ${esc(v.price)}. Cancel anytime.</div>` : ''}
+          ${trustSection(v.trust, v.urgency)}
+          ${platformLine(v.platform)}
+        </div>`;
+
+    } else if (v.offerType === 'Freemium') {
+      inner = `
+        <div class="pv-freemium">
+          ${v.headline ? `<div class="pv-freemium-h">${esc(v.headline)}</div>` : ''}
+          ${v.sub ? `<div style="font-size:0.72rem;color:#888;font-family:var(--font-display);margin-top:-0.25rem">${esc(v.sub)}</div>` : ''}
+          <table class="pv-tier-table">
+            <thead><tr>
+              <th class="pv-tier-th" style="text-align:left">Feature</th>
+              <th class="pv-tier-th">Free</th>
+              <th class="pv-tier-th pro">Pro</th>
+            </tr></thead>
+            <tbody>
+              <tr><td class="pv-tier-td">Core access</td><td class="pv-tier-tc pv-ok">✓</td><td class="pv-tier-tc pv-ok">✓</td></tr>
+              <tr><td class="pv-tier-td">Exports</td><td class="pv-tier-tc pv-no">—</td><td class="pv-tier-tc pv-pay">✓</td></tr>
+              <tr><td class="pv-tier-td">Analytics</td><td class="pv-tier-tc pv-no">—</td><td class="pv-tier-tc pv-pay">✓</td></tr>
+              <tr><td class="pv-tier-td">Priority support</td><td class="pv-tier-tc pv-no">—</td><td class="pv-tier-tc pv-pay">✓</td></tr>
+            </tbody>
+          </table>
+          ${v.cta ? `<div class="pv-upgrade">${esc(v.cta)}${v.price ? ` — ${esc(v.price)}` : ''}</div>` : ''}
+          ${trustSection(v.trust, v.urgency)}
+          ${platformLine(v.platform)}
+        </div>`;
+
+    } else {
+      // Single plan
+      inner = `
+        <div class="pv-single">
+          ${v.headline ? `<div class="pv-headline">${esc(v.headline)}</div>` : ''}
+          ${v.sub ? `<div class="pv-sub">${esc(v.sub)}</div>` : ''}
+          ${v.price ? `<div class="pv-price-box">${esc(v.price)}</div>` : ''}
+          ${v.cta ? `<div class="pv-cta">${esc(v.cta)}</div>` : ''}
+          ${v.friction ? `<div class="pv-friction">${esc(v.friction)}</div>` : ''}
+          ${trustSection(v.trust, v.urgency)}
+          ${platformLine(v.platform)}
+        </div>`;
+    }
+
+    preview.innerHTML = inner;
+  }
+
+  // Wire up all form inputs
+  ['pw-headline', 'pw-sub', 'pw-price', 'pw-cta',
+   'pw-price-basic', 'pw-price-mid', 'pw-price-team'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { updatePreview(); checkReady(); });
+  });
+  document.querySelectorAll('input[name="offer-type"]').forEach(el => {
+    el.addEventListener('change', () => { syncPriceRows(); updatePreview(); checkReady(); });
+  });
+  document.querySelectorAll('input[name="friction"], input[name="platform"]').forEach(el => {
+    el.addEventListener('change', () => { updatePreview(); checkReady(); });
+  });
+  document.querySelectorAll('#pw-trust input, #pw-urgency input').forEach(el => {
+    el.addEventListener('change', () => { updatePreview(); checkReady(); });
+  });
+
+  // Builder grade button → Gemini via server
+  gradeBtn.addEventListener('click', async function() {
+    const v = getVals();
+
+    const priceDesc = v.offerType === 'Multiple plans'
+      ? `Basic: ${v.planBasic || 'not set'}, Pro: ${v.planMid || 'not set'}, Team: ${v.planTeam || 'not set'}`
+      : v.price || 'No price shown';
+
+    const desc = [
+      `Headline: "${v.headline}"`,
+      v.sub ? `Subheadline: "${v.sub}"` : null,
+      `Offer type: ${v.offerType}`,
+      `Price display: ${priceDesc}`,
+      `Call to action: "${v.cta}"`,
+      `Friction level: ${v.friction || 'Not specified'}`,
+      `Trust elements: ${v.trust.length ? v.trust.join(', ') : 'None'}`,
+      `Urgency elements: ${v.urgency.length ? v.urgency.join(', ') : 'None'}`,
+      `Platform: ${v.platform}`,
+    ].filter(Boolean).join('\n');
+
+    this.textContent = 'Grading…';
+    this.disabled = true;
+    try {
+      await runGradeAPI(desc, 'Custom Paywall',
+        document.getElementById('builder-result'),
+        document.getElementById('builder-result-inner'));
+    } finally {
+      this.textContent = 'Grade My Paywall';
+      checkReady();
+    }
+  });
+
+  // ── COUNTDOWN TIMER ──
+  let secs = 2 * 3600 + 47 * 60 + 33;
+  setInterval(() => {
+    if (secs <= 0) return;
+    secs--;
+    const hEl = document.getElementById('cd-h');
+    const mEl = document.getElementById('cd-m');
+    const sEl = document.getElementById('cd-s');
+    if (!hEl) return;
+    hEl.textContent = String(Math.floor(secs / 3600)).padStart(2, '0');
+    mEl.textContent = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
+    sEl.textContent = String(secs % 60).padStart(2, '0');
+  }, 1000);
+
+  // ── UTIL ──
+  function esc(str) {
+    if (!str) return '';
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  // Init
+  goTo(0);
+  syncPriceRows();
+  updatePreview();
+  checkReady();
+
+})();
+</script>
+</body>
+</html>
