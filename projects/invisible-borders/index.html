@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Draw where you think Denver's neighborhoods really exist. See how the city sees itself.">
+  <meta property="og:title" content="Draw Denver — PUBLICWORKS">
+  <meta property="og:description" content="Draw where you think each neighborhood really exists. See how Denver sees itself.">
+  <meta name="theme-color" content="#D1D1D1">
+  <title>Draw Denver — PUBLICWORKS</title>
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+
+  <!-- Fonts (same as rest of PUBLICWORKS) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MapLibre GL JS — free, open-source, no token needed -->
+  <link  href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+
+  <!-- Mapbox GL Draw — works with MapLibre, free via jsDelivr -->
+  <link  href="https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-draw@1.4.3/dist/mapbox-gl-draw.js"></script>
+
+  <!-- Supabase JS v2 — free tier available at supabase.com -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <style>
+    /* =====================================================
+       PUBLICWORKS — Draw Denver
+       Map: MapLibre GL + OpenFreeMap (free, no keys)
+       DB:  Supabase (free tier)
+       ===================================================== */
+
+    :root {
+      --bg:           #D1D1D1;
+      --text:         #0F0F0F;
+      --text-mid:     #6E6E6E;
+      --accent:       #0047FF;
+      --alert:        #FF4D00;
+      --panel:        rgba(209, 209, 209, 0.91);
+      --panel-border: rgba(15, 15, 15, 0.12);
+      --font-display: 'Space Grotesk', system-ui, sans-serif;
+      --font-mono:    'IBM Plex Mono', 'SF Mono', monospace;
+      --header-h:     52px;
+      --sidebar-w:    288px;
+      --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+      --t:            180ms ease-out;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      font-family: var(--font-mono);
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    a:focus-visible     { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ── Map ─────────────────────────────────────────── */
+    #map { position: fixed; inset: 0; }
+
+    /* ── Header ──────────────────────────────────────── */
+    .header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.25rem;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .header-left { display: flex; align-items: center; gap: 0.875rem; }
+
+    .back-link {
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      color: var(--text-mid);
+      transition: color var(--t);
+    }
+    .back-link:hover { color: var(--accent); }
+
+    .hdivider { width: 1px; height: 14px; background: var(--panel-border); }
+
+    .header-title {
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-mid);
+    }
+
+    /* ── Mode Toggle ─────────────────────────────────── */
+    .mode-toggle { display: flex; border: 1px solid var(--panel-border); }
+
+    .mode-btn {
+      font-size: 0.5625rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.4rem 0.875rem;
+      color: var(--text-mid);
+      transition: all var(--t);
+    }
+    .mode-btn + .mode-btn { border-left: 1px solid var(--panel-border); }
+    .mode-btn.active { background: var(--text); color: var(--bg); }
+    .mode-btn:not(.active):hover { color: var(--accent); }
+
+    /* ── Sidebar ─────────────────────────────────────── */
+    .sidebar {
+      position: fixed;
+      top: var(--header-h); left: 0; bottom: 0;
+      width: var(--sidebar-w);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-right: 1px solid var(--panel-border);
+    }
+
+    .sidebar-inner {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 1.25rem 1rem;
+    }
+    .sidebar-inner::-webkit-scrollbar { width: 3px; }
+    .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(15,15,15,0.15); }
+
+    .sidebar-title {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 2.2vw, 1.3rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin-bottom: 0.625rem;
+    }
+
+    .sidebar-sub {
+      font-size: 0.6875rem;
+      color: var(--text-mid);
+      line-height: 1.55;
+      margin-bottom: 1.5rem;
+    }
+
+    .sidebar-rule { height: 1px; background: var(--panel-border); margin-bottom: 1.125rem; }
+
+    .sidebar-label {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-mid);
+      margin-bottom: 0.625rem;
+    }
+
+    .n-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+
+    .n-btn {
+      width: 100%;
+      text-align: left;
+      padding: 0.5rem 0.625rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.01em;
+      color: var(--text);
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all var(--t);
+    }
+    .n-btn:hover { background: rgba(0,71,255,0.06); border-color: rgba(0,71,255,0.2); color: var(--accent); }
+    .n-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+    .n-count {
+      font-size: 0.5rem;
+      opacity: 0.55;
+      letter-spacing: 0.06em;
+      min-width: 2rem;
+      text-align: right;
+    }
+
+    .sidebar-foot { padding: 0.875rem 1.25rem; border-top: 1px solid var(--panel-border); }
+    .sidebar-foot-text { font-size: 0.5625rem; color: var(--text-mid); letter-spacing: 0.06em; text-transform: uppercase; }
+
+    /* ── No-selection hint ───────────────────────────── */
+    .no-sel-hint {
+      position: fixed;
+      top: 50%;
+      left: calc(50% + var(--sidebar-w) / 2);
+      transform: translate(-50%, -50%);
+      z-index: 40;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity var(--t);
+    }
+    .no-sel-hint.vis { opacity: 1; }
+    .nsh-arrow { font-size: 1.4rem; opacity: 0.25; margin-bottom: 0.625rem; }
+    .nsh-text  { font-size: 0.6875rem; color: var(--text-mid); letter-spacing: 0.04em; }
+
+    /* ── Draw Controls ───────────────────────────────── */
+    .draw-controls {
+      position: fixed;
+      top: calc(var(--header-h) + 1rem);
+      right: 1rem;
+      z-index: 60;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--t);
+    }
+    .draw-controls.vis { opacity: 1; pointer-events: all; }
+
+    .dc-btn {
+      width: 38px; height: 38px;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-mid);
+      transition: all var(--t);
+    }
+    .dc-btn:hover { color: var(--accent); border-color: rgba(0,71,255,0.35); }
+    .dc-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .dc-btn svg {
+      width: 15px; height: 15px;
+      stroke: currentColor; fill: none;
+      stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* ── Prompt Card ─────────────────────────────────── */
+    .prompt-card {
+      position: fixed;
+      bottom: 2rem;
+      left: calc(var(--sidebar-w) + 1.5rem);
+      z-index: 60;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      padding: 1.25rem 1.5rem;
+      max-width: 316px;
+      transform: translateY(calc(100% + 2rem));
+      transition: transform 0.4s var(--ease-spring);
+      pointer-events: none;
+    }
+    .prompt-card.vis { transform: translateY(0); pointer-events: all; }
+
+    .card-eyebrow {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-mid);
+      margin-bottom: 0.5rem;
+    }
+
+    .card-question {
+      font-family: var(--font-display);
+      font-size: 1.0625rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      line-height: 1.25;
+      margin-bottom: 0.625rem;
+    }
+    .card-question em { font-style: normal; color: var(--accent); }
+
+    .card-hint {
+      font-size: 0.625rem;
+      color: var(--text-mid);
+      line-height: 1.55;
+      margin-bottom: 1.125rem;
+      min-height: 2.5em;
+      transition: color var(--t);
+    }
+
+    .btn-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+    .btn {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.5rem 1rem;
+      border: 1px solid currentColor;
+      transition: all var(--t);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn-primary:hover:not(:disabled) { background: #0035cc; border-color: #0035cc; }
+    .btn-primary:disabled { opacity: 0.35; cursor: default; }
+    .btn-ghost { color: var(--text-mid); }
+    .btn-ghost:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── Community Card ──────────────────────────────── */
+    .community-card {
+      position: fixed;
+      bottom: 2rem;
+      left: calc(var(--sidebar-w) + 1.5rem);
+      z-index: 60;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      padding: 1.25rem 1.5rem;
+      max-width: 316px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--t);
+    }
+    .community-card.vis { opacity: 1; pointer-events: all; }
+
+    .comm-count {
+      font-family: var(--font-display);
+      font-size: 2.375rem;
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .comm-label {
+      font-size: 0.5625rem;
+      color: var(--text-mid);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+    }
+    .comm-note {
+      font-size: 0.625rem;
+      color: var(--text-mid);
+      line-height: 1.55;
+    }
+
+    /* ── Color Legend (community card, All view) ────── */
+    .comm-legend {
+      display: none;
+      flex-direction: column;
+      gap: 0.3rem;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--panel-border);
+    }
+    .comm-legend.vis { display: flex; }
+    .comm-legend::-webkit-scrollbar { width: 3px; }
+    .comm-legend::-webkit-scrollbar-thumb { background: rgba(15,15,15,0.15); }
+
+    .cl-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.5625rem;
+      letter-spacing: 0.04em;
+    }
+    .cl-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .cl-name { flex: 1; color: var(--text); }
+    .cl-count { color: var(--text-mid); }
+
+    /* ── Heatmap Legend ──────────────────────────────── */
+    .hm-legend {
+      position: fixed;
+      bottom: 2rem;
+      right: 1rem;
+      z-index: 60;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border);
+      padding: 1rem 1.125rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--t);
+    }
+    .hm-legend.vis { opacity: 1; }
+
+    .legend-label {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-mid);
+      margin-bottom: 0.625rem;
+    }
+    .legend-bar {
+      width: 128px; height: 7px;
+      background: linear-gradient(to right,
+        rgba(0,71,255,0.04),
+        rgba(0,71,255,0.25),
+        rgba(0,71,255,0.58),
+        rgba(0,71,255,0.88)
+      );
+      margin-bottom: 0.3rem;
+    }
+    .legend-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.4375rem;
+      color: var(--text-mid);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .legend-meta { font-size: 0.5rem; color: var(--text-mid); margin-top: 0.625rem; }
+
+    /* ── Reveal Card ─────────────────────────────────── */
+    .reveal-card {
+      position: fixed;
+      left: calc(var(--sidebar-w) + 1.5rem);
+      bottom: 2rem;
+      z-index: 160;
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--panel-border);
+      padding: 1.125rem 1.25rem;
+      width: 316px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.35s var(--ease-spring);
+    }
+    .reveal-card.vis { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+    .reveal-top {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .reveal-icon {
+      width: 22px; height: 22px; flex-shrink: 0;
+      background: var(--text); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--bg);
+      transform: scale(0);
+      transition: transform 0.35s var(--ease-spring) 0.1s;
+    }
+    .reveal-card.vis .reveal-icon { transform: scale(1); }
+    .reveal-icon svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .reveal-hood-name {
+      flex: 1;
+      font-family: var(--font-display);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .reveal-share-btn {
+      display: flex; align-items: center; gap: 0.3rem;
+      font-family: var(--font-mono);
+      font-size: 0.4375rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-mid);
+      background: none;
+      border: 1px solid var(--panel-border);
+      padding: 0.35rem 0.625rem;
+      cursor: pointer;
+      transition: color var(--t), border-color var(--t);
+      min-height: 32px;
+    }
+    .reveal-share-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .reveal-share-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .reveal-recorded {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-mid);
+      margin-bottom: 0.875rem;
+    }
+    .reveal-score-row {
+      display: flex; align-items: center; gap: 0.625rem;
+      margin-bottom: 1rem;
+    }
+    .reveal-score-label {
+      font-size: 0.4375rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-mid);
+      white-space: nowrap;
+    }
+    .reveal-bar-track {
+      flex: 1; height: 5px;
+      background: var(--panel-border);
+      overflow: hidden;
+    }
+    .reveal-bar-fill {
+      height: 100%;
+      background: var(--text);
+      width: 0%;
+      transition: width 0.9s var(--ease-spring) 0.3s;
+    }
+    .reveal-score-num {
+      font-family: var(--font-display);
+      font-size: 0.9375rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+      min-width: 2.5rem;
+      text-align: right;
+    }
+
+    /* ── Toast notification ───────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 6rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      background: var(--text);
+      color: var(--bg);
+      font-family: var(--font-mono);
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.5rem 1.125rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 300;
+      white-space: nowrap;
+    }
+    .toast.vis { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Heatmap HTML labels ─────────────────────────── */
+    .heat-label {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      pointer-events: none;
+      text-shadow:
+        0 0 4px rgba(255,255,255,0.95),
+        0 0 8px rgba(255,255,255,0.8),
+        0 0 12px rgba(255,255,255,0.6);
+      /* Marker element itself has no background */
+    }
+    /* Suppress default MapLibre marker dot */
+    .maplibregl-marker.heat-label-marker { background: none; border: none; }
+
+    /* ── Progress checkmark in n-list ────────────────── */
+    .n-check {
+      font-size: 0.5625rem;
+      color: var(--accent);
+      opacity: 0;
+      transition: opacity var(--t);
+      margin-right: 0.125rem;
+    }
+    .n-check.done { opacity: 1; }
+
+    /* ── Supabase setup notice ───────────────────────── */
+    .db-notice {
+      position: fixed;
+      top: calc(var(--header-h) + 1rem);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 300;
+      background: var(--text);
+      color: var(--bg);
+      font-size: 0.5625rem;
+      letter-spacing: 0.07em;
+      padding: 0.5rem 1rem;
+      max-width: 90vw;
+      text-align: center;
+      display: none;
+    }
+
+    /* ── Mobile Bottom Sheet ─────────────────────────── */
+    .mobile-sheet {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 150;
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--panel-border);
+      transform: translateY(calc(100% - 58px));
+      transition: transform 0.36s var(--ease-out);
+      max-height: 75vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .mobile-sheet.open { transform: translateY(0); }
+
+    .sheet-handle-row {
+      padding: 1rem 1.25rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .sheet-handle { width: 28px; height: 3px; background: rgba(15,15,15,0.2); border-radius: 2px; }
+    .sheet-label  { font-size: 0.75rem; font-weight: 500; flex: 1; }
+    .sheet-chevron { font-size: 0.6875rem; color: var(--text-mid); transition: transform var(--t); }
+    .mobile-sheet.open .sheet-chevron { transform: rotate(180deg); }
+
+    .sheet-content { flex: 1; overflow-y: auto; padding: 0 1rem 1.5rem; }
+    .sheet-content::-webkit-scrollbar { display: none; }
+
+    /* ── Spinner ─────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Style toggle (Map / Satellite) ─────────────── */
+    .style-toggle {
+      position: fixed;
+      bottom: 2rem;
+      left: calc(var(--sidebar-w) + 1rem);
+      z-index: 60;
+      display: flex;
+      border: 1px solid var(--panel-border);
+      overflow: hidden;
+    }
+
+    .st-btn {
+      font-size: 0.5rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.375rem 0.75rem;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--text-mid);
+      transition: all var(--t);
+    }
+    .st-btn + .st-btn { border-left: 1px solid var(--panel-border); }
+    .st-btn.active { background: var(--text); color: var(--bg); }
+    .st-btn:not(.active):hover { color: var(--accent); }
+
+    @media (max-width: 700px) {
+      .style-toggle {
+        left: 1rem;
+        bottom: calc(58px + 0.75rem);
+      }
+    }
+
+    /* ── MapLibre overrides ──────────────────────────── */
+    .maplibregl-ctrl-top-right  { display: none !important; }
+    .maplibregl-ctrl-top-left   { display: none !important; }
+    .maplibregl-ctrl-attrib     { font-size: 9px !important; }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 700px) {
+      .sidebar, .header-title, .hdivider { display: none; }
+
+      .prompt-card,
+      .community-card,
+      .reveal-card {
+        left: 1rem; right: 1rem;
+        width: auto; max-width: none;
+        bottom: calc(58px + 0.75rem);
+      }
+
+      .hm-legend {
+        bottom: calc(58px + 0.75rem);
+        right: 1rem;
+      }
+
+      .draw-controls {
+        top: calc(var(--header-h) + 0.75rem);
+        right: 0.75rem;
+      }
+
+      .no-sel-hint { left: 50%; }
+
+      /* Larger touch targets on mobile */
+      .dc-btn { width: 46px; height: 46px; }
+      .dc-btn svg { width: 18px; height: 18px; }
+      .btn { min-height: 44px; padding: 0.625rem 1rem; font-size: 0.5625rem; }
+      .reveal-share-btn { min-height: 36px; padding: 0.5rem 0.75rem; }
+      .reveal-card .btn-row { flex-direction: column; gap: 0.5rem; }
+      .reveal-card .btn { width: 100%; justify-content: center; }
+      .n-btn { min-height: 40px; }
+      .st-btn { min-height: 36px; padding: 0.5rem 0.875rem; }
+    }
+
+    @media (min-width: 701px) { .mobile-sheet { display: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a href="../../" class="back-link">← PUBLICWORKS</a>
+      <div class="hdivider"></div>
+      <span class="header-title">Draw Denver</span>
+    </div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-draw-mode">Draw</button>
+      <button class="mode-btn"        id="btn-comm-mode">Community</button>
+    </div>
+  </header>
+
+  <!-- Desktop Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+      <h1 class="sidebar-title">Where does Denver actually begin?</h1>
+      <p class="sidebar-sub">Draw where you think each neighborhood really exists. See how Denver sees itself.</p>
+      <div class="sidebar-rule"></div>
+      <p class="sidebar-label">Select a neighborhood</p>
+      <ul class="n-list" id="n-list-desktop"></ul>
+    </div>
+    <div class="sidebar-foot">
+      <p class="sidebar-foot-text" id="total-stat">—</p>
+    </div>
+  </aside>
+
+  <!-- Center map hint -->
+  <div class="no-sel-hint vis" id="no-sel-hint">
+    <div class="nsh-arrow">↖</div>
+    <p class="nsh-text">Select a neighborhood to begin</p>
+  </div>
+
+  <!-- Draw Controls -->
+  <div class="draw-controls" id="draw-controls">
+    <!-- Draw polygon -->
+    <button class="dc-btn active" id="dc-draw" title="Draw polygon">
+      <svg viewBox="0 0 24 24">
+        <polygon points="12,3 3,21 21,21" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <!-- Clear -->
+    <button class="dc-btn" id="dc-clear" title="Clear and redraw">
+      <svg viewBox="0 0 24 24">
+        <polyline points="3,6 5,6 21,6"/>
+        <path d="M19,6l-.867,12.142A2,2,0,0,1,16.138,20H7.862a2,2,0,0,1-1.995-1.858L5,6"/>
+        <path d="M10,11v6M14,11v6"/>
+        <path d="M9,6V4a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1V6"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Drawing Prompt Card -->
+  <div class="prompt-card" id="prompt-card">
+    <p class="card-eyebrow">Your turn</p>
+    <p class="card-question">Draw where you think <em id="prompt-name">RiNo</em> is.</p>
+    <p class="card-hint" id="prompt-hint">Click to place points on the map. Click the first point to close your shape.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-submit" disabled>Submit</button>
+      <button class="btn btn-ghost"   id="btn-skip">Next →</button>
+    </div>
+  </div>
+
+  <!-- Community Card -->
+  <div class="community-card" id="comm-card">
+    <p class="comm-count" id="comm-count">—</p>
+    <p class="comm-label" id="comm-label">Select a neighborhood</p>
+    <p class="comm-note"  id="comm-note"></p>
+    <div class="comm-legend" id="comm-legend"></div>
+  </div>
+
+  <!-- Heatmap Legend -->
+  <div class="hm-legend" id="hm-legend">
+    <p class="legend-label">Agreement</p>
+    <div class="legend-bar"></div>
+    <div class="legend-ticks"><span>Few</span><span>Most</span></div>
+    <p class="legend-meta" id="legend-meta"></p>
+  </div>
+
+  <!-- Reveal Card (shown after submit) -->
+  <div class="reveal-card" id="reveal-card">
+    <div class="reveal-top">
+      <div class="reveal-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>
+      </div>
+      <span class="reveal-hood-name" id="reveal-hood-name">RiNo</span>
+      <button class="reveal-share-btn" id="reveal-share-btn">
+        <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Share
+      </button>
+    </div>
+    <p class="reveal-recorded" id="reveal-recorded">Your drawing is now part of the map.</p>
+    <div class="reveal-score-row" id="reveal-score-row" style="display:none">
+      <span class="reveal-score-label">Crowd match</span>
+      <div class="reveal-bar-track"><div class="reveal-bar-fill" id="reveal-bar-fill"></div></div>
+      <span class="reveal-score-num" id="reveal-score-num">—</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-reveal-next">Draw another →</button>
+      <button class="btn btn-ghost"   id="btn-reveal-comm">See community</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Map / Satellite toggle -->
+  <div class="style-toggle" id="style-toggle">
+    <button class="st-btn"        id="st-map">Map</button>
+    <button class="st-btn active" id="st-sat">Satellite</button>
+  </div>
+
+  <!-- Supabase notice (shows if keys not set) -->
+  <div class="db-notice" id="db-notice">
+    Submissions disabled — add your Supabase keys to save drawings
+  </div>
+
+  <!-- Mobile Bottom Sheet -->
+  <div class="mobile-sheet" id="mobile-sheet">
+    <div class="sheet-handle-row" id="sheet-toggle">
+      <div class="sheet-handle"></div>
+      <span class="sheet-label" id="sheet-label">Select a neighborhood</span>
+      <span class="sheet-chevron">▲</span>
+    </div>
+    <div class="sheet-content">
+      <ul class="n-list" id="n-list-mobile"></ul>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ============================================================
+       MAP TILES — completely free, no account needed
+       Powered by OpenFreeMap (openfreemap.org) + MapLibre GL JS
+
+       SUPABASE SETUP (free at supabase.com — no credit card)
+       ─────────────────────────────────────────────────────────
+       1. Create a project at https://supabase.com
+       2. Go to the SQL Editor and run:
+
+          CREATE TABLE submissions (
+            id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+            created_at      TIMESTAMPTZ DEFAULT NOW(),
+            neighborhood    TEXT        NOT NULL,
+            geometry        JSONB       NOT NULL,
+            user_session_id TEXT
+          );
+
+          ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
+
+          CREATE POLICY "public_insert" ON submissions
+            FOR INSERT TO anon WITH CHECK (true);
+
+          CREATE POLICY "public_select" ON submissions
+            FOR SELECT TO anon USING (true);
+
+       3. Go to Settings → API and copy:
+          - Project URL  → paste as SUPABASE_URL below
+          - anon public  → paste as SUPABASE_ANON_KEY below
+
+       The anon key is safe in client-side code; RLS handles security.
+       ============================================================ */
+
+    const SUPABASE_URL      = 'https://dyptcpshlzuinhrhupbn.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR5cHRjcHNobHp1aW5ocmh1cGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1MTY5ODQsImV4cCI6MjA5ODA5Mjk4NH0.ns_dJ1TyrJABsyYhNTjcWoGFJp1ouoFJvqFyQqoWyQo';
+
+    /* ============================================================
+       NEIGHBORHOODS
+       Extend this array to add more — everything else updates.
+       ============================================================ */
+    const HOODS = [
+      { id: 'downtown',       name: 'Downtown',       center: [-104.9903, 39.7470], zoom: 14   },
+      { id: 'rino',           name: 'RiNo',           center: [-104.9800, 39.7720], zoom: 14   },
+      { id: 'capitol-hill',   name: 'Capitol Hill',   center: [-104.9790, 39.7335], zoom: 14   },
+      { id: 'lodo',           name: 'LoDo',           center: [-104.9997, 39.7520], zoom: 14.5 },
+      { id: 'highlands',      name: 'Highlands',      center: [-105.0155, 39.7630], zoom: 14   },
+      { id: 'cherry-creek',   name: 'Cherry Creek',   center: [-104.9528, 39.7162], zoom: 14   },
+      { id: 'wash-park',      name: 'Wash Park',      center: [-104.9624, 39.7060], zoom: 14.5 },
+      { id: 'sloans-lake',    name: "Sloan's Lake",   center: [-105.0454, 39.7520], zoom: 14   },
+      { id: 'five-points',    name: 'Five Points',    center: [-104.9748, 39.7528], zoom: 14.5 },
+      { id: 'baker',          name: 'Baker',          center: [-104.9843, 39.7175], zoom: 14.5 },
+      { id: 'south-broadway', name: 'South Broadway', center: [-104.9880, 39.7080], zoom: 14   },
+    ];
+
+    // One distinct color per neighborhood, in HOODS order
+    const PALETTE = [
+      '#0047FF', // downtown       — blue (brand)
+      '#FF4D00', // rino           — orange-red
+      '#8B5CF6', // capitol-hill   — violet
+      '#059669', // lodo           — emerald
+      '#EC4899', // highlands      — pink
+      '#D97706', // cherry-creek   — amber
+      '#06B6D4', // wash-park      — cyan
+      '#EF4444', // sloans-lake    — red
+      '#10B981', // five-points    — green
+      '#F97316', // baker          — orange
+      '#6366F1', // south-broadway — indigo
+    ];
+
+    function hoodColor(id) {
+      const idx = HOODS.findIndex(h => h.id === id);
+      return idx >= 0 ? PALETTE[idx % PALETTE.length] : '#888';
+    }
+
+    // Approximate centroid of a polygon outer ring
+    function ringCentroid(ring) {
+      const pts = (ring[0][0] === ring[ring.length-1][0] && ring[0][1] === ring[ring.length-1][1])
+        ? ring.slice(0, -1) : ring;
+      let x = 0, y = 0;
+      pts.forEach(([px, py]) => { x += px; y += py; });
+      return [x / pts.length, y / pts.length];
+    }
+
+    /* ============================================================
+       STATE
+       ============================================================ */
+    let map          = null;
+    let draw         = null;
+    let db           = null;
+
+    let mode         = 'draw';
+    let activeHood    = null;
+    let hasPolygon    = false;
+    let isSubmitting  = false;
+    let sheetOpen     = false;
+    let counts        = {};
+    let mapStyle      = 'satellite';
+    let lastPolygons  = null;
+    let lastHeatColor = '#0047FF';
+    let revealHoodId  = null;
+    let revealScore   = null;
+    let toastTimer    = null;
+
+    const drawnHoods = new Set(
+      JSON.parse(localStorage.getItem('pw_ib_drawn') || '[]')
+    );
+
+    const STYLE_MAP = 'https://tiles.openfreemap.org/styles/positron';
+    const STYLE_SAT = {
+      version: 8,
+      sources: {
+        'esri-sat': {
+          type: 'raster',
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+          tileSize: 256,
+          attribution: '© Esri, Maxar, Earthstar Geographics',
+        },
+        'esri-labels': {
+          type: 'raster',
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'],
+          tileSize: 256,
+        },
+      },
+      layers: [
+        { id: 'sat-base',   type: 'raster', source: 'esri-sat'    },
+        { id: 'sat-labels', type: 'raster', source: 'esri-labels' },
+      ],
+      glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+    };
+
+    let sessionId = localStorage.getItem('pw_ib_sid');
+    if (!sessionId) {
+      sessionId = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Date.now().toString(36) + Math.random().toString(36).slice(2);
+      localStorage.setItem('pw_ib_sid', sessionId);
+    }
+
+    /* ============================================================
+       DOM
+       ============================================================ */
+    const $ = id => document.getElementById(id);
+
+    const $drawCtrl    = $('draw-controls');
+    const $promptCard  = $('prompt-card');
+    const $promptName  = $('prompt-name');
+    const $promptHint  = $('prompt-hint');
+    const $btnSubmit   = $('btn-submit');
+    const $btnSkip     = $('btn-skip');
+    const $dcDraw      = $('dc-draw');
+    const $dcClear     = $('dc-clear');
+    const $revealCard      = $('reveal-card');
+    const $revealHoodName  = $('reveal-hood-name');
+    const $revealRecorded  = $('reveal-recorded');
+    const $revealScoreRow  = $('reveal-score-row');
+    const $revealBarFill   = $('reveal-bar-fill');
+    const $revealScoreNum  = $('reveal-score-num');
+    const $revealShareBtn  = $('reveal-share-btn');
+    const $btnRevealNext   = $('btn-reveal-next');
+    const $btnRevealComm   = $('btn-reveal-comm');
+    const $toast           = $('toast');
+    const $btnDrawMd   = $('btn-draw-mode');
+    const $btnCommMd   = $('btn-comm-mode');
+    const $commCard    = $('comm-card');
+    const $commCount   = $('comm-count');
+    const $commLabel   = $('comm-label');
+    const $commNote    = $('comm-note');
+    const $hmLegend    = $('hm-legend');
+    const $legendMeta  = $('legend-meta');
+    const $totalStat   = $('total-stat');
+    const $dbNotice    = $('db-notice');
+    const $noSelHint   = $('no-sel-hint');
+    const $mobileSheet = $('mobile-sheet');
+    const $sheetToggle = $('sheet-toggle');
+    const $sheetLabel  = $('sheet-label');
+    const $nListDesk   = $('n-list-desktop');
+    const $nListMob    = $('n-list-mobile');
+    const $stMap       = $('st-map');
+    const $stSat       = $('st-sat');
+
+    /* ============================================================
+       BOOT
+       ============================================================ */
+    function init() {
+      const dbConfigured =
+        SUPABASE_URL     !== 'YOUR_SUPABASE_URL_HERE' &&
+        SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE';
+
+      if (!dbConfigured) {
+        $dbNotice.style.display = 'block';
+        setTimeout(() => { $dbNotice.style.display = 'none'; }, 5000);
+        $totalStat.textContent = 'Add Supabase keys to save drawings';
+      }
+
+      if (typeof supabase !== 'undefined' && dbConfigured) {
+        const { createClient } = supabase;
+        db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        loadCounts();
+      }
+
+      buildLists();
+      initMap();
+      bindEvents();
+    }
+
+    /* ============================================================
+       NEIGHBORHOOD LISTS
+       ============================================================ */
+    function buildLists() {
+      [$nListDesk, $nListMob].forEach(el => {
+        el.innerHTML = '';
+
+        // "All" entry — community-only shortcut
+        const allLi  = document.createElement('li');
+        const allBtn = document.createElement('button');
+        allBtn.className  = 'n-btn';
+        allBtn.dataset.id = 'all';
+        allBtn.innerHTML  = `<span>All neighborhoods</span><span class="n-count" data-cnt="all">—</span>`;
+        allBtn.addEventListener('click', () => pickHood('all'));
+        allLi.appendChild(allBtn);
+        el.appendChild(allLi);
+
+        // Divider
+        const divLi = document.createElement('li');
+        divLi.style.cssText = 'height:1px;background:var(--panel-border);margin:4px 0;';
+        el.appendChild(divLi);
+
+        HOODS.forEach(h => {
+          const li  = document.createElement('li');
+          const btn = document.createElement('button');
+          btn.className  = 'n-btn';
+          btn.dataset.id = h.id;
+          btn.innerHTML  = `<span>${h.name}</span><span class="n-check${drawnHoods.has(h.id) ? ' done' : ''}" data-check="${h.id}">✓</span><span class="n-count" data-cnt="${h.id}">—</span>`;
+          btn.addEventListener('click', () => pickHood(h.id));
+          li.appendChild(btn);
+          el.appendChild(li);
+        });
+      });
+    }
+
+    function syncUI() {
+      document.querySelectorAll('.n-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.id === activeHood);
+      });
+      document.querySelectorAll('[data-cnt]').forEach(el => {
+        const key = el.dataset.cnt;
+        if (key === 'all') {
+          const total = Object.values(counts).reduce((a, b) => a + b, 0);
+          el.textContent = total > 0 ? total.toLocaleString() : '—';
+        } else {
+          const c = counts[key];
+          el.textContent = c != null ? c.toLocaleString() : '—';
+        }
+      });
+      document.querySelectorAll('[data-check]').forEach(el => {
+        el.classList.toggle('done', drawnHoods.has(el.dataset.check));
+      });
+    }
+
+    /* ============================================================
+       MAP — MapLibre GL + OpenFreeMap (completely free, no keys)
+       ============================================================ */
+    function initMap() {
+      if (typeof maplibregl === 'undefined') return;
+
+      map = new maplibregl.Map({
+        container: 'map',
+        style:     STYLE_SAT,
+        center:    [-104.9903, 39.7392],
+        zoom:      11.5,
+        minZoom:   9,
+        maxZoom:   18,
+      });
+
+      draw = new MapboxDraw({
+        displayControlsDefault: false,
+        controls:               {},
+        defaultMode:            'simple_select',
+        styles:                 drawStyles(),
+      });
+
+      map.addControl(draw);
+
+      map.on('draw.create', onDrawChange);
+      map.on('draw.update', onDrawChange);
+      map.on('draw.delete', onDrawChange);
+
+      // After any style swap, restore community layers
+      map.on('style.load', () => {
+        if (mode === 'community' && activeHood) {
+          loadCommunity(activeHood);
+        }
+      });
+    }
+
+    /* ============================================================
+       MAP STYLE SWITCH (Map ↔ Satellite)
+       ============================================================ */
+    function switchMapStyle(s) {
+      if (s === mapStyle) return;
+      mapStyle = s;
+      $stMap.classList.toggle('active', s === 'map');
+      $stSat.classList.toggle('active', s === 'satellite');
+
+      // Save current draw features before style wipes them
+      const savedFeatures = draw ? draw.getAll() : null;
+
+      map.setStyle(s === 'map' ? STYLE_MAP : STYLE_SAT);
+
+      // After style loads, restore draw features and active draw mode
+      map.once('style.load', () => {
+        if (savedFeatures && savedFeatures.features.length) {
+          draw.add(savedFeatures);
+          // If polygon existed, re-check state
+          onDrawChange();
+        }
+        if (mode === 'draw' && activeHood) {
+          // Stay in simple_select so the polygon remains editable, not redrawn
+          draw.changeMode('simple_select');
+        }
+      });
+    }
+
+    function drawStyles() {
+      const C = '#0047FF';
+      return [
+        {
+          id: 'gl-draw-polygon-fill',
+          type: 'fill',
+          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+          paint: { 'fill-color': C, 'fill-opacity': 0.1 },
+        },
+        {
+          id: 'gl-draw-polygon-stroke',
+          type: 'line',
+          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': C, 'line-width': 2, 'line-dasharray': [2.5, 1.5] },
+        },
+        {
+          id: 'gl-draw-line',
+          type: 'line',
+          filter: ['all', ['==', '$type', 'LineString'], ['!=', 'mode', 'static']],
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: { 'line-color': C, 'line-width': 2, 'line-dasharray': [2.5, 1.5] },
+        },
+        {
+          id: 'gl-draw-vertex',
+          type: 'circle',
+          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+          paint: { 'circle-radius': 5, 'circle-color': C, 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' },
+        },
+        {
+          id: 'gl-draw-midpoint',
+          type: 'circle',
+          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'midpoint']],
+          paint: { 'circle-radius': 3, 'circle-color': C },
+        },
+      ];
+    }
+
+    /* ============================================================
+       PICK NEIGHBORHOOD
+       ============================================================ */
+    function pickHood(id) {
+      activeHood = id;
+      closeSheet();
+      $noSelHint.classList.remove('vis');
+
+      if (id === 'all') {
+        $sheetLabel.textContent = 'All neighborhoods';
+        syncUI();
+        // "All" only makes sense in community mode — switch if needed
+        if (mode !== 'community') {
+          $btnDrawMd.classList.remove('active');
+          $btnCommMd.classList.add('active');
+          mode = 'community';
+          $promptCard.classList.remove('vis');
+          $drawCtrl.classList.remove('vis');
+          if (draw) { draw.deleteAll(); draw.changeMode('simple_select'); }
+          hasPolygon = false;
+          $btnSubmit.disabled = true;
+        }
+        loadCommunity('all');
+        return;
+      }
+
+      const h = HOODS.find(x => x.id === id);
+      if (!h) return;
+      $sheetLabel.textContent = h.name;
+      syncUI();
+      mode === 'draw' ? startDrawing(h) : loadCommunity(id);
+    }
+
+    /* ============================================================
+       DRAW MODE
+       ============================================================ */
+    function startDrawing(h) {
+      clearDraw();
+      draw.changeMode('draw_polygon');
+      $promptName.textContent = h.name;
+      setHint('Click to place points on the map. Click the first point to close your shape.');
+      $promptCard.classList.add('vis');
+      $drawCtrl.classList.add('vis');
+      $dcDraw.classList.add('active');
+    }
+
+    function clearDraw() {
+      if (draw) draw.deleteAll();
+      hasPolygon = false;
+      $btnSubmit.disabled = true;
+      $dcDraw.classList.add('active');
+    }
+
+    function setHint(text) { $promptHint.textContent = text; }
+
+    function onDrawChange() {
+      const features = draw ? draw.getAll().features : [];
+      hasPolygon = features.length > 0 && features[0].geometry.coordinates[0].length > 3;
+      $btnSubmit.disabled = !hasPolygon;
+      setHint(hasPolygon
+        ? "Looks good? Hit Submit when you're happy with your boundary."
+        : 'Click to place points on the map. Click the first point to close your shape.'
+      );
+    }
+
+    /* ============================================================
+       SUBMIT
+       ============================================================ */
+    async function submitDrawing() {
+      if (!hasPolygon || isSubmitting) return;
+      const features = draw ? draw.getAll().features : [];
+      if (!features.length) return;
+
+      isSubmitting         = true;
+      $btnSubmit.disabled  = true;
+      $btnSubmit.innerHTML = '<span class="spinner"></span> Saving';
+
+      // Grab user's ring before clearing anything
+      const userRing = features[0].geometry.coordinates[0];
+      const hoodId   = activeHood;
+
+      if (db) {
+        try {
+          const { error } = await db.from('submissions').insert({
+            neighborhood:    hoodId,
+            geometry:        features[0],
+            user_session_id: sessionId,
+          });
+          if (error) console.warn('Supabase insert:', error);
+        } catch (e) {
+          console.warn('Submit error:', e);
+        }
+      }
+
+      counts[hoodId] = (counts[hoodId] || 0) + 1;
+      markDrawn(hoodId);
+
+      isSubmitting         = false;
+      $btnSubmit.innerHTML = 'Submit';
+
+      // Hide prompt card & draw controls; keep drawn polygon visible on map
+      $promptCard.classList.remove('vis');
+      $drawCtrl.classList.remove('vis');
+
+      // Show the reveal card (async: loads community + computes score)
+      showReveal(hoodId, userRing);
+    }
+
+    /* ============================================================
+       COUNTS
+       ============================================================ */
+    async function loadCounts() {
+      if (!db) return;
+      try {
+        const { data, error } = await db.from('submissions').select('neighborhood');
+        if (error) throw error;
+        counts = {};
+        (data || []).forEach(row => {
+          counts[row.neighborhood] = (counts[row.neighborhood] || 0) + 1;
+        });
+        syncUI();
+        updateTotalStat();
+      } catch (e) {
+        $totalStat.textContent = 'Could not load data';
+      }
+    }
+
+    function updateTotalStat() {
+      const total  = Object.values(counts).reduce((a, b) => a + b, 0);
+      const drawn  = drawnHoods.size;
+      const parts  = [];
+      if (drawn > 0) parts.push(`${drawn}/${HOODS.length} drawn`);
+      if (total > 0) parts.push(`${total.toLocaleString()} submissions`);
+      $totalStat.textContent = parts.length ? parts.join(' · ') : 'Select a neighborhood to begin';
+    }
+
+    /* ============================================================
+       COMMUNITY VIEW
+       ============================================================ */
+    const $commLegend = document.getElementById('comm-legend');
+
+    async function loadCommunity(id) {
+      $commCard.classList.add('vis');
+      $commCount.textContent = '…';
+      $commNote.textContent  = '';
+      $commLegend.classList.remove('vis');
+      $commLegend.innerHTML  = '';
+      clearAllLayers();
+
+      if (id === 'all') {
+        $commLabel.textContent = 'All neighborhoods';
+      } else {
+        const h = HOODS.find(x => x.id === id);
+        if (!h) return;
+        $commLabel.textContent = `drawings of ${h.name}`;
+        $hmLegend.classList.add('vis');
+      }
+
+      if (!db) {
+        $commCount.textContent = '—';
+        $commLabel.textContent = 'Add Supabase keys to view community data';
+        return;
+      }
+
+      try {
+        let query = db.from('submissions').select('neighborhood, geometry');
+        if (id !== 'all') query = query.eq('neighborhood', id);
+        const { data, error } = await query;
+        if (error) throw error;
+
+        const rows = data || [];
+        $commCount.textContent = rows.length.toLocaleString();
+
+        if (rows.length === 0) {
+          $commNote.textContent   = 'No drawings yet — switch to Draw and be the first!';
+          $legendMeta.textContent = '';
+          return;
+        }
+
+        if (id === 'all') {
+          renderAllPolygons(rows);
+          renderAllHeatmaps(rows);
+          buildColorLegend(rows);
+          $hmLegend.classList.add('vis');
+          $legendMeta.textContent = `${rows.length} drawing${rows.length !== 1 ? 's' : ''} across all neighborhoods`;
+        } else {
+          const h2       = HOODS.find(x => x.id === id);
+          const color    = hoodColor(id);
+          const polygons = extractPolygons(rows);
+          if (polygons.length) {
+            renderIndividualPolygons(rows, id);
+            renderHeatmap(polygons, color, h2?.name);
+            $legendMeta.textContent = `Based on ${rows.length} drawing${rows.length !== 1 ? 's' : ''}`;
+          }
+        }
+
+      } catch (e) {
+        console.error('Community error:', e);
+        $commCount.textContent = '!';
+        $commLabel.textContent = 'Error loading data';
+      }
+    }
+
+    /* ── Color legend for "All" view ───────────────────────────── */
+    function buildColorLegend(rows) {
+      const byCounts = {};
+      rows.forEach(r => { byCounts[r.neighborhood] = (byCounts[r.neighborhood] || 0) + 1; });
+
+      $commLegend.innerHTML = '';
+      HOODS.forEach(h => {
+        const c = byCounts[h.id];
+        if (!c) return;
+        const item = document.createElement('div');
+        item.className = 'cl-item';
+        item.innerHTML = `
+          <span class="cl-dot" style="background:${hoodColor(h.id)}"></span>
+          <span class="cl-name">${h.name}</span>
+          <span class="cl-count">${c}</span>
+        `;
+        $commLegend.appendChild(item);
+      });
+      $commLegend.classList.add('vis');
+    }
+
+    /* ── Render colored individual polygon outlines + labels ────── */
+    function renderIndividualPolygons(rows, hoodId) {
+      clearIndividualPolygons();
+      const fillFeats  = [];
+      const labelFeats = [];
+
+      rows.forEach((row, i) => {
+        try {
+          const g = row.geometry;
+          let coords = null;
+          if (g.type === 'Feature' && g.geometry) coords = g.geometry.coordinates;
+          else if (g.type === 'Polygon')           coords = g.coordinates;
+          else if (g.type === 'MultiPolygon')      coords = g.coordinates[0];
+          if (!coords || !coords[0] || coords[0].length < 3) return;
+
+          const ring  = coords[0];
+          const color = hoodColor(hoodId || row.neighborhood);
+          const name  = hoodId
+            ? `#${i + 1}`
+            : (HOODS.find(h => h.id === row.neighborhood)?.name || row.neighborhood);
+
+          fillFeats.push({
+            type: 'Feature',
+            geometry: { type: 'Polygon', coordinates: [ring] },
+            properties: { color },
+          });
+          labelFeats.push({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: ringCentroid(ring) },
+            properties: { name },
+          });
+        } catch (_) {}
+      });
+
+      if (!fillFeats.length) return;
+      addPolyLayers(fillFeats, labelFeats);
+    }
+
+    /* ── Render all neighborhoods at once (colored) ─────────────── */
+    function renderAllPolygons(rows) {
+      clearIndividualPolygons();
+      const fillFeats  = [];
+      const labelFeats = [];
+
+      rows.forEach(row => {
+        try {
+          const g = row.geometry;
+          let coords = null;
+          if (g.type === 'Feature' && g.geometry) coords = g.geometry.coordinates;
+          else if (g.type === 'Polygon')           coords = g.coordinates;
+          else if (g.type === 'MultiPolygon')      coords = g.coordinates[0];
+          if (!coords || !coords[0] || coords[0].length < 3) return;
+
+          const ring  = coords[0];
+          const color = hoodColor(row.neighborhood);
+          const name  = HOODS.find(h => h.id === row.neighborhood)?.name || row.neighborhood;
+
+          fillFeats.push({
+            type: 'Feature',
+            geometry: { type: 'Polygon', coordinates: [ring] },
+            properties: { color },
+          });
+          labelFeats.push({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: ringCentroid(ring) },
+            properties: { name },
+          });
+        } catch (_) {}
+      });
+
+      if (!fillFeats.length) return;
+      addPolyLayers(fillFeats, labelFeats);
+    }
+
+    function addPolyLayers(fillFeats, labelFeats) {
+      map.addSource('ib-poly', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: fillFeats },
+      });
+      map.addLayer({
+        id: 'ib-poly-fill',
+        type: 'fill',
+        source: 'ib-poly',
+        paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.07 },
+      });
+      map.addLayer({
+        id: 'ib-poly-stroke',
+        type: 'line',
+        source: 'ib-poly',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': ['get', 'color'], 'line-width': 1.5, 'line-opacity': 0.65 },
+      });
+
+      if (labelFeats.length) {
+        map.addSource('ib-labels', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: labelFeats },
+        });
+        map.addLayer({
+          id: 'ib-label-text',
+          type: 'symbol',
+          source: 'ib-labels',
+          layout: {
+            'text-field': ['get', 'name'],
+            'text-font':  ['Open Sans Bold', 'Open Sans Regular'],
+            'text-size':  10,
+            'text-anchor': 'center',
+            'text-allow-overlap': false,
+          },
+          paint: {
+            'text-color':       '#0F0F0F',
+            'text-halo-color':  'rgba(255,255,255,0.88)',
+            'text-halo-width':  1.5,
+          },
+        });
+      }
+    }
+
+    function clearIndividualPolygons() {
+      if (!map) return;
+      ['ib-label-text', 'ib-poly-stroke', 'ib-poly-fill'].forEach(id => {
+        if (map.getLayer(id)) map.removeLayer(id);
+      });
+      ['ib-poly', 'ib-labels'].forEach(id => {
+        if (map.getSource(id)) map.removeSource(id);
+      });
+    }
+
+    /* ── Extract polygon rings from Supabase rows ──────────────── */
+    function extractPolygons(rows) {
+      const out = [];
+      rows.forEach(row => {
+        try {
+          const g = row.geometry;
+          let coords = null;
+          if (g.type === 'Feature' && g.geometry)  coords = g.geometry.coordinates;
+          else if (g.type === 'Polygon')            coords = g.coordinates;
+          else if (g.type === 'MultiPolygon')       coords = g.coordinates[0];
+          if (coords && coords[0] && coords[0].length >= 3) out.push(coords[0]);
+        } catch (_) {}
+      });
+      return out;
+    }
+
+    /* ── Point-in-polygon (ray casting) ───────────────────────── */
+    function pip([x, y], ring) {
+      let inside = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, yi] = ring[i], [xj, yj] = ring[j];
+        if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+          inside = !inside;
+        }
+      }
+      return inside;
+    }
+
+    /* ── Build 50×50 density grid ──────────────────────────────── */
+    function buildGrid(polygons) {
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      polygons.forEach(ring => ring.forEach(([x, y]) => {
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      }));
+
+      const pad = 0.005;
+      minX -= pad; maxX += pad; minY -= pad; maxY += pad;
+
+      const G  = 50;
+      const dx = (maxX - minX) / G;
+      const dy = (maxY - minY) / G;
+      const total    = polygons.length;
+      const features = [];
+
+      for (let i = 0; i < G; i++) {
+        for (let j = 0; j < G; j++) {
+          const cx = minX + (i + 0.5) * dx;
+          const cy = minY + (j + 0.5) * dy;
+          let count = 0;
+          polygons.forEach(ring => { if (pip([cx, cy], ring)) count++; });
+          if (!count) continue;
+          features.push({
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [[
+                [minX + i * dx,       minY + j * dy      ],
+                [minX + (i+1) * dx,   minY + j * dy      ],
+                [minX + (i+1) * dx,   minY + (j+1) * dy  ],
+                [minX + i * dx,       minY + (j+1) * dy  ],
+                [minX + i * dx,       minY + j * dy      ],
+              ]],
+            },
+            properties: { count, intensity: count / total },
+          });
+        }
+      }
+      return { type: 'FeatureCollection', features };
+    }
+
+    /* ── Shared color helper ────────────────────────────────────── */
+    function hexRgba(hex, a) {
+      const r = parseInt(hex.slice(1,3),16);
+      const g = parseInt(hex.slice(3,5),16);
+      const b = parseInt(hex.slice(5,7),16);
+      return `rgba(${r},${g},${b},${a})`;
+    }
+
+    function heatPaint(color) {
+      return [
+        'interpolate', ['linear'], ['get', 'intensity'],
+        0,    hexRgba(color, 0),
+        0.04, hexRgba(color, 0.08),
+        0.15, hexRgba(color, 0.24),
+        0.35, hexRgba(color, 0.48),
+        0.6,  hexRgba(color, 0.72),
+        1.0,  hexRgba(color, 0.92),
+      ];
+    }
+
+    /* ── Heatmap label markers (HTML overlays — no glyph dependency) ── */
+    const heatMarkers = [];
+
+    function heatmapCentroid(geojson) {
+      let sumX = 0, sumY = 0, sumW = 0;
+      (geojson.features || []).forEach(f => {
+        const w    = f.properties.intensity;
+        const ring = f.geometry.coordinates[0];
+        let cx = 0, cy = 0;
+        ring.forEach(([x, y]) => { cx += x; cy += y; });
+        cx /= ring.length; cy /= ring.length;
+        sumX += cx * w; sumY += cy * w; sumW += w;
+      });
+      return sumW > 0 ? [sumX / sumW, sumY / sumW] : null;
+    }
+
+    function addHeatLabel(lngLat, name, color) {
+      const el = document.createElement('div');
+      el.className = 'heat-label';
+      el.textContent = name;
+      el.style.color = color;
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat(lngLat)
+        .addTo(map);
+      heatMarkers.push(marker);
+    }
+
+    function clearHeatmapMarkers() {
+      heatMarkers.forEach(m => m.remove());
+      heatMarkers.length = 0;
+    }
+
+    /* ── All-neighborhoods heatmap (one per hood, stacked) ───────── */
+    function renderAllHeatmaps(rows) {
+      clearAllHeatmaps();
+
+      const byHood = {};
+      rows.forEach(row => {
+        if (!byHood[row.neighborhood]) byHood[row.neighborhood] = [];
+        byHood[row.neighborhood].push(row);
+      });
+
+      HOODS.forEach(h => {
+        const hoodRows = byHood[h.id];
+        if (!hoodRows || !hoodRows.length) return;
+
+        const polygons = extractPolygons(hoodRows);
+        if (!polygons.length) return;
+
+        const color   = hoodColor(h.id);
+        const geojson = buildGrid(polygons);
+        const srcId   = `ib-ah-${h.id}`;
+        const fillId  = `ib-ah-fill-${h.id}`;
+
+        map.addSource(srcId, { type: 'geojson', data: geojson });
+        map.addLayer({
+          id: fillId,
+          type: 'fill',
+          source: srcId,
+          paint: { 'fill-color': heatPaint(color), 'fill-opacity': 1 },
+        });
+
+        const centroid = heatmapCentroid(geojson);
+        if (centroid) addHeatLabel(centroid, h.name, color);
+      });
+    }
+
+    function clearAllHeatmaps() {
+      if (!map) return;
+      clearHeatmapMarkers();
+      HOODS.forEach(h => {
+        const fillId = `ib-ah-fill-${h.id}`;
+        const srcId  = `ib-ah-${h.id}`;
+        if (map.getLayer(fillId)) map.removeLayer(fillId);
+        if (map.getSource(srcId)) map.removeSource(srcId);
+      });
+    }
+
+    /* ── Single-neighborhood heatmap ────────────────────────────── */
+    function renderHeatmap(polygons, color, name) {
+      if (!map) return;
+      lastPolygons  = polygons;
+      lastHeatColor = color || '#0047FF';
+      clearHeatmap();
+
+      const c       = lastHeatColor;
+      const geojson = buildGrid(polygons);
+
+      map.addSource('ib-heatmap', { type: 'geojson', data: geojson });
+      map.addLayer({
+        id: 'ib-heatmap-fill',
+        type: 'fill',
+        source: 'ib-heatmap',
+        paint: { 'fill-color': heatPaint(c), 'fill-opacity': 1 },
+      });
+      map.addLayer({
+        id: 'ib-heatmap-border',
+        type: 'line',
+        source: 'ib-heatmap',
+        filter: ['>=', ['get', 'intensity'], 0.4],
+        paint: { 'line-color': hexRgba(c, 0.3), 'line-width': 0.5 },
+      });
+
+      if (name) {
+        const centroid = heatmapCentroid(geojson);
+        if (centroid) addHeatLabel(centroid, name, c);
+      }
+    }
+
+    function clearHeatmap() {
+      if (!map) return;
+      clearHeatmapMarkers();
+      ['ib-heatmap-border', 'ib-heatmap-fill'].forEach(id => {
+        if (map.getLayer(id)) map.removeLayer(id);
+      });
+      if (map.getSource('ib-heatmap')) map.removeSource('ib-heatmap');
+    }
+
+    function clearAllLayers() {
+      clearHeatmap();
+      clearAllHeatmaps();
+      clearIndividualPolygons();
+    }
+
+    /* ============================================================
+       REVEAL — shown after submission
+       ============================================================ */
+    function computeMatchScore(userRing, communityPolygons) {
+      if (!communityPolygons.length) return null;
+      const total = communityPolygons.length;
+      const G = 25;
+      let [minX, maxX, minY, maxY] = [Infinity, -Infinity, Infinity, -Infinity];
+      userRing.forEach(([x, y]) => {
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      });
+      const dx = (maxX - minX) / G || 0.001;
+      const dy = (maxY - minY) / G || 0.001;
+      let userCells = 0, matchCells = 0;
+      for (let i = 0; i < G; i++) {
+        for (let j = 0; j < G; j++) {
+          const cx = minX + (i + 0.5) * dx;
+          const cy = minY + (j + 0.5) * dy;
+          if (!pip([cx, cy], userRing)) continue;
+          userCells++;
+          let count = 0;
+          communityPolygons.forEach(ring => { if (pip([cx, cy], ring)) count++; });
+          if (count / total >= 0.2) matchCells++;
+        }
+      }
+      return userCells > 0 ? Math.round((matchCells / userCells) * 100) : null;
+    }
+
+    async function showReveal(hoodId, userRing) {
+      const h = HOODS.find(x => x.id === hoodId);
+      if (!h) return;
+
+      revealHoodId = hoodId;
+      revealScore  = null;
+
+      $revealHoodName.textContent     = h.name;
+      $revealRecorded.textContent     = 'Your drawing is now part of the map.';
+      $revealScoreRow.style.display   = 'none';
+      $revealBarFill.style.transition = 'none';
+      $revealBarFill.style.width      = '0%';
+      $revealCard.classList.add('vis');
+
+      if (db && userRing) {
+        try {
+          const { data } = await db.from('submissions').select('geometry').eq('neighborhood', hoodId);
+          const rows     = data || [];
+          const all      = extractPolygons(rows);
+          // All but the submission just made (last in list) gives the "prior community"
+          const prev = all.slice(0, -1);
+
+          if (prev.length === 0) {
+            $revealRecorded.textContent = `You're the first to draw ${h.name}!`;
+          } else {
+            const score = computeMatchScore(userRing, prev);
+            if (score !== null) {
+              revealScore = score;
+              $revealScoreRow.style.display = 'flex';
+              $revealScoreNum.textContent   = `${score}%`;
+              // Animate bar after a tick so the transition fires
+              requestAnimationFrame(() => {
+                $revealBarFill.style.transition = '';
+                $revealBarFill.style.width = `${score}%`;
+              });
+            }
+            // Show community heatmap underneath user polygon
+            renderHeatmap(all, hoodColor(hoodId), h?.name);
+          }
+        } catch (_) {}
+      }
+    }
+
+    function hideReveal() {
+      $revealCard.classList.remove('vis');
+      clearHeatmap();
+      revealHoodId = null;
+      revealScore  = null;
+    }
+
+    async function shareResult() {
+      const h    = HOODS.find(x => x.id === revealHoodId);
+      const name = h ? h.name : 'a Denver neighborhood';
+      const url  = window.location.href;
+      const scoreText = revealScore !== null ? ` I matched ${revealScore}% of the crowd.` : '';
+      const text = `Where is ${name}?${scoreText} You tell me.`;
+
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: 'Draw Denver', text, url });
+        } else {
+          await navigator.clipboard.writeText(`${text}\n${url}`);
+          showToast('Copied to clipboard ✓');
+        }
+      } catch (_) {}
+    }
+
+    function showToast(msg) {
+      $toast.textContent = msg;
+      $toast.classList.add('vis');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => $toast.classList.remove('vis'), 2200);
+    }
+
+    function markDrawn(hoodId) {
+      drawnHoods.add(hoodId);
+      localStorage.setItem('pw_ib_drawn', JSON.stringify([...drawnHoods]));
+      syncUI();
+      updateTotalStat();
+    }
+
+    /* ============================================================
+       MODE SWITCHING
+       ============================================================ */
+    function setMode(m) {
+      mode = m;
+      $btnDrawMd.classList.toggle('active', m === 'draw');
+      $btnCommMd.classList.toggle('active', m === 'community');
+
+      if (m === 'draw') {
+        $commCard.classList.remove('vis');
+        $hmLegend.classList.remove('vis');
+        $commLegend.classList.remove('vis');
+        clearAllLayers();
+
+        // 'all' is a community-only selection — reset it
+        if (activeHood === 'all') activeHood = null;
+
+        if (activeHood) {
+          startDrawing(HOODS.find(x => x.id === activeHood));
+        } else {
+          $noSelHint.classList.add('vis');
+        }
+
+      } else {
+        $promptCard.classList.remove('vis');
+        $drawCtrl.classList.remove('vis');
+        if (draw) { draw.deleteAll(); draw.changeMode('simple_select'); }
+        hasPolygon = false;
+        $btnSubmit.disabled = true;
+
+        if (activeHood) {
+          loadCommunity(activeHood);
+        } else {
+          $commCard.classList.add('vis');
+          $commCount.textContent = '—';
+          $commLabel.textContent = 'Select a neighborhood';
+        }
+      }
+    }
+
+    /* ============================================================
+       MOBILE SHEET
+       ============================================================ */
+    function openSheet()  { sheetOpen = true;  $mobileSheet.classList.add('open'); }
+    function closeSheet() { sheetOpen = false; $mobileSheet.classList.remove('open'); }
+    function toggleSheet(){ sheetOpen ? closeSheet() : openSheet(); }
+
+    /* ============================================================
+       EVENTS
+       ============================================================ */
+    function bindEvents() {
+      $btnDrawMd.addEventListener('click', () => setMode('draw'));
+      $btnCommMd.addEventListener('click', () => setMode('community'));
+
+      $dcDraw.addEventListener('click', () => {
+        if (draw) { draw.changeMode('draw_polygon'); $dcDraw.classList.add('active'); }
+      });
+
+      $dcClear.addEventListener('click', () => {
+        clearDraw();
+        if (activeHood && draw) draw.changeMode('draw_polygon');
+      });
+
+      $btnSubmit.addEventListener('click', submitDrawing);
+
+      $btnSkip.addEventListener('click', () => {
+        const base = activeHood && activeHood !== 'all' ? activeHood : HOODS[HOODS.length - 1].id;
+        const idx  = HOODS.findIndex(h => h.id === base);
+        pickHood(HOODS[(idx + 1) % HOODS.length].id);
+      });
+
+      $btnRevealNext.addEventListener('click', () => {
+        const base = revealHoodId || (activeHood !== 'all' ? activeHood : null) || HOODS[0].id;
+        hideReveal();
+        clearDraw();
+        const idx = HOODS.findIndex(h => h.id === base);
+        pickHood(HOODS[(idx + 1) % HOODS.length].id);
+      });
+
+      $btnRevealComm.addEventListener('click', () => {
+        const hoodId = revealHoodId;
+        hideReveal();
+        clearDraw();
+        setMode('community');
+        if (hoodId) loadCommunity(hoodId);
+      });
+
+      $revealShareBtn.addEventListener('click', shareResult);
+
+      $sheetToggle.addEventListener('click', toggleSheet);
+      $stMap.addEventListener('click', () => switchMapStyle('map'));
+      $stSat.addEventListener('click', () => switchMapStyle('satellite'));
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          if ($revealCard.classList.contains('vis')) hideReveal();
+          if (sheetOpen) closeSheet();
+        }
+      });
+    }
+
+    /* ============================================================
+       GO
+       ============================================================ */
+    init();
+
+  }());
+  </script>
+</body>
+</html>

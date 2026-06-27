@@ -2,5 +2,10 @@
   "version": 2,
   "buildCommand": "",
   "outputDirectory": ".",
-  "framework": null
+  "framework": null,
+  "rewrites": [
+    { "source": "/paywall-grader", "destination": "/projects/paywall-grader/paywall-grader.html" },
+    { "source": "/invisible-borders", "destination": "/projects/invisible-borders/index.html" },
+    { "source": "/api/grade", "destination": "/api/grade.js" }
+  ]
 }

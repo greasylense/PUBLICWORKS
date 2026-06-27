@@ -1,11 +1,11 @@
 [
   {
-    "id": "paywall-grader",
+    "id": "invisible-borders",
     "number": "010",
-    "name": "Paywall Grader",
-    "description": "Browse 8 real paywall patterns or build your own — then get an AI-powered effectiveness score with CRO breakdown",
+    "name": "Draw Denver",
+    "description": "Draw where you think Denver's neighborhoods really exist — then see how the city sees itself",
     "status": "live",
-    "url": "projects/paywall-grader/paywall-grader.html",
+    "url": "projects/invisible-borders/",
     "date": "2026-06"
   },
   {
